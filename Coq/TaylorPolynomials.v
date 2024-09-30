@@ -23,6 +23,7 @@ Axiom D : (R -> R) -> (R -> R).
 Axiom zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c.
 Axiom constant_integral : forall (f : R -> R), forall (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'.
 
+(* The key property assumed of Lin a F is that it's second derivative is zero *)
 Axiom D_D_Lin_a_F_is_zero : forall (a : R), D (D (Lin a F)) = fun x => 0.
 
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
