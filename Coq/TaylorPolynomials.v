@@ -23,9 +23,6 @@ Parameter D : (R -> R) -> (R -> R).
 Axiom zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c.
 Axiom constant_integral : forall (f : R -> R), forall (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'.
 
-Axiom D_linear : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x.
-Axiom D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x.
-
 (* Assume the supplied functions are the true first and second order derivatives *)
 Axiom F_derivative : D F = F_prime.
 
