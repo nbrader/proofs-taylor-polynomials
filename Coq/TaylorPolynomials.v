@@ -25,7 +25,7 @@ Axiom constant_integral : forall (f : R -> R), forall (c : R), (D f = fun x => c
 Theorem Lin_exists_uniquely : forall (a : R),
 
   (* The second derivative of any linearisation of F is zero. *)
-  (forall (a : R), D (D (Lin a F)) = fun x => 0) ->
+  (D (D (Lin a F)) = fun x => 0) ->
 
   (* The linearisation at a of F applied to a is equal to F applied to a. *)
   Lin a F a = F a ->
@@ -34,7 +34,7 @@ Theorem Lin_exists_uniquely : forall (a : R),
   D (Lin a F) a = D F a -> Lin a F = fun x => (D F a)*(x-a) + F a.
 Proof.
   intros.
-  pose proof (H a). clear H.
+  pose proof H. clear H.
 
   apply (zero_integral (D (Lin a F))) in H2.
 
