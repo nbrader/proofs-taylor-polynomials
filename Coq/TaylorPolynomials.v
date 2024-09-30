@@ -26,7 +26,7 @@ Axiom constant_integral : forall (f : R -> R), forall (c : R), (D f = fun x => c
 (* Assume the supplied functions are the true first and second order derivatives *)
 Axiom F_derivative : D F = F_prime.
 
-Axiom Lin_a_F_at_a_is_F_a : forall (a : R), D (Lin a F) a = F a.
+Axiom Lin_a_F_at_a_is_F_a : forall (a : R), (Lin a F) a = F a.
 Axiom Lin_a_F_derivative_at_a_is_F_prime_a : forall (a : R), D (Lin a F) a = F_prime a.
 Axiom Lin_a_F_derivative_derivative_is_zero : forall (a : R), D (D (Lin a F)) = fun x => 0.
 
