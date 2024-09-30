@@ -10,13 +10,14 @@ As such, I'll introduce some parameters and assume only the
 properties of differentiation I require.
 *)
 
+(* The input function *)
+Axiom F : R -> R.
+
 (* Lin f is the linearisation of f *)
 Axiom Lin : R -> (R -> R) -> (R -> R).
 
-Parameter F : R -> R.
-
 (* Denote the derivative by D *)
-Parameter D : (R -> R) -> (R -> R).
+Axiom D : (R -> R) -> (R -> R).
 
 (* Derivative properties *)
 Axiom zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c.
