@@ -22,7 +22,7 @@ Axiom zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R),
 Axiom constant_integral : forall (f : R -> R), forall (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'.
 
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
-Theorem Lin_exists_uniquely : forall (a : R),
+Theorem Lin_implem : forall (a : R),
 
   (* The second derivative of any linearisation of F is zero. *)
   (D (D (Lin a F)) = fun x => 0) ->
