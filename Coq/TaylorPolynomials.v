@@ -33,8 +33,7 @@ Theorem Lin_exists_uniquely : forall (a : R),
   (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
   D (Lin a F) a = D F a -> Lin a F = fun x => (D F a)*(x-a) + F a.
 Proof.
-  intros.
-  pose proof H. clear H.
+  intros a H2 H0 H1.
 
   apply (zero_integral (D (Lin a F))) in H2.
 
