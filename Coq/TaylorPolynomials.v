@@ -5,9 +5,7 @@ Open Scope R_scope.
 
 (*
 I'm going to avoid having to define differentiation, limits etc.
-
-As such, I'll introduce some parameters and assume only the
-properties of differentiation I require.
+As such, I'll assume only the properties of differentiation I require.
 *)
 
 (* The input function *)
