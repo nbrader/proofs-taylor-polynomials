@@ -12,9 +12,8 @@ properties of differentiation I require.
 (* Lin f is the linearisation of f *)
 Axiom Lin : (R -> R) -> (R -> R).
 
-Parameter f_in : R -> R.
-Parameter f_in_prime : R -> R.
-Parameter f_in_prime_prime : R -> R.
+Parameter F : R -> R.
+Parameter F_prime : R -> R.
 
 (* Denote the derivative by D *)
 Parameter D : (R -> R) -> (R -> R).
@@ -24,13 +23,13 @@ Axiom D_linear : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x 
 Axiom D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x.
 
 (* Assume the supplied functions are the true first and second order derivatives *)
-Axiom f_in_derivative : D f_in = f_in_prime.
-Axiom f_in_prime_derivative : D f_in_prime = f_in_prime_prime.
+Axiom F_derivative : D F = F_prime.
+Axiom F_prime_derivative : D F_prime = fun x => 0.
 
 Theorem Lin_exists_uniquely : forall (a : R),
-  (forall (x : R), D (D (Lin f_in)) x = 0) ->
-  Lin f_in a = f_in a ->
-  D (Lin f_in) a = D f_in a -> Lin f_in = fun x => (D f_in a)*(x-a) + f_in a.
+  (forall (x : R), D (D (Lin F)) x = 0) ->
+  Lin F a = F a ->
+  D (Lin F) a = D F a -> Lin F = fun x => (D F a)*(x-a) + F a.
 Proof.
   intros.
 
