@@ -34,28 +34,29 @@ Theorem Lin_exists_uniquely : forall (a : R),
   D (Lin a F) a = D F a -> Lin a F = fun x => (D F a)*(x-a) + F a.
 Proof.
   intros.
-  pose proof (H a).
+  pose proof (H a). clear H.
 
   apply (zero_integral (D (Lin a F))) in H2.
 
   destruct H2.
-  assert (D (Lin a F) a = x) by (rewrite H2; reflexivity).
-  rewrite H1 in H3. clear H1.
+  assert (D (Lin a F) a = x) by (rewrite H; reflexivity).
 
-  apply (constant_integral (Lin a F) x) in H2.
+  rewrite H1 in H2. clear H1.
 
-  destruct H2.
+  apply (constant_integral (Lin a F) x) in H.
 
-  assert (Lin a F a = x * a + x0) by (rewrite H1; reflexivity).
-  rewrite H0 in H2. clear H0.
-  rewrite <- H3 in H2.
+  destruct H.
 
-  assert (x0 = F a - (D F a) * a) by (rewrite H2; ring). clear H2.
+  assert (Lin a F a = x * a + x0) by (rewrite H; reflexivity).
   rewrite H0 in H1. clear H0.
-  rewrite <- H3 in H1. clear H3.
+  rewrite <- H2 in H1.
+
+  assert (x0 = F a - (D F a) * a) by (rewrite H1; ring). clear H1.
+  rewrite H0 in H. clear H0.
+  rewrite <- H2 in H. clear H2.
 
   assert (((fun x : R => D F a * x + (F a - D F a * a)) = (fun x : R => D F a * (x - a) + F a))) by (apply functional_extensionality; intros; ring).
-  rewrite H0 in H1. clear H0.
-  
-  apply H1.
+  rewrite H0 in H. clear H0.
+
+  apply H.
 Qed.
