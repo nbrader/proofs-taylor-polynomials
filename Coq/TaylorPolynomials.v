@@ -132,7 +132,7 @@ Lemma Lin_example_lemma_1 :
       Lin 0 (fun x => 3*x*x*x + 5*x*x - 7)
         = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
   *)
-  Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0 - 7) 0 * x - 7.
+  Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0 - 7) 0 * x - 7.
 Proof.
   intros Lin D
          zero_integral constant_integral linear_integral
@@ -140,8 +140,8 @@ Proof.
          Lin_equals_F_at_a
          Lin_deriv_equals_F_deriv_at_a.
   pose proof (Lin_implem Lin D zero_integral constant_integral Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a (fun x => 3*x*x*x + 5*x*x - 7) 0).
-  assert ((fun x : R => D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0 - 7) 0 * (x - 0) + (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0 - 7) 0)
-         = fun x : R => D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0 - 7) 0 * x - 7) by (apply functional_extensionality; intros; ring).
+  assert ((fun x : R => D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0 - 7) 0 * (x-0) + (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0 - 7) 0)
+         = fun x : R => D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0 - 7) 0 * x - 7) by (apply functional_extensionality; intros; ring).
           
   rewrite H.
   apply H0.
@@ -190,7 +190,7 @@ Proof.
     + rewrite H3.
       apply functional_extensionality.
       intro.
-      assert (D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0) x + 0 = D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0) x) by ring. rewrite H4. clear H4.
+      assert (D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x + 0 = D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x) by ring. rewrite H4. clear H4.
       
 Admitted.
 
