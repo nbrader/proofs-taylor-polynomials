@@ -129,8 +129,7 @@ Lemma Lin_example_lemma_1 :
 
   (*
     Given the above then
-      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7)
-        = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
+      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0 - 7) 0 * x - 7
   *)
   Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0 - 7) 0 * x - 7.
 Proof.
@@ -173,8 +172,7 @@ Lemma Lin_example_lemma_2 :
 
   (*
     Given the above then
-      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7)
-        = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
+      D (fun x => 3*x*x*x + 5*x*x - 7) = fun x => 9*x*x + 10*x.
   *)
   D (fun x => 3*x*x*x + 5*x*x - 7) = fun x => 9*x*x + 10*x.
 Proof.
@@ -240,7 +238,7 @@ Theorem Lin_example :
 
   (*
     Given the above then
-      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => -7
+      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => -7.
   *)
   Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => -7.
 Proof.
