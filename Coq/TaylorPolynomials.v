@@ -33,7 +33,7 @@ Theorem Lin_implem : forall (a : R),
   (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
   D (Lin a F) a = D F a -> Lin a F = fun x => (D F a)*(x-a) + F a.
 Proof.
-  intros a second_deriv_Lin_0 equals_F_at_a deriv_equals_deriv_F_at_a.
+  intros a Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a.
   (*
     Givens:
       lin_f''(x) = 0
@@ -41,10 +41,10 @@ Proof.
       lin_f'(a) = f'(a)
   *)
 
-  apply (zero_integral (D (Lin a F))) in second_deriv_Lin_0.
-  destruct second_deriv_Lin_0 as [x first_deriv_Lin_c].
-  assert (linear_coeff_def : D (Lin a F) a = x) by (rewrite first_deriv_Lin_c; reflexivity).
-  rewrite deriv_equals_deriv_F_at_a in linear_coeff_def. clear deriv_equals_deriv_F_at_a.
+  apply (zero_integral (D (Lin a F))) in Lin_second_deriv_is_0.
+  destruct Lin_second_deriv_is_0 as [x first_deriv_Lin_is_c].
+  assert (linear_coeff_def_is_D_F_a : D (Lin a F) a = x) by (rewrite first_deriv_Lin_is_c; reflexivity).
+  rewrite Lin_deriv_equals_F_deriv_at_a in linear_coeff_def_is_D_F_a. clear Lin_deriv_equals_F_deriv_at_a.
   (*
     Given
       lin_f''(x) = 0
@@ -56,11 +56,11 @@ Proof.
       m = f'(a)
   *)
 
-  apply (constant_integral (Lin a F) x) in first_deriv_Lin_c.
-  destruct first_deriv_Lin_c as [x0 Lin_def].
+  apply (constant_integral (Lin a F) x) in first_deriv_Lin_is_c.
+  destruct first_deriv_Lin_is_c as [x0 Lin_def].
   assert (algebra_1 : Lin a F a = x * a + x0) by (rewrite Lin_def; reflexivity).
-  rewrite equals_F_at_a in algebra_1. clear equals_F_at_a.
-  rewrite <- linear_coeff_def in algebra_1.
+  rewrite Lin_equals_F_at_a in algebra_1. clear Lin_equals_F_at_a.
+  rewrite <- linear_coeff_def_is_D_F_a in algebra_1.
   assert (constant_term_def : x0 = F a - (D F a) * a) by (rewrite algebra_1; ring). clear algebra_1.
   (*
     Given
@@ -74,7 +74,7 @@ Proof.
   *)
 
   rewrite constant_term_def in Lin_def. clear constant_term_def.
-  rewrite <- linear_coeff_def in Lin_def. clear linear_coeff_def.
+  rewrite <- linear_coeff_def_is_D_F_a in Lin_def. clear linear_coeff_def_is_D_F_a.
   assert (algebra_2 : ((fun x : R => D F a * x + (F a - D F a * a)) = (fun x : R => D F a * (x - a) + F a))) by (apply functional_extensionality; intros; ring).
   rewrite algebra_2 in Lin_def. clear algebra_2.
   (*
