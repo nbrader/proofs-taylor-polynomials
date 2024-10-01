@@ -17,8 +17,8 @@ Theorem Lin_implem :
   forall (D : (R -> R) -> (R -> R)),
 
   (* Derivative properties *)
-  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c),
-  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'),
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
 
   (* The second derivative of any linearisation of F is zero. *)
   (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
@@ -106,7 +106,7 @@ Proof.
   apply Lin_def.
 Qed.
 
-Theorem Lin_example :
+Lemma Lin_example_lemma_1 :
   (* Lin f is the linearisation of f *)
   forall (Lin : R -> (R -> R) -> (R -> R)),
 
@@ -114,9 +114,9 @@ Theorem Lin_example :
   forall (D : (R -> R) -> (R -> R)),
 
   (* Derivative properties *)
-  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c),
-  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'),
-  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) -> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
 
   (* The second derivative of any linearisation of F is zero. *)
   (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
@@ -145,4 +145,95 @@ Proof.
           
   rewrite H.
   apply H0.
+Qed.
+
+Lemma Lin_example_lemma_2 :
+  (* Lin f is the linearisation of f *)
+  forall (Lin : R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+  forall (D_linear : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The second derivative of any linearisation of F is zero. *)
+  (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
+
+  (* The linearisation at a of F applied to a is equal to F applied to a. *)
+  (forall (a : R) (F : R -> R), Lin a F a = F a) ->
+
+  (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
+  (forall (a : R) (F : R -> R), D (Lin a F) a = D F a) ->
+
+  (*
+    Given the above then
+      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7)
+        = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
+  *)
+  D (fun x => 3*x*x*x + 5*x*x - 7) = fun x => 9*x*x + 10*x.
+Proof.
+  assert ((fun x => 3*x*x*x + 5*x*x - 7) = fun x => (3*x*x*x + 5*x*x) + (- 7)) by (apply functional_extensionality; auto).
+  intros.
+    rewrite H.
+    rewrite (D_linear (fun x => 3*x*x*x + 5*x*x) (fun x => - 7)).
+    assert (D (fun x => - 7) = fun x => 0).
+    + assert (exists (c : R), ((fun (x : R) => - 7) = (fun x => c))).
+      * exists (-7).
+        reflexivity.
+      * apply (zero_integral (fun x => - 7)).
+        apply H3.
+    + rewrite H3.
+      apply functional_extensionality.
+      intro.
+      assert (D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0) x + 0 = D (fun x0 : R => 3 * x0 * x0 * x0 + 5 * x0 * x0) x) by ring. rewrite H4. clear H4.
+      
+Admitted.
+
+Theorem Lin_example :
+  (* Lin f is the linearisation of f *)
+  forall (Lin : R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+  forall (D_linear : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The second derivative of any linearisation of F is zero. *)
+  (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
+
+  (* The linearisation at a of F applied to a is equal to F applied to a. *)
+  (forall (a : R) (F : R -> R), Lin a F a = F a) ->
+
+  (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
+  (forall (a : R) (F : R -> R), D (Lin a F) a = D F a) ->
+
+  (*
+    Given the above then
+      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => -7
+  *)
+  Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => -7.
+Proof.
+  intros Lin D
+         zero_integral constant_integral linear_integral
+         D_linear D_homog
+         Lin_second_deriv_is_0
+         Lin_equals_F_at_a
+         Lin_deriv_equals_F_deriv_at_a.
+  pose proof (Lin_example_lemma_1 Lin D zero_integral constant_integral linear_integral Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a).
+  rewrite H.
+  apply functional_extensionality.
+  intros.
+  pose proof (Lin_example_lemma_2 Lin D zero_integral constant_integral linear_integral D_linear D_homog Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a).
+  rewrite H0.
+  ring.
 Qed.
