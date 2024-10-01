@@ -50,10 +50,10 @@ Proof.
       lin_f''(x) = 0
 
     then
-      lin_f'(x) = m
+      lin_f'(x) = c
 
     and so
-      m = f'(a)
+      c = f'(a)
   *)
 
   apply (constant_integral (Lin a F) x) in first_deriv_Lin_is_c.
@@ -64,13 +64,13 @@ Proof.
   assert (constant_term_def : x0 = F a - (D F a) * a) by (rewrite algebra_1; ring). clear algebra_1.
   (*
     Given
-      lin_f'(x) = m
+      lin_f'(x) = c
     
     then
-      lin_f(x) = m*x + c
+      lin_f(x) = c*x + c'
     
     and so
-      c = f(a) - f'(a) * a
+      c' = f(a) - f'(a) * a
   *)
 
   rewrite constant_term_def in Lin_def. clear constant_term_def.
