@@ -8,40 +8,49 @@ I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
 
-(* The input function *)
-Axiom F : R -> R.
-
-(* Lin f is the linearisation of f *)
-Axiom Lin : R -> (R -> R) -> (R -> R).
-
-(* Denote the derivative by D *)
-Axiom D : (R -> R) -> (R -> R).
-
-(* Derivative properties *)
-Axiom zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c.
-Axiom constant_integral : forall (f : R -> R), forall (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'.
-
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
-Theorem Lin_implem : forall (a : R),
+Theorem Lin_implem :
+  (* Lin f is the linearisation of f *)
+  forall (Lin : R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'),
 
   (* The second derivative of any linearisation of F is zero. *)
-  (D (D (Lin a F)) = fun x => 0) ->
+  (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
 
   (* The linearisation at a of F applied to a is equal to F applied to a. *)
-  Lin a F a = F a ->
+  (forall (a : R) (F : R -> R), Lin a F a = F a) ->
 
   (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
-  D (Lin a F) a = D F a -> Lin a F = fun x => (D F a)*(x-a) + F a.
+  (forall (a : R) (F : R -> R), D (Lin a F) a = D F a) ->
+
+  (* The input function *)
+  forall (F : R -> R),
+  
+  (* The point about which we linearise F *)
+  forall (a : R),
+  
+  Lin a F = fun x => (D F a)*(x-a) + F a.
 Proof.
-  intros a Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a.
+  intros Lin D
+         zero_integral constant_integral
+         Lin_second_deriv_is_0
+         Lin_equals_F_at_a
+         Lin_deriv_equals_F_deriv_at_a
+         F a.
   (*
     Givens:
       lin_f''(x) = 0
       lin_f(a) = f(a)
       lin_f'(a) = f'(a)
   *)
-  
-  apply (zero_integral (D (Lin a F))) in Lin_second_deriv_is_0.
+
+  apply (zero_integral (D (Lin a F))) in Lin_second_deriv_is_0. clear zero_integral.
   destruct Lin_second_deriv_is_0 as [x first_deriv_Lin_is_c].
   assert (linear_coeff_def_is_D_F_a : D (Lin a F) a = x) by (rewrite first_deriv_Lin_is_c; reflexivity).
   rewrite Lin_deriv_equals_F_deriv_at_a in linear_coeff_def_is_D_F_a. clear Lin_deriv_equals_F_deriv_at_a.
@@ -61,7 +70,7 @@ Proof.
       c = f'(a)
   *)
 
-  apply (constant_integral (Lin a F) x) in first_deriv_Lin_is_c.
+  apply (constant_integral (Lin a F) x) in first_deriv_Lin_is_c. clear constant_integral.
   destruct first_deriv_Lin_is_c as [x0 Lin_def].
   assert (algebra_1 : Lin a F a = x * a + x0) by (rewrite Lin_def; reflexivity).
   rewrite Lin_equals_F_at_a in algebra_1. clear Lin_equals_F_at_a.
@@ -98,4 +107,36 @@ Proof.
   *)
 
   apply Lin_def.
+Qed.
+
+Theorem Lin_example :
+  (* Lin f is the linearisation of f *)
+  forall (Lin : R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) -> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) -> exists (c' : R), f = fun x => c*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) -> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+
+  (* The second derivative of any linearisation of F is zero. *)
+  (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
+
+  (* The linearisation at a of F applied to a is equal to F applied to a. *)
+  (forall (a : R) (F : R -> R), Lin a F a = F a) ->
+
+  (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
+  (forall (a : R) (F : R -> R), D (Lin a F) a = D F a) ->
+
+  Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
+Proof.
+  intros Lin D
+         zero_integral constant_integral linear_integral
+         Lin_second_deriv_is_0
+         Lin_equals_F_at_a
+         Lin_deriv_equals_F_deriv_at_a.
+  pose proof (Lin_implem Lin D zero_integral constant_integral Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a (fun x => 3*x*x*x + 5*x*x - 7) 0).
+  apply H.
 Qed.
