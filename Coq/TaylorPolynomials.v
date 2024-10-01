@@ -69,7 +69,10 @@ Proof.
     then
       lin_f(x) = c*x + c'
     
-    and so
+    and since
+      c = f'(a)
+
+    then
       c' = f(a) - f'(a) * a
   *)
 
@@ -78,7 +81,12 @@ Proof.
   assert (algebra_2 : ((fun x : R => D F a * x + (F a - D F a * a)) = (fun x : R => D F a * (x - a) + F a))) by (apply functional_extensionality; intros; ring).
   rewrite algebra_2 in Lin_def. clear algebra_2.
   (*
-    Thus:
+    Given
+      lin_f(x) = c*x + c'
+      c = f'(a)
+      c' = f(a) - f'(a) * a
+
+    Then:
       lin_f(x) = f'(a)*(x-a) + f(a)
   *)
 
