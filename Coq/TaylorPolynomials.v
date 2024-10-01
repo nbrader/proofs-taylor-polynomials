@@ -303,6 +303,16 @@ Proof.
   intros.
   split.
   - intros.
+    pose proof (quadratic_deriv D linear_deriv D_product_rule).
+    assert (exists (c': R), D (fun x : R => c * x * x) = (fun x : R => 2 * c * x + c')).
+    + exists 0.
+      replace (fun x : R => c * x * x) with (fun x : R => c * (x * x)) by (apply functional_extensionality; intro; ring).
+      rewrite (D_homog (fun x : R => x * x) c).
+      apply functional_extensionality.
+      intro.
+      rewrite (quadratic_deriv D linear_deriv D_product_rule).
+      ring.
+    + 
     admit.
   - intros.
     destruct H.
