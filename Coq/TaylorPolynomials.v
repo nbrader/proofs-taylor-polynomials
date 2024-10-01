@@ -40,7 +40,7 @@ Proof.
       lin_f(a) = f(a)
       lin_f'(a) = f'(a)
   *)
-
+  
   apply (zero_integral (D (Lin a F))) in Lin_second_deriv_is_0.
   destruct Lin_second_deriv_is_0 as [x first_deriv_Lin_is_c].
   assert (linear_coeff_def_is_D_F_a : D (Lin a F) a = x) by (rewrite first_deriv_Lin_is_c; reflexivity).
@@ -52,7 +52,7 @@ Proof.
     then
       lin_f'(x) = c
   *)
-    
+  
   (*
     Given
       lin_f'(x) = c
@@ -74,7 +74,7 @@ Proof.
     then
       lin_f(x) = c*x + c'
   *)
-    
+  
   (*
     Given
       lin_f(x) = c*x + c'
