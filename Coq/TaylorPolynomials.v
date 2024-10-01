@@ -116,7 +116,7 @@ Lemma Lin_example_lemma_1 :
   (* Derivative properties *)
   forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
-  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'),
 
   (* The second derivative of any linearisation of F is zero. *)
   (forall (a : R) (F : R -> R), D (D (Lin a F)) = fun x => 0) ->
@@ -157,7 +157,8 @@ Lemma Lin_example_lemma_2 :
   (* Derivative properties *)
   forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
-  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'),
+  forall (quadratic_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x*x) <-> exists (c' : R), f = fun x => (1/3)*c*x*x*x + c'),
   forall (D_linear : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
 
@@ -182,17 +183,36 @@ Proof.
     rewrite H.
     rewrite (D_linear (fun x => 3*x*x*x + 5*x*x) (fun x => - 7)).
     assert (D (fun x => - 7) = fun x => 0).
-    + assert (exists (c : R), ((fun (x : R) => - 7) = (fun x => c))).
-      * exists (-7).
+    - assert (exists (c : R), ((fun (x : R) => - 7) = (fun x => c))).
+      + exists (-7).
         reflexivity.
-      * apply (zero_integral (fun x => - 7)).
+      + apply (zero_integral (fun x => - 7)).
         apply H3.
-    + rewrite H3.
+    - rewrite H3.
       apply functional_extensionality.
       intro.
       assert (D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x + 0 = D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x) by ring. rewrite H4. clear H4.
-      
-Admitted.
+      rewrite (D_linear (fun x => 3*x*x*x) (fun x => 5*x*x)).
+      assert (D (fun x => 5*x*x) = fun (x : R) => 10*x).
+      + assert (exists (c' : R), (fun x => 5*x*x) = fun (x : R) => (1/2)*10*x*x + c').
+        * exists (0).
+          apply functional_extensionality.
+          intros.
+          field.
+        * apply (linear_integral (fun x => 5*x*x)).
+          apply H4.
+      + rewrite H4.
+        assert (D (fun x => 3*x*x*x) = fun (x : R) => 9*x*x).
+        * assert (exists (c' : R), (fun x => 3*x*x*x) = fun (x : R) => (1/3)*9*x*x*x + c').
+          -- exists (0).
+             apply functional_extensionality.
+             intros.
+             field.
+          -- apply (quadratic_integral (fun x => 3*x*x*x)).
+             apply H5.
+        * rewrite H5.
+          field.
+Qed.
 
 Theorem Lin_example :
   (* Lin f is the linearisation of f *)
@@ -204,7 +224,8 @@ Theorem Lin_example :
   (* Derivative properties *)
   forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
-  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => 0.5*c*x*x + c'),
+  forall (linear_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'),
+  forall (quadratic_integral : forall (f : R -> R) (c : R), (D f = fun x => c*x*x) <-> exists (c' : R), f = fun x => (1/3)*c*x*x*x + c'),
   forall (D_linear : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
 
@@ -224,7 +245,7 @@ Theorem Lin_example :
   Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => -7.
 Proof.
   intros Lin D
-         zero_integral constant_integral linear_integral
+         zero_integral constant_integral linear_integral quadratic_integral
          D_linear D_homog
          Lin_second_deriv_is_0
          Lin_equals_F_at_a
@@ -233,7 +254,7 @@ Proof.
   rewrite H.
   apply functional_extensionality.
   intros.
-  pose proof (Lin_example_lemma_2 Lin D zero_integral constant_integral linear_integral D_linear D_homog Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a).
+  pose proof (Lin_example_lemma_2 Lin D zero_integral constant_integral linear_integral quadratic_integral D_linear D_homog Lin_second_deriv_is_0 Lin_equals_F_at_a Lin_deriv_equals_F_deriv_at_a).
   rewrite H0.
   ring.
 Qed.
