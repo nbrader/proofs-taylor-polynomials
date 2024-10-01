@@ -48,11 +48,16 @@ Proof.
   (*
     Given
       lin_f''(x) = 0
-
+      zero_integral
     then
       lin_f'(x) = c
-
-    and so
+  *)
+    
+  (*
+    Given
+      lin_f'(x) = c
+      lin_f'(a) = f'(a)
+    then
       c = f'(a)
   *)
 
@@ -65,13 +70,16 @@ Proof.
   (*
     Given
       lin_f'(x) = c
-    
+      constant_integral
     then
       lin_f(x) = c*x + c'
+  *)
     
-    and since
+  (*
+    Given
+      lin_f(x) = c*x + c'
       c = f'(a)
-
+      lin_f(a) = f(a)
     then
       c' = f(a) - f'(a) * a
   *)
@@ -85,7 +93,6 @@ Proof.
       lin_f(x) = c*x + c'
       c = f'(a)
       c' = f(a) - f'(a) * a
-
     Then:
       lin_f(x) = f'(a)*(x-a) + f(a)
   *)
