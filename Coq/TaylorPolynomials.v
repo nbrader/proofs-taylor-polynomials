@@ -29,13 +29,10 @@ Theorem Lin_implem :
   (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
   (forall (a : R) (F : R -> R), D (Lin a F) a = D F a) ->
 
-  (* The input function *)
-  forall (F : R -> R),
-  
-  (* The point about which we linearise F *)
-  forall (a : R),
-  
-  Lin a F = fun x => (D F a)*(x-a) + F a.
+  (*
+    Given the above then Lin a F must have this implementation: fun x => (D F a)*(x-a) + F a
+  *)
+  forall (F : R -> R), forall (a : R), Lin a F = fun x => (D F a)*(x-a) + F a.
 Proof.
   intros Lin D
          zero_integral constant_integral
@@ -130,6 +127,11 @@ Theorem Lin_example :
   (* The first derivative of the linearisation at a of F applied to a is equal to the first derivative of F applied to a. *)
   (forall (a : R) (F : R -> R), D (Lin a F) a = D F a) ->
 
+  (*
+    Given the above then
+      Lin 0 (fun x => 3*x*x*x + 5*x*x - 7)
+        = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
+  *)
   Lin 0 (fun x => 3*x*x*x + 5*x*x - 7) = fun x => (D (fun x => 3*x*x*x + 5*x*x - 7) 0)*(x-0) + (fun x => 3*x*x*x + 5*x*x - 7) 0.
 Proof.
   intros Lin D
