@@ -8,67 +8,44 @@ I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
 
-Lemma skolemizationPart1 : (forall (P Q : Prop), (exists (c0 : R), Q) -> P) -> (forall (c0 : R) (P Q : Prop), Q -> P).
-Proof.
-  intros H c0 P Q HP.
-  (* Use the existential quantifier in H to get some c0 *)
-  assert ((exists _ : R, Q) -> P).
-  + apply (H P Q).
-  + apply H0.
-    exists 0.
-    apply HP.
-Qed.
-
-Lemma skolemizationPart2 : (forall (P Q : Prop), P -> exists (c0 : R), Q) -> (forall (c0 : R) (P Q : Prop), P -> Q).
-Proof.
-  intros H c0 P Q HP.
-  (* Use the existential quantifier in H to get some c0 *)
-  destruct (H P Q HP) as [c0' HQ].
-  apply HQ.
-Qed.
-
-Lemma skolemizationPart3 : (forall (c0 : R) (P Q : Prop), Q -> P) -> (forall (P Q : Prop), (exists (c0 : R), Q) -> P).
+Lemma skolemizationPart1 : (forall (P Q : Prop), (exists (c0 : R), Q) -> P -> forall (c0 : R), Q -> P).
 Proof.
   intros.
-  destruct H0.
-  assert (Q -> P).
-  + apply H.
-    apply x.
-  + apply H1.
-    assumption.
+  assumption.
 Qed.
 
-Lemma skolemizationPart4 : (forall (c0 : R) (P Q : Prop), P -> Q) -> (forall (P Q : Prop), P -> exists (c0 : R), Q).
+Lemma skolemizationPart2 : (forall (P Q : Prop), P -> exists (c0 : R), Q -> forall (c0 : R), P -> Q).
 Proof.
-  intros H P Q HP.
-  exists 0. (* Choose an arbitrary value of type R *)
-  apply (H 0 P Q).
+  intros.
+  exists 0.
+  intros.
+  assumption.
+Qed.
+
+Lemma skolemizationPart3 : (forall (P Q : Prop) (c0 : R), Q -> P -> (exists (c0 : R), Q) -> P).
+Proof.
+  intros.
+  assumption.
+Qed.
+
+Lemma skolemizationPart4 : (forall (P Q : Prop) (c0 : R), P -> Q -> P -> exists (c0 : R), Q).
+Proof.
+  intros.
+  exists 0.
   assumption.
 Qed.
 
 (* !!! TO DO !!! *)
 (* (this should really be moved to its own file) *)
-Lemma skolemization : (forall (P Q : Prop), (exists (c0 : R), Q) <-> P) <-> (forall (c0 : R) (P Q : Prop), Q <-> P).
+Lemma skolemization : (forall (P Q : Prop), (exists (c0 : R), Q) <-> P <-> forall (c0 : R), Q <-> P).
 Proof.
   split.
   - intros.
     split.
     + apply skolemizationPart1.
-      * apply H.
-      * apply c0.
-    + apply skolemizationPart2.
-      * apply H.
-      * apply c0.
-  - intros.
-    split.
-    + apply skolemizationPart3.
-      intros.
-      apply (H c0 P0 Q0).
-      apply H0.
-    + apply skolemizationPart4.
-      intros.
-      apply (H c0 P0 Q0).
-      apply H0.
+      * exists 0.
+        admit.
+      * admit.
 Qed.
 
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
@@ -418,11 +395,8 @@ Proof.
                          *** apply H0.
                      +++ clear H0 H1.
                          assert (forall (f g : R -> R), D f = D g <-> exists (c0 : R), f = (fun x : R => g x + c0)).
-                         *** admit.
-                             (* apply (skolemization ). *)
-                         *** clear H2.
-                             apply H0. clear H0.
-                             apply H.
+                         *** intros.
+                             apply skolemization.
   - intros.
     destruct H.
     rewrite H.
