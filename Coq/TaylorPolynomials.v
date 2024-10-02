@@ -312,7 +312,21 @@ Proof.
       field.
     + clear H0.
       rewrite <- H1 in H. clear H1.
-      
+      assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
+      assert (forall (c : R), D (fun x : R => 1 / 2 * c * x * x) = (fun x0 => D (fun x : R => 1 / 2 * c * x * x) x0 + D (fun _ => c) x0)).
+      * intro.
+        assert (D (fun _ : R => c0) = (fun _ : R => 0)).
+        -- apply (zero_integral (fun _ : R => c0)).
+           exists c0.
+           reflexivity.
+        -- rewrite H0. clear H0.
+        apply functional_extensionality.
+        intros.
+        field.
+      * rewrite H0 in H. clear H0.
+        rewrite <- D_additive in H.
+        exists c.
+        
     admit.
   - intros.
     destruct H.
