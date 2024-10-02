@@ -313,30 +313,52 @@ Proof.
     + clear H0.
       rewrite <- H1 in H. clear H1.
       assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
-      assert (forall c0 : R, D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
+      assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
       * intro.
         assert (D (fun _ : R => c0) = (fun _ : R => 0)).
         -- apply (zero_integral (fun _ : R => c0)).
            exists c0.
            reflexivity.
         -- rewrite H0. clear H0.
+        intro.
         apply functional_extensionality.
         intros.
         field.
-      * assert (forall c0 : R, (fun x0 : R => D f x0 + D (fun _ : R => c0) x0) = (fun x0 : R => D (fun x : R => f x + c0) x0)).
-        -- intro.
+      * assert (forall (c0 : R) (f : R -> R), (fun x0 : R => D f x0 + D (fun _ : R => c0) x0) = (fun x0 : R => D (fun x : R => f x + c0) x0)).
+        -- intros.
            apply functional_extensionality.
            intro.
            rewrite D_additive.
            reflexivity.
-        -- assert (forall c0 : R, D f = D (fun x : R => f x + c0)).
-           ++ intro.
+        -- assert (forall (c0 : R) (f : R -> R), D f = D (fun x : R => f x + c0)).
+           ++ intros.
               rewrite (H0 c0).
               rewrite (H1 c0).
               reflexivity.
            ++ clear H0 H1.
-              
-    admit.
+              assert (forall (c0 : R) (f g : R -> R), (f = fun x => g x + c0) -> D f = D g).
+              ** intros.
+                 rewrite H0.
+                 symmetry.
+                 rewrite <- (H2 c0).
+                 apply functional_extensionality.
+                 intro.
+                 reflexivity.
+              ** clear H2.
+                 assert (forall (c0 : R) (f g : R -> R), D f = D g -> (f = fun x => g x + c0)).
+                 --- intros.
+                     admit.
+                 --- assert (forall (c0 : R) (f g : R -> R), D f = D g <-> (f = fun x => g x + c0)).
+                     +++ intros.
+                         split.
+                         *** apply H1.
+                         *** apply H0.
+                     +++ clear H0 H1.
+                         assert (forall (f g : R -> R), D f = D g <-> exists (c0 : R), f = (fun x : R => g x + c0)).
+                         *** admit.
+                         *** clear H2.
+                             apply H0. clear H0.
+                             apply H.
   - intros.
     destruct H.
     rewrite H.
