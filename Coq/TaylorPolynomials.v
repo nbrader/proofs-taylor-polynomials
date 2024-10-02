@@ -10,44 +10,40 @@ As such, I'll assume only the properties of differentiation I require.
 
 Lemma skolemizationPart1 : (forall (P Q : Prop), (exists (c0 : R), Q) -> P) -> (forall (c0 : R) (P Q : Prop), Q -> P).
 Proof.
-  - (* <- Direction *)
-    intros H c0 P Q HP.
-    (* Use the existential quantifier in H to get some c0 *)
-    assert ((exists _ : R, Q) -> P).
-    + apply (H P Q).
-    + apply H0.
-      exists 0.
-      apply HP.
+  intros H c0 P Q HP.
+  (* Use the existential quantifier in H to get some c0 *)
+  assert ((exists _ : R, Q) -> P).
+  + apply (H P Q).
+  + apply H0.
+    exists 0.
+    apply HP.
 Qed.
 
 Lemma skolemizationPart2 : (forall (P Q : Prop), P -> exists (c0 : R), Q) -> (forall (c0 : R) (P Q : Prop), P -> Q).
 Proof.
-  - (* <- Direction *)
-    intros H c0 P Q HP.
-    (* Use the existential quantifier in H to get some c0 *)
-    destruct (H P Q HP) as [c0' HQ].
-    apply HQ.
+  intros H c0 P Q HP.
+  (* Use the existential quantifier in H to get some c0 *)
+  destruct (H P Q HP) as [c0' HQ].
+  apply HQ.
 Qed.
 
 Lemma skolemizationPart3 : (forall (c0 : R) (P Q : Prop), Q -> P) -> (forall (P Q : Prop), (exists (c0 : R), Q) -> P).
 Proof.
-  - (* -> Direction *)
-    intros.
-    destruct H0.
-    assert (Q -> P).
-    + apply H.
-      apply x.
-    + apply H1.
-      assumption.
+  intros.
+  destruct H0.
+  assert (Q -> P).
+  + apply H.
+    apply x.
+  + apply H1.
+    assumption.
 Qed.
 
 Lemma skolemizationPart4 : (forall (c0 : R) (P Q : Prop), P -> Q) -> (forall (P Q : Prop), P -> exists (c0 : R), Q).
 Proof.
-  - (* -> Direction *)
-    intros H P Q HP.
-    exists 0. (* Choose an arbitrary value of type R *)
-    apply (H 0 P Q).
-    assumption.
+  intros H P Q HP.
+  exists 0. (* Choose an arbitrary value of type R *)
+  apply (H 0 P Q).
+  assumption.
 Qed.
 
 (* !!! TO DO !!! *)
