@@ -181,35 +181,47 @@ Proof.
     rewrite H.
     rewrite (D_additive (fun x => 3*x*x*x + 5*x*x) (fun x => - 7)).
     assert (D (fun x => - 7) = fun x => 0).
-    - assert (exists (c : R), ((fun (x : R) => - 7) = (fun x => c))).
-      + exists (-7).
+    {
+      assert (exists (c : R), ((fun (x : R) => - 7) = (fun x => c))).
+      {
+        exists (-7).
         reflexivity.
-      + apply (zero_integral (fun x => - 7)).
-        apply H3.
-    - rewrite H3.
-      apply functional_extensionality.
-      intro.
-      assert (D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x + 0 = D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x) by ring. rewrite H4. clear H4.
-      rewrite (D_additive (fun x => 3*x*x*x) (fun x => 5*x*x)).
-      assert (D (fun x => 5*x*x) = fun (x : R) => 10*x).
-      + assert (exists (c' : R), (fun x => 5*x*x) = fun (x : R) => (1/2)*10*x*x + c').
-        * exists (0).
-          apply functional_extensionality.
-          intros.
-          field.
-        * apply (linear_integral (fun x => 5*x*x)).
-          apply H4.
-      + rewrite H4.
-        assert (D (fun x => 3*x*x*x) = fun (x : R) => 9*x*x).
-        * assert (exists (c' : R), (fun x => 3*x*x*x) = fun (x : R) => (1/3)*9*x*x*x + c').
-          -- exists (0).
-             apply functional_extensionality.
-             intros.
-             field.
-          -- apply (quadratic_integral (fun x => 3*x*x*x)).
-             apply H5.
-        * rewrite H5.
-          field.
+      }
+      apply (zero_integral (fun x => - 7)).
+      apply H3.
+    }
+    rewrite H3.
+    apply functional_extensionality.
+    intro.
+    assert (D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x + 0 = D (fun x0 : R => 3*x0*x0*x0 + 5*x0*x0) x) by ring. rewrite H4. clear H4.
+    rewrite (D_additive (fun x => 3*x*x*x) (fun x => 5*x*x)).
+    assert (D (fun x => 5*x*x) = fun (x : R) => 10*x).
+    {
+      assert (exists (c' : R), (fun x => 5*x*x) = fun (x : R) => (1/2)*10*x*x + c').
+      {
+        exists (0).
+        apply functional_extensionality.
+        intros.
+        field.
+      }
+      apply (linear_integral (fun x => 5*x*x)).
+      apply H4.
+    }
+    rewrite H4.
+    assert (D (fun x => 3*x*x*x) = fun (x : R) => 9*x*x).
+    {
+      assert (exists (c' : R), (fun x => 3*x*x*x) = fun (x : R) => (1/3)*9*x*x*x + c').
+      {
+        exists (0).
+        apply functional_extensionality.
+        intros.
+        field.
+      }
+      apply (quadratic_integral (fun x => 3*x*x*x)).
+      apply H5.
+    }
+    rewrite H5.
+    field.
 Qed.
 
 Theorem Lin_example :
@@ -306,48 +318,60 @@ Proof.
   - intros.
     pose proof (quadratic_deriv D linear_deriv D_product_rule).
     assert (D (fun x : R => c / 2 * (x * x)) = (fun x : R => c * x)).
-    + rewrite D_homog.
+    {
+      rewrite D_homog.
       rewrite H0.
       apply functional_extensionality.
       intro.
       field.
-    + clear H0.
-      rewrite <- H1 in H. clear H1.
-      assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
-      assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
-      * intro.
-        assert (D (fun _ : R => c0) = (fun _ : R => 0)).
-        -- apply (zero_integral (fun _ : R => c0)).
-           exists c0.
-           reflexivity.
-        -- rewrite H0. clear H0.
-        intro.
-        apply functional_extensionality.
-        intros.
-        field.
-      * assert (forall (c0 : R) (f : R -> R), (fun x0 : R => D f x0 + D (fun _ : R => c0) x0) = (fun x0 : R => D (fun x : R => f x + c0) x0)).
-        -- intros.
-           apply functional_extensionality.
-           intro.
-           rewrite D_additive.
-           reflexivity.
-        -- assert (forall (c0 : R) (f : R -> R), D f = D (fun x : R => f x + c0)).
-           ++ intros.
-              rewrite (H0 c0).
-              rewrite (H1 c0).
-              reflexivity.
-           ++ clear H0 H1.
-              assert (forall (c0 : R) (f g : R -> R), (f = fun x => g x + c0) -> D f = D g).
-              ** intros.
-                 rewrite H0.
-                 symmetry.
-                 rewrite <- (H2 c0).
-                 apply functional_extensionality.
-                 intro.
-                 reflexivity.
-              ** clear H2.
-                 apply integration_constant.
-                 apply H.
+    }
+    clear H0.
+    rewrite <- H1 in H. clear H1.
+    assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
+    assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
+    {
+      intro.
+      assert (D (fun _ : R => c0) = (fun _ : R => 0)).
+      {
+        apply (zero_integral (fun _ : R => c0)).
+        exists c0.
+        reflexivity.
+      }
+      rewrite H0. clear H0.
+      intro.
+      apply functional_extensionality.
+      intros.
+      field.
+    }
+    assert (forall (c0 : R) (f : R -> R), (fun x0 : R => D f x0 + D (fun _ : R => c0) x0) = (fun x0 : R => D (fun x : R => f x + c0) x0)).
+    {
+      intros.
+      apply functional_extensionality.
+      intro.
+      rewrite D_additive.
+      reflexivity.
+    }
+    assert (forall (c0 : R) (f : R -> R), D f = D (fun x : R => f x + c0)).
+    {
+      intros.
+      rewrite (H0 c0).
+      rewrite (H1 c0).
+      reflexivity.
+    }
+    clear H0 H1.
+    assert (forall (c0 : R) (f g : R -> R), (f = fun x => g x + c0) -> D f = D g).
+    {
+      intros.
+      rewrite H0.
+      symmetry.
+      rewrite <- (H2 c0).
+      apply functional_extensionality.
+      intro.
+      reflexivity.
+    }
+    clear H2.
+    apply integration_constant.
+    apply H.
   - intros.
     destruct H.
     rewrite H.
@@ -357,16 +381,18 @@ Proof.
     rewrite unit_deriv.
     replace (x * 0) with 0 by ring.
     replace (D (fun x1 : R => 1 / 2 * c * x1 * x1)) with (fun x1 : R => c * x1).
-    + apply functional_extensionality.
+    {
+      apply functional_extensionality.
       intro.
       field.
-    + apply functional_extensionality.
-      intro.
-      assert ((fun x1 : R => 1 / 2 * c * x1 * x1) = (fun x1 : R => 1 / 2 * c * (x1 * x1))) by (apply functional_extensionality; intro; ring).
-      rewrite H0.
-      rewrite (D_homog (fun x0 : R => x0 * x0) (1/2 * c)).
-      rewrite (quadratic_deriv D linear_deriv D_product_rule).
-      field.
+    }
+    apply functional_extensionality.
+    intro.
+    assert ((fun x1 : R => 1 / 2 * c * x1 * x1) = (fun x1 : R => 1 / 2 * c * (x1 * x1))) by (apply functional_extensionality; intro; ring).
+    rewrite H0.
+    rewrite (D_homog (fun x0 : R => x0 * x0) (1/2 * c)).
+    rewrite (quadratic_deriv D linear_deriv D_product_rule).
+    field.
 Qed.
 
 Theorem quadratic_integral :
@@ -396,11 +422,11 @@ Proof.
     { (* Derive this from the linearity and power rule of the derivative *)
       (* Use D_homog and D_product_rule to handle the derivative of x^3 *)
       (* Proof omitted, but follows from applying the hypothesis *)
-         rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
-         rewrite (cubic_deriv D linear_deriv D_product_rule).
-         apply functional_extensionality.
-         intro.
-         field.
+      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
+      rewrite (cubic_deriv D linear_deriv D_product_rule).
+      apply functional_extensionality.
+      intro.
+      field.
     }
     
     assert (H1 : D (fun x => (1/3) * c * x*x*x) = fun x => c * x*x).
@@ -426,22 +452,26 @@ Proof.
     (* Apply the derivative to the expression (1/3) * c * x^3 + c' *)
     rewrite D_additive.
     assert (D (fun _ : R => c') = (fun _ : R => 0)).
-    -- apply (zero_integral (fun _ : R => c')).
-        exists c'.
-        reflexivity.
-    -- rewrite H. clear H.
-       pose proof (cubic_deriv D linear_deriv D_product_rule).
-       assert (D (fun x : R => (1/3*c) * (x*x*x)) = (fun x : R => c * (x*x))).
-       * rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
-         rewrite (cubic_deriv D linear_deriv D_product_rule).
-         apply functional_extensionality.
-         intro.
-         field.
-       * replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
-         apply functional_extensionality.
-         intro.
-         rewrite H0.
-         field.
+    {
+      apply (zero_integral (fun _ : R => c')).
+      exists c'.
+      reflexivity.
+    }
+    rewrite H. clear H.
+    pose proof (cubic_deriv D linear_deriv D_product_rule).
+    assert (D (fun x : R => (1/3*c) * (x*x*x)) = (fun x : R => c * (x*x))).
+    {
+      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
+      rewrite (cubic_deriv D linear_deriv D_product_rule).
+      apply functional_extensionality.
+      intro.
+      field.
+    }
+    replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
+    apply functional_extensionality.
+    intro.
+    rewrite H0.
+    field.
     (* Derive that D f = fun x => c * x^2 *)
     (* Proof omitted for brevity, but follows directly *)
 Qed.
