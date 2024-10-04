@@ -298,6 +298,7 @@ Theorem linear_integral :
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
   forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'.
 Proof.
   intros.
@@ -345,22 +346,8 @@ Proof.
                  intro.
                  reflexivity.
               ** clear H2.
-                 assert (forall (c0 : R) (f g : R -> R), D f = D g -> (f = fun x => g x + c0)).
-                 --- intros.
-                     admit.
-                 --- assert (forall (c0 : R) (f g : R -> R), D f = D g <-> (f = fun x => g x + c0)).
-                     +++ intros.
-                         split.
-                         *** apply H1.
-                         *** apply H0.
-                     +++ clear H0 H1.
-                         assert (forall (f g : R -> R), D f = D g -> exists (c0 : R), f = (fun x : R => g x + c0)).
-                         *** intros.
-                             exists c.
-                             apply (H2 c f0 g) in H0.
-                             apply H0.
-                         *** apply H0. clear H0.
-                             apply H.
+                 apply integration_constant.
+                 apply H.
   - intros.
     destruct H.
     rewrite H.
