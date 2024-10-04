@@ -8,46 +8,6 @@ I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
 
-Lemma skolemizationPart1 : (forall (P Q : Prop), (exists (c0 : R), Q) -> P -> forall (c0 : R), Q -> P).
-Proof.
-  intros.
-  assumption.
-Qed.
-
-Lemma skolemizationPart2 : (forall (P Q : Prop), P -> exists (c0 : R), Q -> forall (c0 : R), P -> Q).
-Proof.
-  intros.
-  exists 0.
-  intros.
-  assumption.
-Qed.
-
-Lemma skolemizationPart3 : (forall (P Q : Prop) (c0 : R), Q -> P -> (exists (c0 : R), Q) -> P).
-Proof.
-  intros.
-  assumption.
-Qed.
-
-Lemma skolemizationPart4 : (forall (P Q : Prop) (c0 : R), P -> Q -> P -> exists (c0 : R), Q).
-Proof.
-  intros.
-  exists 0.
-  assumption.
-Qed.
-
-(* !!! TO DO !!! *)
-(* (this should really be moved to its own file) *)
-Lemma skolemization : (forall (P Q : Prop), (exists (c0 : R), Q) <-> P <-> forall (c0 : R), Q <-> P).
-Proof.
-  split.
-  - intros.
-    split.
-    + apply skolemizationPart1.
-      * exists 0.
-        admit.
-      * admit.
-Qed.
-
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
 Theorem Lin_implem :
   (* Lin f is the linearisation of f *)
@@ -396,7 +356,8 @@ Proof.
                      +++ clear H0 H1.
                          assert (forall (f g : R -> R), D f = D g <-> exists (c0 : R), f = (fun x : R => g x + c0)).
                          *** intros.
-                             apply skolemization.
+                             admit.
+                         *** admit.
   - intros.
     destruct H.
     rewrite H.
