@@ -367,7 +367,7 @@ Proof.
       rewrite (D_homog (fun x0 : R => x0 * x0) (1/2 * c)).
       rewrite (quadratic_deriv D linear_deriv D_product_rule).
       field.
-Admitted.
+Qed.
 
 Theorem quadratic_integral :
   (* Denote the derivative by D *)
