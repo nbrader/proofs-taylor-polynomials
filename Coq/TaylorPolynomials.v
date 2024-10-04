@@ -357,7 +357,8 @@ Proof.
                          assert (forall (f g : R -> R), D f = D g <-> exists (c0 : R), f = (fun x : R => g x + c0)).
                          *** intros.
                              admit.
-                         *** admit.
+                         *** apply H0. clear H0.
+                             apply H.
   - intros.
     destruct H.
     rewrite H.
