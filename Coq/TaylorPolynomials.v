@@ -354,9 +354,11 @@ Proof.
                          *** apply H1.
                          *** apply H0.
                      +++ clear H0 H1.
-                         assert (forall (f g : R -> R), D f = D g <-> exists (c0 : R), f = (fun x : R => g x + c0)).
+                         assert (forall (f g : R -> R), D f = D g -> exists (c0 : R), f = (fun x : R => g x + c0)).
                          *** intros.
-                             admit.
+                             exists c.
+                             apply (H2 c f0 g) in H0.
+                             apply H0.
                          *** apply H0. clear H0.
                              apply H.
   - intros.
