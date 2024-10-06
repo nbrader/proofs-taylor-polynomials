@@ -36,34 +36,29 @@ Theorem Taylor_implem :
   forall (F : R -> R) (a : R) (n : nat),
     Taylor n a F = fun x => fold_left Rplus (map (fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0.
 Proof.
-  intros Taylor D zero_integral constant_integral Taylor_deriv Taylor_agrees F a.
+  intros Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a.
   induction n as [|n IH]; intros.
 
   - (* Base case: n = 0 *)
     simpl.
     (* We need to show that Taylor 0 a F equals the 0th term of the Taylor series *)
-    assert (H0 : iter D 0 F = F). { reflexivity. }
     replace (fun _ : R => 0 + F a * 1 / 1) with (fun _ : R => F a) by (apply functional_extensionality; intros; field).
-    specialize (Taylor_agrees 0%nat 0%nat a F).
-    rewrite H0.
-    specialize (Taylor_agrees 0 0 a F).
-    simpl in Taylor_agrees.
-    rewrite Rle_refl in Taylor_agrees.
-    specialize (Taylor_agrees eq_refl).
-    unfold seq; simpl.
-    unfold fact; simpl.
-    rewrite Rdiv_1.
-    rewrite Rmult_1_r.
-    rewrite Rminus_diag_eq; try reflexivity.
-    rewrite Rmult_0_l, Rplus_0_r.
-    assumption.
-
+    specialize (Taylor_agrees_at_a 0%nat 0%nat a F).
+    replace (INR 0 <= INR 0 -> iter D 0 (Taylor 0%nat a F) a = iter D 0 F a) with (INR 0 <= INR 0 -> Taylor 0%nat a F a = F a) in Taylor_agrees_at_a by (try (rewrite H0); reflexivity).
+    specialize (Taylor_agrees_at_a (Rle_refl (INR 0))).
+    specialize (Taylor_degree 0%nat a F).
+    rewrite <- Taylor_agrees_at_a. clear Taylor_agrees_at_a.
+    apply zero_integral in Taylor_degree.
+    destruct Taylor_degree as [x Taylor_constant].
+    rewrite Taylor_constant.
+    reflexivity.
+  
   - (* Inductive step: n -> S n *)
     simpl.
     (* Assume the property holds for n, and prove it for S n *)
     specialize (IH F a).
     (* Apply the assumption that the (n+1)th derivative of the Taylor polynomial of degree n is 0 *)
-    specialize (Taylor_deriv n a F).
+    specialize (Taylor_degree n a F).
     (* Expand the fold_left definition for S n *)
     rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))).
     
