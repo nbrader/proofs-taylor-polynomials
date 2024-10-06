@@ -54,7 +54,23 @@ Proof.
   
   - (* Inductive step: n -> S n *)
     specialize (Taylor_agrees_at_a n (S n) a F).
-    rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))).
+    assert (INR n <= INR (S n)).
+    {
+      rewrite S_INR.
+      apply Rlt_le.
+      rewrite Rplus_comm.
+      rewrite <- (Rplus_0_l (INR n)) at 1.
+      apply (Rplus_lt_compat_r (INR n)).
+      apply Rlt_0_1.
+    }
+    specialize (Taylor_agrees_at_a H).
+
+    assert (conclusion : Taylor (S n) a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S (S n)))) 0)).
+    {
+      (* rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))). *)
+      admit.
+    }
+    apply conclusion.
     
 Admitted.
 
