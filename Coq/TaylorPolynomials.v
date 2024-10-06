@@ -1,5 +1,6 @@
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Lists.List.
 
 Open Scope R_scope.
 
@@ -7,6 +8,66 @@ Open Scope R_scope.
 I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
+
+Fixpoint iter {A : Type} (f : A -> A) (n : nat) (x : A) : A :=
+  match n with
+  | 0 => x
+  | S n' => f (iter f n' x)
+  end.
+
+Theorem Taylor_implem :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (m n : nat) (a : R) (F : R -> R), (INR m <= INR n) -> iter D m (Taylor n a F) a = iter D m F a) ->
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (F : R -> R) (a : R) (n : nat),
+    Taylor n a F = fun x => fold_left Rplus (map (fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0.
+Proof.
+  intros Taylor D zero_integral constant_integral Taylor_deriv Taylor_agrees F a.
+  induction n as [|n IH]; intros.
+
+  - (* Base case: n = 0 *)
+    simpl.
+    (* We need to show that Taylor 0 a F equals the 0th term of the Taylor series *)
+    assert (H0 : iter D 0 F = F). { reflexivity. }
+    replace (fun _ : R => 0 + F a * 1 / 1) with (fun _ : R => F a) by (apply functional_extensionality; intros; field).
+    specialize (Taylor_agrees 0%nat 0%nat a F).
+    rewrite H0.
+    specialize (Taylor_agrees 0 0 a F).
+    simpl in Taylor_agrees.
+    rewrite Rle_refl in Taylor_agrees.
+    specialize (Taylor_agrees eq_refl).
+    unfold seq; simpl.
+    unfold fact; simpl.
+    rewrite Rdiv_1.
+    rewrite Rmult_1_r.
+    rewrite Rminus_diag_eq; try reflexivity.
+    rewrite Rmult_0_l, Rplus_0_r.
+    assumption.
+
+  - (* Inductive step: n -> S n *)
+    simpl.
+    (* Assume the property holds for n, and prove it for S n *)
+    specialize (IH F a).
+    (* Apply the assumption that the (n+1)th derivative of the Taylor polynomial of degree n is 0 *)
+    specialize (Taylor_deriv n a F).
+    (* Expand the fold_left definition for S n *)
+    rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))).
+    
+Admitted.
 
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
 Theorem Lin_implem :
