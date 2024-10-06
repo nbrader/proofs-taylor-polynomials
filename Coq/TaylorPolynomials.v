@@ -41,7 +41,6 @@ Proof.
 
   - (* Base case: n = 0 *)
     simpl.
-    (* We need to show that Taylor 0 a F equals the 0th term of the Taylor series *)
     replace (fun _ : R => 0 + F a * 1 / 1) with (fun _ : R => F a) by (apply functional_extensionality; intros; field).
     specialize (Taylor_agrees_at_a 0%nat 0%nat a F).
     replace (INR 0 <= INR 0 -> iter D 0 (Taylor 0%nat a F) a = iter D 0 F a) with (INR 0 <= INR 0 -> Taylor 0%nat a F a = F a) in Taylor_agrees_at_a by (try (rewrite H0); reflexivity).
@@ -54,12 +53,7 @@ Proof.
     reflexivity.
   
   - (* Inductive step: n -> S n *)
-    simpl.
-    (* Assume the property holds for n, and prove it for S n *)
-    specialize (IH F a).
-    (* Apply the assumption that the (n+1)th derivative of the Taylor polynomial of degree n is 0 *)
-    specialize (Taylor_degree n a F).
-    (* Expand the fold_left definition for S n *)
+    specialize (Taylor_agrees_at_a n (S n) a F).
     rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))).
     
 Admitted.
