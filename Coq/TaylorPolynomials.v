@@ -65,6 +65,19 @@ Proof.
     }
     specialize (Taylor_agrees_at_a H).
 
+    (*
+    Taylor : nat -> R -> (R -> R) -> R -> R
+    D : (R -> R) -> R -> R
+    zero_integral : forall f : R -> R, D f = (fun _ : R => 0) <-> (exists c : R, f = (fun _ : R => c))
+    constant_integral : forall (f : R -> R) (c : R), D f = (fun _ : R => c) <-> (exists c' : R, f = (fun x : R => c * x + c'))
+    Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = (fun _ : R => 0)
+    F : R -> R
+    a : R
+    n : nat
+    Taylor_agrees_at_a : iter D n (Taylor (S n) a F) a = iter D n F a
+    IH : Taylor n a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0)
+    H : INR n <= INR (S n)
+    *)
     assert (conclusion : Taylor (S n) a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S (S n)))) 0)).
     {
       (* rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))). *)
