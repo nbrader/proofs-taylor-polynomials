@@ -15,6 +15,236 @@ Fixpoint iter {A : Type} (f : A -> A) (n : nat) (x : A) : A :=
   | S n' => f (iter f n' x)
   end.
 
+(* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
+Theorem Taylor_0_implem :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (m n : nat) (a : R) (F : R -> R), (le m n) -> iter D m (Taylor n a F) a = iter D m F a) ->
+
+  (*
+    Given the above then Lin a F must have this implementation: fun x => (D F a)*(x-a) + F a
+  *)
+  forall (F : R -> R), forall (a : R), Taylor 0%nat a F = fun (x : R) => F a.
+Proof.
+  (* intros Lin D
+         zero_integral constant_integral
+         Lin_second_deriv_is_0
+         Lin_equals_F_at_a
+         Lin_deriv_equals_F_deriv_at_a
+         F a. *)
+  intros Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a.
+  (*
+    Givens:
+      lin_f''(x) = 0
+      lin_f(a) = f(a)
+      lin_f'(a) = f'(a)
+  *)
+
+  assert (Lin_deriv_is_0 : forall (a : R) (F : R -> R), D (Taylor 0%nat a F) = fun x => 0).
+  {
+    intros.
+    specialize (Taylor_degree 0%nat a0 F0).
+    simpl in Taylor_degree.
+    apply Taylor_degree.
+  }
+
+  assert (Taylor_agrees_at_a_1a : forall (a : R) (F : R -> R), iter D 0 (Taylor 0%nat a F) a = iter D 0 F a) by (intros; apply (Taylor_agrees_at_a 0%nat 0%nat a0 F0 (Nat.le_refl 0%nat))).
+  assert (Taylor_agrees_at_a_1b : forall (a : R) (F : R -> R), Taylor 0%nat a F a = F a) by auto.
+  assert (Taylor_agrees_at_a_1c : forall (a : R) (F : R -> R), iter D 0 (Taylor 1%nat a F) a = F a) by auto.
+  assert (Lin_equals_F_at_a : forall (a : R) (F : R -> R), Taylor 1%nat a F a = F a) by (apply Taylor_agrees_at_a_1c). clear Taylor_agrees_at_a_1a Taylor_agrees_at_a_1c.
+
+  apply (zero_integral (Taylor 0%nat a F)) in Lin_deriv_is_0. clear zero_integral.
+  destruct Lin_deriv_is_0 as [x Lin_is_c].
+  assert (linear_coeff_def_is_F_a : Taylor 0%nat a F a = x) by (rewrite Lin_is_c; reflexivity).
+  rewrite Taylor_agrees_at_a_1b in linear_coeff_def_is_F_a. clear Taylor_agrees_at_a_1b.
+  rewrite <- linear_coeff_def_is_F_a in Lin_is_c. clear linear_coeff_def_is_F_a.
+  apply Lin_is_c.
+Qed.
+
+(* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
+Theorem Taylor_1_implem :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (m n : nat) (a : R) (F : R -> R), (le m n) -> iter D m (Taylor n a F) a = iter D m F a) ->
+
+  (*
+    Given the above then Lin a F must have this implementation: fun x => (D F a)*(x-a) + F a
+  *)
+  forall (F : R -> R), forall (a : R), Taylor 1%nat a F = fun x => (D F a)*(x-a) + F a.
+Proof.
+  (* intros Lin D
+         zero_integral constant_integral
+         Lin_second_deriv_is_0
+         Lin_equals_F_at_a
+         Lin_deriv_equals_F_deriv_at_a
+         F a. *)
+  intros Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a.
+  (*
+    Givens:
+      lin_f''(x) = 0
+      lin_f(a) = f(a)
+      lin_f'(a) = f'(a)
+  *)
+
+  assert (Lin_second_deriv_is_0 : forall (a : R) (F : R -> R), D (D (Taylor 1%nat a F)) = fun x => 0).
+  {
+    intros.
+    specialize (Taylor_degree 1%nat a0 F0).
+    simpl in Taylor_degree.
+    apply Taylor_degree.
+  }
+
+  assert (Taylor_agrees_at_a_1a : forall (a : R) (F : R -> R), iter D 0 (Taylor 0%nat a F) a = iter D 0 F a) by (intros; apply (Taylor_agrees_at_a 0%nat 0%nat a0 F0 (Nat.le_refl 0%nat))).
+  assert (Taylor_agrees_at_a_1b : forall (a : R) (F : R -> R), iter D 0 (Taylor 1%nat a F) a = F a) by auto.
+  assert (Lin_equals_F_at_a : forall (a : R) (F : R -> R), Taylor 1%nat a F a = F a) by (apply Taylor_agrees_at_a_1b). clear Taylor_agrees_at_a_1a Taylor_agrees_at_a_1b.
+
+  assert (Taylor_agrees_at_a_2a : forall (a : R) (F : R -> R), iter D 1 (Taylor 1%nat a F) a = iter D 1 F a) by (intros; apply (Taylor_agrees_at_a 1%nat 1%nat a0 F0 (Nat.le_refl 1%nat))).
+  assert (Taylor_agrees_at_a_2b : forall (a : R) (F : R -> R), iter D 1 (Taylor 1%nat a F) a = D F a) by auto.
+  assert (Lin_deriv_equals_F_deriv_at_a : forall (a : R) (F : R -> R), D (Taylor 1%nat a F) a = D F a) by (apply Taylor_agrees_at_a_2b). clear Taylor_agrees_at_a_2a Taylor_agrees_at_a_2b.
+
+  apply (zero_integral (D (Taylor 1%nat a F))) in Lin_second_deriv_is_0. clear zero_integral.
+  destruct Lin_second_deriv_is_0 as [x first_deriv_Lin_is_c].
+  assert (linear_coeff_def_is_D_F_a : D (Taylor 1%nat a F) a = x) by (rewrite first_deriv_Lin_is_c; reflexivity).
+  rewrite Lin_deriv_equals_F_deriv_at_a in linear_coeff_def_is_D_F_a. clear Lin_deriv_equals_F_deriv_at_a.
+  (*
+    Given
+      lin_f''(x) = 0
+      zero_integral
+    then
+      lin_f'(x) = c
+  *)
+  
+  (*
+    Given
+      lin_f'(x) = c
+      lin_f'(a) = f'(a)
+    then
+      c = f'(a)
+  *)
+
+  apply (constant_integral (Taylor 1%nat a F) x) in first_deriv_Lin_is_c. clear constant_integral.
+  destruct first_deriv_Lin_is_c as [x0 Lin_def].
+  assert (algebra_1 : Taylor 1%nat a F a = x * a + x0) by (rewrite Lin_def; reflexivity).
+  rewrite Lin_equals_F_at_a in algebra_1. clear Lin_equals_F_at_a.
+  rewrite <- linear_coeff_def_is_D_F_a in algebra_1.
+  assert (constant_term_def : x0 = F a - (D F a) * a) by (rewrite algebra_1; ring). clear algebra_1.
+  (*
+    Given
+      lin_f'(x) = c
+      constant_integral
+    then
+      lin_f(x) = c*x + c'
+  *)
+  
+  (*
+    Given
+      lin_f(x) = c*x + c'
+      c = f'(a)
+      lin_f(a) = f(a)
+    then
+      c' = f(a) - f'(a) * a
+  *)
+
+  rewrite constant_term_def in Lin_def. clear constant_term_def.
+  rewrite <- linear_coeff_def_is_D_F_a in Lin_def. clear linear_coeff_def_is_D_F_a.
+  assert (algebra_2 : ((fun x : R => D F a * x + (F a - D F a * a)) = (fun x : R => D F a * (x - a) + F a))) by (apply functional_extensionality; intros; ring).
+  rewrite algebra_2 in Lin_def. clear algebra_2.
+  (*
+    Given
+      lin_f(x) = c*x + c'
+      c = f'(a)
+      c' = f(a) - f'(a) * a
+    Then:
+      lin_f(x) = f'(a)*(x-a) + f(a)
+  *)
+
+  apply Lin_def.
+Qed.
+
+Lemma Taylor_deriv :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (m n : nat) (a : R) (F : R -> R), (le m n) -> iter D m (Taylor n a F) a = iter D m F a) ->
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (F : R -> R) (a : R) (n : nat),
+    D (Taylor (S n) a F) = Taylor n a (D F).
+Proof.
+  intros Taylor D zero_integral constant_integral
+         unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant
+         Taylor_degree Taylor_agrees_at_a F a.
+  induction n as [|n IH]; intros.
+
+  - (* Base case: n = 0 *)
+    assert (Taylor_agrees_at_a_0 : Taylor 0%nat a F a = F a) by (apply (Taylor_agrees_at_a 0%nat 0%nat a F (Nat.le_refl 0))).
+    (* assert (Taylor_agrees_at_a_1 : forall (a0 : R), Taylor 0%nat a0 F a0 = F a) by (intros; apply (Taylor_agrees_at_a 0%nat 0%nat a F (Nat.le_refl 0))). *)
+    assert (Taylor_agrees_at_a_1 : Taylor 0%nat a (D F) = fun (x : R) => D F a) by (apply (Taylor_0_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a (D F) a)).
+    assert (Taylor_agrees_at_a_2 : Taylor 1%nat a F = (fun x : R => D F a * (x - a) + F a)) by (apply (Taylor_1_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a)).
+
+    rewrite Taylor_agrees_at_a_1.
+    rewrite Taylor_agrees_at_a_2.
+
+    apply functional_extensionality.
+    intros.
+    rewrite D_additive.
+    replace (F a) with (F a * 1) by ring.
+    rewrite D_homog.
+    rewrite D_homog.
+    unfold Rminus.
+    rewrite D_additive.
+    replace (- a) with (- a * 1) by ring.
+    rewrite D_homog.
+    rewrite unit_deriv.
+    rewrite linear_deriv.
+    field.
+  
+  - (* Inductive step: n -> S n *)
+    admit.
+Admitted.
+
+
 Theorem Taylor_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -63,7 +293,7 @@ Proof.
       apply (Rplus_lt_compat_r (INR n)).
       apply Rlt_0_1.
     }
-    specialize (Taylor_agrees_at_a H).
+    specialize (Taylor_agrees_at_a H). clear H.
 
     (*
     Taylor : nat -> R -> (R -> R) -> R -> R
@@ -76,11 +306,10 @@ Proof.
     n : nat
     Taylor_agrees_at_a : iter D n (Taylor (S n) a F) a = iter D n F a
     IH : Taylor n a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0)
-    H : INR n <= INR (S n)
     *)
     assert (conclusion : Taylor (S n) a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S (S n)))) 0)).
     {
-      (* rewrite <- fold_left_map with (f := fun k => (iter D k F a) * (x - a) ^ k / INR (fact k)) (l := seq 0 (S (S n))). *)
+      (* Taylor_deriv *)
       admit.
     }
     apply conclusion.
