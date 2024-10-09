@@ -611,12 +611,11 @@ Qed.
 Theorem nth_pow_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
-  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
   forall (linear_deriv : D (fun x => x) = fun x => 1),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (n : nat), D (fun x => x^(n+1)) = fun x => INR (n+1) * x^n.
 Proof.
-  intros D unit_deriv linear_deriv D_product_rule.
+  intros D linear_deriv D_product_rule.
   induction n as [|n IH]; intros.
   - simpl.
     replace (fun x : R => x * 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
