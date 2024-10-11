@@ -340,9 +340,6 @@ Proof.
 Qed.
 
 Lemma Taylor_1_example_lemma_2 :
-  (* Taylor 1%nat f is the linearisation of f *)
-  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
-
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -443,7 +440,7 @@ Proof.
   rewrite H.
   apply functional_extensionality.
   intros.
-  pose proof (Taylor_1_example_lemma_2 Taylor D zero_integral constant_integral linear_integral quadratic_integral D_additive D_homog).
+  pose proof (Taylor_1_example_lemma_2 D zero_integral constant_integral linear_integral quadratic_integral D_additive D_homog).
   rewrite H0.
   ring.
 Qed.
