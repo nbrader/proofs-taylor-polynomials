@@ -339,6 +339,49 @@ Proof.
   apply H0.
 Qed.
 
+Theorem nth_pow_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n : nat), D (fun x => x^(n+1)) = fun x => INR (n+1) * x^n.
+Proof.
+  intros D linear_deriv D_product_rule.
+  induction n as [|n IH]; intros.
+  - simpl.
+    replace (fun x : R => x * 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
+    replace (1 * 1) with (1) by ring.
+    apply linear_deriv.
+  - replace (fun x : R => x ^ (S n + 1)) with (fun x : R => x * x ^ (S n)) by (apply functional_extensionality; intros; rewrite pow_add; rewrite pow_1; rewrite Rmult_comm; auto).
+    rewrite D_product_rule.
+    rewrite linear_deriv.
+    replace (fun x0 : R => x0 ^ S n) with (fun x : R => x ^ (n + 1)) by (apply functional_extensionality; intros; f_equal; apply Nat.add_1_r).
+    rewrite IH.
+    apply functional_extensionality.
+    intros.
+    replace (1 * x ^ S n) with (x ^ S n) by ring.
+    replace (x * (INR (n + 1) * x ^ n)) with ((INR (n + 1) * x ^ (S n))) by (simpl; ring).
+    rewrite tech_pow_Rplus.
+    reflexivity.
+Qed.
+
+Theorem poly_term_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n : nat), forall (c : R), D (fun x => c*x^(n+1)) = fun x => c * INR (n+1) * x^n.
+Proof.
+  intros D linear_deriv D_homog D_product_rule.
+  intros.
+  replace (fun x : R => c * INR (n + 1) * x ^ n) with (fun x : R => c * D (fun x => x^(n+1)) x) by (apply functional_extensionality; intros; rewrite Rmult_assoc; rewrite (nth_pow_deriv D linear_deriv D_product_rule n); reflexivity).
+  apply functional_extensionality.
+  intros.
+  rewrite D_homog.
+  reflexivity.
+Qed.
+
 Lemma Taylor_1_example_lemma_2 :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
@@ -474,32 +517,6 @@ Proof.
   apply functional_extensionality.
   intro.
   ring.
-Qed.
-
-Theorem nth_pow_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (n : nat), D (fun x => x^(n+1)) = fun x => INR (n+1) * x^n.
-Proof.
-  intros D linear_deriv D_product_rule.
-  induction n as [|n IH]; intros.
-  - simpl.
-    replace (fun x : R => x * 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
-    replace (1 * 1) with (1) by ring.
-    apply linear_deriv.
-  - replace (fun x : R => x ^ (S n + 1)) with (fun x : R => x * x ^ (S n)) by (apply functional_extensionality; intros; rewrite pow_add; rewrite pow_1; rewrite Rmult_comm; auto).
-    rewrite D_product_rule.
-    rewrite linear_deriv.
-    replace (fun x0 : R => x0 ^ S n) with (fun x : R => x ^ (n + 1)) by (apply functional_extensionality; intros; f_equal; apply Nat.add_1_r).
-    rewrite IH.
-    apply functional_extensionality.
-    intros.
-    replace (1 * x ^ S n) with (x ^ S n) by ring.
-    replace (x * (INR (n + 1) * x ^ n)) with ((INR (n + 1) * x ^ (S n))) by (simpl; ring).
-    rewrite tech_pow_Rplus.
-    reflexivity.
 Qed.
 
 Theorem linear_integral :
