@@ -563,8 +563,8 @@ Qed.
 
 Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
   match n with
-    | O => F_ O x
-    | S n' => F_ (S n') x + summation F_ n' x
+    | O => 0
+    | S n' => F_ n' x + summation F_ n' x
   end.
 
 (* Admitted *)
@@ -590,7 +590,9 @@ Proof.
 
   - (* Base case: n = 0 *)
     simpl.
-    f_equal.
+    replace (0) with (0*1) by field.
+    rewrite (D_homog (fun _ => 1) 0).
+    field.
   
   - (* Inductive step: n -> S n *)
     simpl.
@@ -658,6 +660,29 @@ Proof.
     admit.
 Admitted.
 
+Theorem nth_integration_constant :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (m n : nat) (a : R) (F : R -> R), (INR m <= INR n) -> iter D m (Taylor n a F) a = iter D m F a) ->
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (f g : R -> R) (n : nat), iter D n f = iter D n g -> exists (c_ : nat -> R), f = (fun x : R => g x + summation (fun i x' => (c_ i) * x'^i) n x).
+Proof.
+Admitted.
+
 Theorem Taylor_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -678,7 +703,7 @@ Theorem Taylor_implem :
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
-    Taylor n a F = fun x => summation (fun k x' => (iter D k F a) * (x' - a) ^ k / INR (fact k)) n x.
+    Taylor n a F = fun x => summation (fun k x' => (iter D k F a) * (x' - a) ^ k / INR (fact k)) (S n) x.
 Proof.
   intros Taylor D zero_integral constant_integral integration_constant Taylor_degree Taylor_agrees_at_a F a.
   induction n as [|n IH]; intros.
@@ -694,11 +719,12 @@ Proof.
     apply zero_integral in Taylor_degree.
     destruct Taylor_degree as [x Taylor_constant].
     rewrite Taylor_constant.
-    reflexivity.
+    apply functional_extensionality.
+    intros.
+    field.
   
   - (* Inductive step: n -> S n *)
-    simpl.
-    replace (fun x : R => D (iter D n F) a * ((x - a) * (x - a) ^ n) / INR (fact n + n * fact n) + summation (fun (k : nat) (x' : R) => iter D k F a * (x' - a) ^ k / INR (fact k)) n x) with (fun x : R => D (iter D n F) a * ((x - a) ^ S n) / INR (fact (S n)) + Taylor n a F x) by (apply functional_extensionality; intros; f_equal; rewrite IH; reflexivity). clear IH.
+    replace (fun x : R => summation (fun (k : nat) (x' : R) => iter D k F a * (x' - a) ^ k / INR (fact k)) (S (S n)) x) with (fun x : R => D (iter D n F) a * ((x - a) ^ S n) / INR (fact (S n)) + Taylor n a F x) by (apply functional_extensionality; intros; rewrite IH; simpl; f_equal). clear IH.
 
     specialize (Taylor_agrees_at_a n (S n) a F).
     assert (INR n <= INR (S n)).
@@ -712,22 +738,7 @@ Proof.
     }
     specialize (Taylor_agrees_at_a H). clear H.
 
-    (*
-    Taylor : nat -> R -> (R -> R) -> R -> R
-    D : (R -> R) -> R -> R
-    zero_integral : forall f : R -> R, D f = (fun _ : R => 0) <-> (exists c : R, f = (fun _ : R => c))
-    constant_integral : forall (f : R -> R) (c : R), D f = (fun _ : R => c) <-> (exists c' : R, f = (fun x : R => c * x + c'))
-    Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = (fun _ : R => 0)
-    F : R -> R
-    a : R
-    n : nat
-    Taylor_agrees_at_a : iter D n (Taylor (S n) a F) a = iter D n F a
-    IH : Taylor n a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0)
-    *)
-    
-    (* Taylor_deriv *)
-
-    assert (conclusion : Taylor (S n) a F = (fun x : R => D (iter D n F) a * ((x - a) * (x - a) ^ n) / INR (fact n + n * fact n) + Taylor n a F x)).
+    assert (conclusion : Taylor (S n) a F = (fun x : R => D (iter D n F) a * (x - a) ^ S n / INR (fact (S n)) + Taylor n a F x)).
     {
       (* Try integrating both sides of Taylor_deriv to get an equation for "Taylor (S n) a F x" *)
       admit.
