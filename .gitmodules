@@ -1,0 +1,3 @@
+[submodule "Coq/CoqUtilLib"]
+	path = Coq/CoqUtilLib
+	url = https://github.com/nbrader/proofs-coq-util-lib

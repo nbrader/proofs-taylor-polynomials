@@ -1,2 +1,7 @@
--Q . TaylorPolynomials
-TaylorPolynomials.v
+-docroot MyProject
+-R TaylorPolynomials TaylorPolynomials
+-R CoqUtilLib CoqUtilLib
+TaylorPolynomials/TaylorPolynomials.v
+CoqUtilLib/ListFunctions.v
+CoqUtilLib/OptionFunctions.v
+CoqUtilLib/FunctionLemmas.v

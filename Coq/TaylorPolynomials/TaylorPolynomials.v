@@ -1,6 +1,9 @@
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Lists.List.
+Require Import CoqUtilLib.OptionFunctions.
+Require Import CoqUtilLib.ListFunctions.
+Require Import CoqUtilLib.FunctionLemmas.
 
 Open Scope R_scope.
 
