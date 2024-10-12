@@ -12,12 +12,6 @@ I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
 
-Fixpoint iter {A : Type} (f : A -> A) (n : nat) (x : A) : A :=
-  match n with
-  | 0 => x
-  | S n' => f (iter f n' x)
-  end.
-
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
 Theorem Taylor_0_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
@@ -565,42 +559,6 @@ Proof.
     field.
     (* Derive that D f = fun x => c * x^2 *)
     (* Proof omitted for brevity, but follows directly *)
-Qed.
-
-Theorem fold_left_right_equiv : 
-  forall (A : Type) (f : A -> A -> A) (z : A) (l : list A),
-    (forall x y z, f x (f y z) = f (f x y) z) -> (* Associativity of f *)
-    (forall x y, f x y = f y x) -> (* Associativity of f *)
-    fold_left f l z = fold_right f z l.
-Proof.
-  intros A f z l H_assoc H_comm.
-  revert z. (* We generalize z to allow induction *)
-  induction l as [| x xs IH]; intros z.
-  - (* Base case: empty list *)
-    reflexivity.
-  - (* Inductive step: non-empty list *)
-    simpl. (* Simplify both fold_left and fold_right *)
-    rewrite <- IH. (* Apply the inductive hypothesis *)
-    clear IH. (* No longer need the inductive hypothesis *)
-    (* Now use the associativity of f to rearrange *)
-    induction xs as [| y ys IHys]; simpl.
-    + (* Case: xs = [] *)
-      apply H_comm.
-    + (* Case: xs = y :: ys *)
-      rewrite (H_comm x (fold_left f ys (f z y))).
-      rewrite <- (fold_left_cons_comm).
-      * simpl.
-        rewrite <- (H_assoc z y x).
-        rewrite (H_comm y x).
-        rewrite (H_assoc z x y).
-        reflexivity.
-      * intros.
-        unfold ssrfun.commutative.
-        intros.
-        rewrite <- H_assoc.
-        rewrite (H_comm x0 y0).
-        rewrite H_assoc.
-        reflexivity.
 Qed.
 
 
