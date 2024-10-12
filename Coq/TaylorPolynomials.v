@@ -232,6 +232,28 @@ Proof.
     admit.
 Admitted.
 
+Theorem fold_left_right_equiv : 
+  forall (A : Type) (f : A -> A -> A) (z : A) (l : list A),
+    (forall x y z, f x (f y z) = f (f x y) z) -> (* Associativity of f *)
+    (forall x y, f x y = f y x) -> (* Associativity of f *)
+    fold_left f l z = fold_right f z l.
+Proof.
+  intros A f z l H_assoc H_comm.
+  revert z. (* We generalize z to allow induction *)
+  induction l as [| x xs IH]; intros z.
+  - (* Base case: empty list *)
+    reflexivity.
+  - (* Inductive step: non-empty list *)
+    simpl. (* Simplify both fold_left and fold_right *)
+    rewrite <- IH. (* Apply the inductive hypothesis *)
+    clear IH. (* No longer need the inductive hypothesis *)
+    (* Now use the associativity of f to rearrange *)
+    induction xs as [| y ys IHys]; simpl.
+    + (* Case: xs = [] *)
+      apply H_comm.
+    + (* Case: xs = y :: ys *)
+      admit.
+Admitted.
 
 Theorem Taylor_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
@@ -295,9 +317,17 @@ Proof.
     Taylor_agrees_at_a : iter D n (Taylor (S n) a F) a = iter D n F a
     IH : Taylor n a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0)
     *)
-    assert (conclusion : Taylor (S n) a F = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S (S n)))) 0)).
+    
+    (* Taylor_deriv *)
+    assert ((fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S (S n)))) 0) = (fun x : R => iter D (S n) F a * (x - a) ^ (S n) / INR (fact (S n)) + fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0)) by admit.
+    rewrite H.
+    assert (forall (x' : R), Taylor n a F x' = (fun x : R => fold_left Rplus (map (fun k : nat => iter D k F a * (x - a) ^ k / INR (fact k)) (seq 0 (S n))) 0) x') by (intros; rewrite IH; reflexivity). clear IH.
+    apply functional_extensionality.
+    intros.
+    rewrite <- H0.
+    assert (conclusion : Taylor (S n) a F x = iter D (S n) F a * (x - a) ^ S n / INR (fact (S n)) + Taylor n a F x).
     {
-      (* Taylor_deriv *)
+      (* Try integrating both sides of Taylor_deriv to get an equation for "Taylor (S n) a F x" *)
       admit.
     }
     apply conclusion.
