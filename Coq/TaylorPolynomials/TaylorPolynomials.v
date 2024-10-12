@@ -567,10 +567,6 @@ Proof.
     (* Proof omitted for brevity, but follows directly *)
 Qed.
 
-
-
-(* Admitted *)
-
 Theorem fold_left_right_equiv : 
   forall (A : Type) (f : A -> A -> A) (z : A) (l : list A),
     (forall x y z, f x (f y z) = f (f x y) z) -> (* Associativity of f *)
@@ -591,8 +587,24 @@ Proof.
     + (* Case: xs = [] *)
       apply H_comm.
     + (* Case: xs = y :: ys *)
-      admit.
-Admitted.
+      rewrite (H_comm x (fold_left f ys (f z y))).
+      rewrite <- (fold_left_cons_comm).
+      * simpl.
+        rewrite <- (H_assoc z y x).
+        rewrite (H_comm y x).
+        rewrite (H_assoc z x y).
+        reflexivity.
+      * intros.
+        unfold ssrfun.commutative.
+        intros.
+        rewrite <- H_assoc.
+        rewrite (H_comm x0 y0).
+        rewrite H_assoc.
+        reflexivity.
+Qed.
+
+
+(* Admitted *)
 
 Lemma Taylor_deriv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
