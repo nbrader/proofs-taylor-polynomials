@@ -561,8 +561,43 @@ Proof.
     (* Proof omitted for brevity, but follows directly *)
 Qed.
 
+Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
+  match n with
+    | O => F_ O x
+    | S n' => F_ (S n') x + summation F_ n' x
+  end.
 
 (* Admitted *)
+
+Lemma D_additive_over_summation :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (F_ : nat -> R -> R) (n : nat) (x : R),
+    D (summation F_ n) x = summation (fun i => D (F_ i)) n x.
+Proof.
+  intros Taylor D D_additive D_homog F n x.
+  simpl.
+  induction n as [|n IH]; intros.
+
+  - (* Base case: n = 0 *)
+    simpl.
+    f_equal.
+  
+  - (* Inductive step: n -> S n *)
+    simpl.
+    rewrite <- IH.
+    rewrite D_additive.
+    reflexivity.
+Qed.
 
 Lemma Taylor_deriv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
