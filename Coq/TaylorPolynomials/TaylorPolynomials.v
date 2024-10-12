@@ -682,6 +682,20 @@ Theorem nth_integration_constant :
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (f g : R -> R) (n : nat), iter D n f = iter D n g -> exists (c_ : nat -> R), f = (fun x : R => g x + summation (fun i x' => (c_ i) * x'^i) n x).
 Proof.
+  intros Taylor D zero_integral constant_integral integration_constant Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
+  induction n as [|n IH]; intros.
+
+  - (* Base case: n = 0 *)
+    simpl in *.
+    exists (fun _ => 0).
+    rewrite <- f_and_g_agree_at_nth_D.
+    apply functional_extensionality.
+    intros.
+    ring.
+  
+  - (* Inductive step: n -> S n *)
+    (* apply integration_constant. *)
+    (* apply IH. *)
 Admitted.
 
 Theorem Taylor_implem :
