@@ -567,8 +567,6 @@ Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
     | S n' => F_ n' x + summation F_ n' x
   end.
 
-(* Admitted *)
-
 Lemma D_additive_over_summation :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -600,6 +598,9 @@ Proof.
     rewrite D_additive.
     reflexivity.
 Qed.
+
+
+(* Admitted *)
 
 Lemma Taylor_deriv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
