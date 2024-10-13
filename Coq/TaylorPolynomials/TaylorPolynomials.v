@@ -749,7 +749,7 @@ Proof.
     simpl in H.
     apply zero_integral in H.
     destruct H as [c H].
-    induction n.
+    induction n. (*  <--- This could have probably just been "case".  *)
     + simpl.
       exists (fun _ => c).
       simpl in H.
@@ -758,8 +758,20 @@ Proof.
       * apply functional_extensionality.
         intros.
         ring.
-      * rewrite <- H. (* WHY DOESN'T THIS WORK?! *)
-        admit.
+      * apply functional_extensionality.
+        intros.
+        assert (f x - g x = c).
+        {
+          set (F := (fun x : R => f x - g x)).
+          (* pose proof (eq_refl (F x)). *)
+          assert (F = (fun _ : R => c)) by (unfold F; apply H).
+          assert (F x = f x - g x) by (unfold F; reflexivity).
+          assert (F x = (fun _ : R => c) x) by (rewrite H0; reflexivity).
+          rewrite H1 in H2.
+          apply H2.
+        }
+        rewrite <- H0.
+        reflexivity.
     + simpl in *.
       admit.
     (* apply constant_integral in H. *)
