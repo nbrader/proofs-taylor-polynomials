@@ -755,9 +755,11 @@ Proof.
       simpl in H.
       replace (c * 1 + 0) with (c) by ring.
       replace (fun x : R => g x + c) with (fun x : R => (fun x' : R => g x') x + (fun x : R => f x - g x) x).
-      * admit.
-      * admit.
-
+      * apply functional_extensionality.
+        intros.
+        ring.
+      * rewrite <- H. (* WHY DOESN'T THIS WORK?! *)
+        admit.
     + simpl in *.
       admit.
     (* apply constant_integral in H. *)
