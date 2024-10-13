@@ -773,10 +773,22 @@ Proof.
         rewrite <- H0.
         reflexivity.
     + simpl in *.
-      admit.
-    (* apply constant_integral in H. *)
-    (* apply nth_pow_deriv in H. *)
-    (* apply IH. *)
+      destruct IH as [c_ IH].
+      * admit.
+      * exists c_. (* REWORK THIS *)
+        replace (fun x : R => g x + (c_ (S n) * (x * x ^ n) + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x))) with (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) + c_ (S n) * (x * x ^ n)) by (apply functional_extensionality; intros; ring).
+        replace (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) + c_ (S n) * (x * x ^ n)) with (fun x2 : R => f x2 + (fun x => c_ (S n) * (x * x ^ n)) x2) by (rewrite IH; reflexivity).
+        assert (c_ (S n) = 0).
+        {
+          (* apply constant_integral in H. *)
+          (* apply nth_pow_deriv in H. *)
+          (* apply IH. *)
+          admit.
+        }
+        rewrite H0.
+        apply functional_extensionality.
+        intros.
+        ring.
 Admitted.
 
 Theorem Taylor_implem :
