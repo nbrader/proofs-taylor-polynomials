@@ -775,7 +775,7 @@ Proof.
     + simpl in *.
       destruct IH as [c_ IH].
       * admit.
-      * exists c_. (* REWORK THIS *)
+      * exists c_.
         replace (fun x : R => g x + (c_ (S n) * (x * x ^ n) + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x))) with (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) + c_ (S n) * (x * x ^ n)) by (apply functional_extensionality; intros; ring).
         replace (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) + c_ (S n) * (x * x ^ n)) with (fun x2 : R => f x2 + (fun x => c_ (S n) * (x * x ^ n)) x2) by (rewrite IH; reflexivity).
         assert (c_ (S n) = 0).
