@@ -849,6 +849,7 @@ Proof.
     assert (conclusion : Taylor (S n) a F = (fun x : R => D (iter D n F) a * (x - a) ^ S n / INR (fact (S n)) + Taylor n a F x)).
     {
       (* Try integrating both sides of Taylor_deriv to get an equation for "Taylor (S n) a F x" *)
+      (* apply nth_integration_constant in Taylor_agrees_at_a. *)
       admit.
     }
     apply conclusion.
