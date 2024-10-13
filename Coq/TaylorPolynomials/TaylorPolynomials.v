@@ -783,6 +783,9 @@ Proof.
           (* apply constant_integral in H. *)
           (* apply nth_pow_deriv in H. *)
           (* apply IH. *)
+          rewrite IH in H.
+          replace (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) - g x) with (fun x : R => c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) in H by (intros; apply functional_extensionality; intros; ring).
+          
           admit.
         }
         rewrite H0.
