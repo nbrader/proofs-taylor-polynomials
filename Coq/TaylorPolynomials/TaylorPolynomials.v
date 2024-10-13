@@ -599,6 +599,36 @@ Proof.
     reflexivity.
 Qed.
 
+Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (f g : R -> R) (n : nat),
+    iter D n (fun x => f x + g x) = fun x => iter D n f x + iter D n g x.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    reflexivity.
+  - simpl.
+    rewrite <- (D_additive (iter D n f) (iter D n g)).
+    rewrite <- IHn.
+    reflexivity.
+Qed.
+
+Lemma iter_homog : forall (D : (R -> R) -> (R -> R)),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (f : R -> R) (s : R) (n : nat),
+    iter D n (fun x => s * f x) = fun x => s * iter D n f x.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    reflexivity.
+  - simpl.
+    rewrite <- (D_homog (iter D n f) s).
+    rewrite <- IHn.
+    reflexivity.
+Qed.
+
 
 (* Admitted *)
 
@@ -673,7 +703,6 @@ Theorem nth_integration_constant :
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
   (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
@@ -684,7 +713,7 @@ Theorem nth_integration_constant :
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (f g : R -> R) (n : nat), iter D n f = iter D n g -> exists (c_ : nat -> R), f = (fun x : R => g x + summation (fun i x' => (c_ i) * x'^i) n x).
 Proof.
-  intros Taylor D zero_integral constant_integral D_additive D_homog integration_constant Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
+  intros Taylor D zero_integral constant_integral D_additive D_homog Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
   induction n as [|n IH]; intros.
 
   - (* Base case: n = 0 *)
@@ -696,25 +725,43 @@ Proof.
     ring.
   
   - (* Inductive step: n -> S n *)
+    simpl.
+
     assert (iter D (S n) (fun x => f x - g x) = fun _ => 0).
     {
+      simpl in *.
+      unfold Rminus.
+      rewrite iter_additive by (intros; apply D_additive).
+      rewrite D_additive.
+      rewrite f_and_g_agree_at_nth_D.
+      rewrite <- D_additive.
+      rewrite <- iter_additive by (intros; apply D_additive).
+      replace (fun x : R => g x + - g x) with (fun _ : R => 0) by (apply functional_extensionality; intros; ring).
+      replace (0) with (0*1) by field.
+      rewrite (iter_homog D D_homog (fun _ => 1) 0) by (intros; apply D_homog).
+      rewrite D_homog.
       apply functional_extensionality.
       intros.
-      induction n.
-      + simpl in *.
-        unfold Rminus.
-        rewrite D_additive.
-        rewrite f_and_g_agree_at_nth_D.
-        replace (fun x0 : R => - g x0) with (fun x0 : R => (-1) * g x0) by (apply functional_extensionality; intros; ring).
-        rewrite D_homog.
-        ring.
-      + simpl.
-        admit.
+      now ring.
     }
-    simpl in f_and_g_agree_at_nth_D.
-    apply integration_constant in f_and_g_agree_at_nth_D.
-    destruct f_and_g_agree_at_nth_D.
-    apply nth_pow_deriv in H.
+    clear f_and_g_agree_at_nth_D.
+
+    simpl in H.
+    apply zero_integral in H.
+    destruct H as [c H].
+    induction n.
+    + simpl.
+      exists (fun _ => c).
+      simpl in H.
+      replace (c * 1 + 0) with (c) by ring.
+      replace (fun x : R => g x + c) with (fun x : R => (fun x' : R => g x') x + (fun x : R => f x - g x) x).
+      * admit.
+      * admit.
+
+    + simpl in *.
+      admit.
+    (* apply constant_integral in H. *)
+    (* apply nth_pow_deriv in H. *)
     (* apply IH. *)
 Admitted.
 
