@@ -629,6 +629,18 @@ Proof.
     reflexivity.
 Qed.
 
+Lemma iter_expand_inner : forall (D : (R -> R) -> (R -> R)),
+  forall (f : R -> R) (n : nat),
+  iter D (S n) f = iter D n (D f).
+Proof.
+  induction n.
+  - simpl.
+    reflexivity.
+  - simpl in *.
+    rewrite IHn.
+    reflexivity.
+Qed.
+
 
 (* Admitted *)
 
@@ -689,6 +701,55 @@ Proof.
   
   - (* Inductive step: n -> S n *)
     admit.
+Admitted.
+
+Theorem nth_integral_of_zero :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (m n : nat) (a : R) (F : R -> R), (INR m <= INR n) -> iter D m (Taylor n a F) a = iter D m F a) ->
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (n : nat) (f : R -> R), iter D n f = (fun _ => 0) -> exists (c_ : nat -> R), f = summation (fun i x' => (c_ i) * x'^i) n.
+Proof.
+  intros Taylor D zero_integral constant_integral D_additive D_homog integration_constant Taylor_degree Taylor_agrees_at_a n.
+  induction n.
+
+  - (* Base case: n = 0 *)
+    simpl in *.
+    intros f f_at_0th_D.
+    exists (fun _ => 0).
+    apply f_at_0th_D.
+  
+  - (* Inductive step: n -> S n *)
+    intros f f_at_nth_D.
+    rewrite iter_expand_inner in f_at_nth_D.
+    apply IHn in f_at_nth_D. clear IHn.
+    destruct f_at_nth_D as [c IH].
+    assert (summation (fun (i : nat) (x' : R) => c i * x' ^ i) n = D (summation (fun (i : nat) (x' : R) => INR (S n) * c (S i) * x' ^ i) (S n))).
+    {
+      admit.
+    }
+    rewrite H in IH.
+    apply integration_constant in IH.
+    destruct IH as [c0 H0].
+      (* nth_pow_deriv *)
+      (* D_additive_over_summation *)
+    + admit.
 Admitted.
 
 Theorem nth_integration_constant :
