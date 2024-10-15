@@ -569,8 +569,6 @@ Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
 
 Lemma D_additive_over_summation :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
-  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
-
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -582,7 +580,7 @@ Lemma D_additive_over_summation :
   forall (F_ : nat -> R -> R) (n : nat) (x : R),
     D (summation F_ n) x = summation (fun i => D (F_ i)) n x.
 Proof.
-  intros Taylor D D_additive D_homog F n x.
+  intros D D_additive D_homog F n x.
   simpl.
   induction n as [|n IH]; intros.
 
@@ -715,6 +713,7 @@ Theorem nth_integral_of_zero :
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
@@ -726,7 +725,7 @@ Theorem nth_integral_of_zero :
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (n : nat) (f : R -> R), iter D n f = (fun _ => 0) -> exists (c_ : nat -> R), f = summation (fun i x' => (c_ i) * x'^i) n.
 Proof.
-  intros Taylor D zero_integral constant_integral D_additive D_homog integration_constant Taylor_degree Taylor_agrees_at_a n.
+  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a n.
   induction n.
 
   - (* Base case: n = 0 *)
@@ -740,16 +739,44 @@ Proof.
     rewrite iter_expand_inner in f_at_nth_D.
     apply IHn in f_at_nth_D. clear IHn.
     destruct f_at_nth_D as [c IH].
-    assert (summation (fun (i : nat) (x' : R) => c i * x' ^ i) n = D (summation (fun (i : nat) (x' : R) => INR (S n) * c (S i) * x' ^ i) (S n))).
+    assert (summation (fun (i : nat) (x' : R) => c i * x' ^ i) n = D (summation (fun (i : nat) (x' : R) => c (S i) / INR (S i) * x' ^ i) (S n))).
     {
+      assert (summation (fun (i : nat) (x' : R) => c (S i) / INR (S i) * x' ^ i) (S n) = fun x => c (S n) / INR (S n) * x ^ n + summation (fun (i : nat) (x' : R) => c (S i) / INR (S i) * x' ^ i) n x) by reflexivity.
+      rewrite H. clear H.
+
+      apply functional_extensionality.
+      intros.
+      rewrite D_additive.
+      rewrite (D_additive_over_summation D D_additive D_homog).
+      assert (linear_deriv : D (fun x => x) = fun x => 1).
+      {
+        apply constant_integral.
+        exists 0.
+        apply functional_extensionality.
+        intros.
+        field.
+      }
+      
+      rewrite D_homog.
+      replace (fun x0 : R => x0 ^ n) with (fun x0 : R => x0 ^ ((S n) - 1)) by (apply functional_extensionality; intro; simpl; rewrite Nat.sub_0_r; reflexivity).
+      replace (fun x0 : R => x0 ^ ((S n) - 1)) with (fun x0 : R => x0 ^ ((n - 1) + 1)) by (apply functional_extensionality; intro; simpl; rewrite Nat.sub_0_r; f_equal; admit).
+        (* The above isn't true for n=0 because the predecessor of the natural number zero is defined to be zero. This argument would work if I'd used a theorem about integer powers. Or I could just resolve it by cases of zero and successors. *)
+      rewrite (nth_pow_deriv D linear_deriv D_product_rule (n-1)).
+      replace (c (S n) / INR (S n) * (INR (n - 1 + 1) * x ^ (n - 1))) with (c (S n) / INR (S n) * (INR n * x ^ (n - 1))) by admit.
       admit.
     }
     rewrite H in IH.
     apply integration_constant in IH.
     destruct IH as [c0 H0].
-      (* nth_pow_deriv *)
-      (* D_additive_over_summation *)
-    + admit.
+    exists (fun i => c i / INR i).
+    rewrite H0.
+
+    (* The following is an alternative I'm not sure is correct for this proof. *)
+    (* exists (fun i => match i with
+                | 0%nat => c0
+                | S i' => c (S i') / INR (S i') end). *)
+    admit.
+    
 Admitted.
 
 Theorem nth_integration_constant :
