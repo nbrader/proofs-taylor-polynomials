@@ -567,6 +567,18 @@ Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
     | S n' => F_ n' x + summation F_ n' x
   end.
 
+Lemma summation_expand_lower :
+  forall (F_ : nat -> R -> R) (n : nat) (x : R),
+    summation F_ (S n) x = summation (fun i x' => F_ (S i) x') n x + F_ O x.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    ring.
+  - simpl.
+    admit.
+Admitted.
+
 Lemma D_additive_over_summation :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   (* Denote the derivative by D *)
@@ -774,16 +786,37 @@ Proof.
       apply Rlt_not_eq in H1.
       contradiction.
     }
-    rewrite H in IH.
+
+    rewrite H in IH. clear H.
     apply integration_constant in IH.
-    destruct IH as [c0 H0].
+    destruct IH as [c0 f_impl].
     set (d := fun i => match i with
                 | 0%nat => c0
                 | S i' => c i' / INR (S i') end).
     exists d.
-    admit.
-    
-Admitted.
+    assert (summation (fun (i : nat) (x' : R) => d i * x' ^ i) (S n) = fun x => summation (fun (i : nat) (x' : R) => c i / INR (S i) * x' ^ S i) n x + d O * x ^ O).
+    {
+      apply functional_extensionality.
+      intros.
+      rewrite (summation_expand_lower (fun (i : nat) (x' : R) => d i * x' ^ i) n).
+      reflexivity.
+    }
+    rewrite H. clear H.
+
+    apply functional_extensionality.
+    intros.
+
+    assert (d 0%nat * x ^ 0 = c0).
+    {
+      unfold d.
+      simpl.
+      ring.
+    }
+    rewrite H. clear H.
+
+    rewrite f_impl.
+    reflexivity.
+Qed.
 
 Theorem nth_integration_constant :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
