@@ -800,18 +800,32 @@ Proof.
 
   apply (nth_integral_of_zero) in H.
 
-  assert (f = g -> (fun x => f x - g x) = fun _ => 0).
+  assert (f = g <-> (fun x => f x - g x) = fun _ => 0).
   {
-    intros.
-    apply functional_extensionality.
-    intros.
-    rewrite H0.
-    field.
+    split.
+    - intros.
+      apply functional_extensionality.
+      intros.
+      rewrite H0.
+      field.
+
+    - intros.
+      set (z := (fun _ : R => 0)).
+      replace g with (fun x => g x + z x) by (unfold z; apply functional_extensionality; intros; ring).
+      replace (fun _ : R => 0) with z in H0 by reflexivity.
+      rewrite <- H0.
+      apply functional_extensionality.
+      intros.
+      ring.
   }
 
-  admit.
-
-Admitted.
+  destruct H as [c IHn].
+  exists c.
+  replace (summation (fun (i : nat) (x' : R) => c i * x' ^ i) (S n)) with (fun x : R => f x - g x).
+  apply functional_extensionality.
+  intros.
+  ring.
+Qed.
 
 Theorem Taylor_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
