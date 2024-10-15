@@ -764,6 +764,8 @@ Theorem nth_integration_constant :
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
   (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
@@ -772,87 +774,43 @@ Theorem nth_integration_constant :
   (forall (m n : nat) (a : R) (F : R -> R), (INR m <= INR n) -> iter D m (Taylor n a F) a = iter D m F a) ->
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
-  forall (f g : R -> R) (n : nat), iter D n f = iter D n g -> exists (c_ : nat -> R), f = (fun x : R => g x + summation (fun i x' => (c_ i) * x'^i) n x).
+  forall (f g : R -> R) (n : nat), iter D n f = iter D n g -> exists (c_ : nat -> R), f = (fun x : R => g x + summation (fun i x' => (c_ i) * x'^i) (S n) x).
 Proof.
-  intros Taylor D zero_integral constant_integral D_additive D_homog Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
-  induction n as [|n IH]; intros.
+  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
+  pose proof (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant) as nth_integral_of_zero.
 
-  - (* Base case: n = 0 *)
+  assert (iter D (S n) (fun x => f x - g x) = fun _ => 0).
+  {
     simpl in *.
-    exists (fun _ => 0).
-    rewrite <- f_and_g_agree_at_nth_D.
+    unfold Rminus.
+    rewrite iter_additive by (intros; apply D_additive).
+    rewrite D_additive.
+    rewrite f_and_g_agree_at_nth_D.
+    rewrite <- D_additive.
+    rewrite <- iter_additive by (intros; apply D_additive).
+    replace (fun x : R => g x + - g x) with (fun _ : R => 0) by (apply functional_extensionality; intros; ring).
+    replace (0) with (0*1) by field.
+    rewrite (iter_homog D D_homog (fun _ => 1) 0) by (intros; apply D_homog).
+    rewrite D_homog.
     apply functional_extensionality.
     intros.
-    ring.
-  
-  - (* Inductive step: n -> S n *)
-    simpl.
+    now ring.
+  }
+  clear f_and_g_agree_at_nth_D.
 
-    assert (iter D (S n) (fun x => f x - g x) = fun _ => 0).
-    {
-      simpl in *.
-      unfold Rminus.
-      rewrite iter_additive by (intros; apply D_additive).
-      rewrite D_additive.
-      rewrite f_and_g_agree_at_nth_D.
-      rewrite <- D_additive.
-      rewrite <- iter_additive by (intros; apply D_additive).
-      replace (fun x : R => g x + - g x) with (fun _ : R => 0) by (apply functional_extensionality; intros; ring).
-      replace (0) with (0*1) by field.
-      rewrite (iter_homog D D_homog (fun _ => 1) 0) by (intros; apply D_homog).
-      rewrite D_homog.
-      apply functional_extensionality.
-      intros.
-      now ring.
-    }
-    clear f_and_g_agree_at_nth_D.
+  apply (nth_integral_of_zero) in H.
 
-    simpl in H.
-    apply zero_integral in H.
-    destruct H as [c H].
-    induction n. (*  <--- This could have probably just been "case".  *)
-    + simpl.
-      exists (fun _ => c).
-      simpl in H.
-      replace (c * 1 + 0) with (c) by ring.
-      replace (fun x : R => g x + c) with (fun x : R => (fun x' : R => g x') x + (fun x : R => f x - g x) x).
-      * apply functional_extensionality.
-        intros.
-        ring.
-      * apply functional_extensionality.
-        intros.
-        assert (f x - g x = c).
-        {
-          set (F := (fun x : R => f x - g x)).
-          (* pose proof (eq_refl (F x)). *)
-          assert (F = (fun _ : R => c)) by (unfold F; apply H).
-          assert (F x = f x - g x) by (unfold F; reflexivity).
-          assert (F x = (fun _ : R => c) x) by (rewrite H0; reflexivity).
-          rewrite H1 in H2.
-          apply H2.
-        }
-        rewrite <- H0.
-        reflexivity.
-    + simpl in *.
-      destruct IH as [c_ IH].
-      * admit.
-      * exists c_.
-        replace (fun x : R => g x + (c_ (S n) * (x * x ^ n) + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x))) with (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) + c_ (S n) * (x * x ^ n)) by (apply functional_extensionality; intros; ring).
-        replace (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) + c_ (S n) * (x * x ^ n)) with (fun x2 : R => f x2 + (fun x => c_ (S n) * (x * x ^ n)) x2) by (rewrite IH; reflexivity).
-        assert (c_ (S n) = 0).
-        {
-          (* apply constant_integral in H. *)
-          (* apply nth_pow_deriv in H. *)
-          (* apply IH. *)
-          rewrite IH in H.
-          replace (fun x : R => g x + (c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) - g x) with (fun x : R => c_ n * x ^ n + summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) n x) in H by (intros; apply functional_extensionality; intros; ring).
-          
-          admit.
-        }
-        rewrite H0.
-        apply functional_extensionality.
-        intros.
-        ring.
+  assert (f = g -> (fun x => f x - g x) = fun _ => 0).
+  {
+    intros.
+    apply functional_extensionality.
+    intros.
+    rewrite H0.
+    field.
+  }
+
+  admit.
+
 Admitted.
 
 Theorem Taylor_implem :
