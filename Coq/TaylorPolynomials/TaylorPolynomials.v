@@ -739,15 +739,12 @@ Proof.
     rewrite iter_expand_inner in f_at_nth_D.
     apply IHn in f_at_nth_D. clear IHn.
     destruct f_at_nth_D as [c IH].
-    assert (summation (fun (i : nat) (x' : R) => c i * x' ^ i) n = D (summation (fun (i : nat) (x' : R) => c (S i) / INR (S i) * x' ^ i) (S n))).
+    assert (summation (fun (i : nat) (x' : R) => c i * x' ^ i) n = D (summation (fun (i : nat) (x' : R) => c i / INR (S i) * x' ^ (S i)) n)).
     {
-      assert (summation (fun (i : nat) (x' : R) => c (S i) / INR (S i) * x' ^ i) (S n) = fun x => c (S n) / INR (S n) * x ^ n + summation (fun (i : nat) (x' : R) => c (S i) / INR (S i) * x' ^ i) n x) by reflexivity.
-      rewrite H. clear H.
-
       apply functional_extensionality.
       intros.
-      rewrite D_additive.
       rewrite (D_additive_over_summation D D_additive D_homog).
+
       assert (linear_deriv : D (fun x => x) = fun x => 1).
       {
         apply constant_integral.
@@ -756,25 +753,34 @@ Proof.
         intros.
         field.
       }
-      
+      f_equal.
+      apply functional_extensionality.
+      intros.
+
       rewrite D_homog.
-      replace (fun x0 : R => x0 ^ n) with (fun x0 : R => x0 ^ ((S n) - 1)) by (apply functional_extensionality; intro; simpl; rewrite Nat.sub_0_r; reflexivity).
-      replace (fun x0 : R => x0 ^ ((S n) - 1)) with (fun x0 : R => x0 ^ ((n - 1) + 1)) by (apply functional_extensionality; intro; simpl; rewrite Nat.sub_0_r; f_equal; admit).
-        (* The above isn't true for n=0 because the predecessor of the natural number zero is defined to be zero. This argument would work if I'd used a theorem about integer powers. Or I could just resolve it by cases of zero and successors. *)
-      rewrite (nth_pow_deriv D linear_deriv D_product_rule (n-1)).
-      replace (c (S n) / INR (S n) * (INR (n - 1 + 1) * x ^ (n - 1))) with (c (S n) / INR (S n) * (INR n * x ^ (n - 1))) by admit.
-      admit.
+      replace (S x0) with (x0 + 1)%nat by ring.
+      rewrite (nth_pow_deriv D linear_deriv D_product_rule x0).
+      apply functional_extensionality.
+      intros.
+      field.
+      rewrite plus_INR.
+      simpl.
+      intro.
+      assert (INR x0 + 1 = 0 -> INR x0 = 0 /\ 1 = 0) by (apply (Rplus_eq_R0 (INR x0) 1 (pos_INR x0) Rle_0_1)).
+      apply H0 in H. clear H0.
+      destruct H.
+      apply eq_sym in H0.
+      assert (0 < 1) by apply Rlt_0_1.
+      apply Rlt_not_eq in H1.
+      contradiction.
     }
     rewrite H in IH.
     apply integration_constant in IH.
     destruct IH as [c0 H0].
-    exists (fun i => c i / INR i).
-    rewrite H0.
-
-    (* The following is an alternative I'm not sure is correct for this proof. *)
-    (* exists (fun i => match i with
+    set (d := fun i => match i with
                 | 0%nat => c0
-                | S i' => c (S i') / INR (S i') end). *)
+                | S i' => c i' / INR (S i') end).
+    exists d.
     admit.
     
 Admitted.
