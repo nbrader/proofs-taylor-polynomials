@@ -859,7 +859,7 @@ Theorem Taylor_implem :
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
-    Taylor n a F = fun x => summation (fun k x' => (iter D k F a / INR (fact k)) * (x' - a) ^ k) (S n) x.
+    Taylor n a F = fun x => summation (fun k x' => (iter D k F a / INR (fact k)) * (x' - a) ^ k) (S n) x. (* <---- TO DO: Check this assertion is valid with a couple examples *)
 Proof.
   intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n.
   apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n a F)) in Taylor_degree.
@@ -869,7 +869,7 @@ Proof.
                 | 0%nat => c0
                 | S k => iter D k F a / INR (fact k) end).
   {
-    admit.
+    admit. (* <---- TO DO: Check this assertion is valid with a couple examples *)
   }
   destruct coeff_impl as [c0 coeff_impl].
 
@@ -877,6 +877,13 @@ Proof.
   rewrite coeff_impl in Taylor_degree.
   replace (fun x : R => summation (fun (i : nat) (x' : R) => iter D i F a / INR (fact i) * x' ^ S i) n x + c0 * x ^ 0) with (fun x : R => summation (fun (i : nat) (x' : R) => iter D i F a / INR (fact i) * x' ^ S i) n x + c0) in Taylor_degree by (apply functional_extensionality; intros; ring).
   
+  rewrite Taylor_degree.
+  apply functional_extensionality.
+  intros.
+  rewrite (summation_expand_lower_extensional (fun (k : nat) (x' : R) => iter D k F a / INR (fact k) * (x' - a) ^ k) n).
+  replace (iter D 0 F a / INR (fact 0) * (x - a) ^ 0) with (F a) by (simpl; field).
+
+
   admit.
 Admitted.
 
