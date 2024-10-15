@@ -655,9 +655,6 @@ Proof.
 Qed.
 
 Theorem nth_integral_of_zero :
-  (* Taylor n f is the Taylor polynomial of degree n of f *)
-  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
-
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -671,7 +668,7 @@ Theorem nth_integral_of_zero :
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (n : nat) (f : R -> R), iter D n f = (fun _ => 0) -> exists (c_ : nat -> R), f = summation (fun i x' => (c_ i) * x'^i) n.
 Proof.
-  intros Taylor D constant_integral D_additive D_homog D_product_rule integration_constant n.
+  intros D constant_integral D_additive D_homog D_product_rule integration_constant n.
   induction n.
 
   - (* Base case: n = 0 *)
