@@ -582,6 +582,16 @@ Proof.
     reflexivity.
 Qed.
 
+Lemma summation_expand_lower_extensional :
+  forall (F_ : nat -> R -> R) (n : nat),
+    summation F_ (S n) = fun x => summation (fun i x' => F_ (S i) x') n x + F_ O x.
+Proof.
+  intros.
+  apply functional_extensionality.
+  intros.
+  apply summation_expand_lower.
+Qed.
+
 Lemma D_additive_over_summation :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   (* Denote the derivative by D *)
@@ -855,6 +865,18 @@ Proof.
   apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n a F)) in Taylor_degree.
   specialize (Taylor_agrees_at_a n).
   destruct Taylor_degree as [c Taylor_degree].
+  assert (coeff_impl : exists (c0 : R), c = fun i => match i with
+                | 0%nat => c0
+                | S k => iter D k F a / INR (fact k) end).
+  {
+    admit.
+  }
+  destruct coeff_impl as [c0 coeff_impl].
+
+  rewrite (summation_expand_lower_extensional (fun (i : nat) (x' : R) => c i * x' ^ i) n) in Taylor_degree.
+  rewrite coeff_impl in Taylor_degree.
+  replace (fun x : R => summation (fun (i : nat) (x' : R) => iter D i F a / INR (fact i) * x' ^ S i) n x + c0 * x ^ 0) with (fun x : R => summation (fun (i : nat) (x' : R) => iter D i F a / INR (fact i) * x' ^ S i) n x + c0) in Taylor_degree by (apply functional_extensionality; intros; ring).
+  
   admit.
 Admitted.
 
