@@ -575,9 +575,12 @@ Proof.
   induction n.
   - simpl.
     ring.
-  - simpl.
-    admit.
-Admitted.
+  (* - replace (summation F_ (S (S n)) x) with (F_ (S n) x + summation F_ (S n) x) by auto. *)
+  - replace (summation (fun (i : nat) (x' : R) => F_ (S i) x') (S n) x) with (F_ (S n) x + summation (fun (i : nat) (x' : R) => F_ (S i) x') n x) by auto.
+    rewrite Rplus_assoc.
+    rewrite <- IHn. clear IHn.
+    reflexivity.
+Qed.
 
 Lemma D_additive_over_summation :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
