@@ -760,7 +760,6 @@ Theorem nth_integration_constant :
   forall (D : (R -> R) -> (R -> R)),
 
   (* Derivative properties *)
-  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
@@ -776,7 +775,7 @@ Theorem nth_integration_constant :
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (f g : R -> R) (n : nat), iter D n f = iter D n g -> exists (c_ : nat -> R), f = (fun x : R => g x + summation (fun i x' => (c_ i) * x'^i) (S n) x).
 Proof.
-  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
+  intros Taylor D constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a f g n f_and_g_agree_at_nth_D.
   pose proof (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant) as nth_integral_of_zero.
 
   assert (iter D (S n) (fun x => f x - g x) = fun _ => 0).
@@ -789,7 +788,7 @@ Proof.
     rewrite <- D_additive.
     rewrite <- iter_additive by (intros; apply D_additive).
     replace (fun x : R => g x + - g x) with (fun _ : R => 0) by (apply functional_extensionality; intros; ring).
-    replace (0) with (0*1) by field.
+    replace 0 with (0*1) by field.
     rewrite (iter_homog D D_homog (fun _ => 1) 0) by (intros; apply D_homog).
     rewrite D_homog.
     apply functional_extensionality.
@@ -837,6 +836,9 @@ Theorem Taylor_implem :
   (* Derivative properties *)
   forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
@@ -847,49 +849,11 @@ Theorem Taylor_implem :
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
-    Taylor n a F = fun x => summation (fun k x' => (iter D k F a) * (x' - a) ^ k / INR (fact k)) (S n) x.
+    Taylor n a F = fun x => summation (fun k x' => (iter D k F a / INR (fact k)) * (x' - a) ^ k) (S n) x.
 Proof.
-  intros Taylor D zero_integral constant_integral integration_constant Taylor_degree Taylor_agrees_at_a F a.
-  induction n as [|n IH]; intros.
-
-  - (* Base case: n = 0 *)
-    simpl.
-    replace (fun _ : R => F a * 1 / 1) with (fun _ : R => F a) by (apply functional_extensionality; intros; field).
-    specialize (Taylor_agrees_at_a 0%nat 0%nat a F).
-    replace (INR 0 <= INR 0 -> iter D 0 (Taylor 0%nat a F) a = iter D 0 F a) with (INR 0 <= INR 0 -> Taylor 0%nat a F a = F a) in Taylor_agrees_at_a by (try (rewrite H0); reflexivity).
-    specialize (Taylor_agrees_at_a (Rle_refl (INR 0))).
-    specialize (Taylor_degree 0%nat a F).
-    rewrite <- Taylor_agrees_at_a. clear Taylor_agrees_at_a.
-    apply zero_integral in Taylor_degree.
-    destruct Taylor_degree as [x Taylor_constant].
-    rewrite Taylor_constant.
-    apply functional_extensionality.
-    intros.
-    field.
+  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n.
+  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n a F)) in Taylor_degree.
   
-  - (* Inductive step: n -> S n *)
-    replace (fun x : R => summation (fun (k : nat) (x' : R) => iter D k F a * (x' - a) ^ k / INR (fact k)) (S (S n)) x) with (fun x : R => D (iter D n F) a * ((x - a) ^ S n) / INR (fact (S n)) + Taylor n a F x) by (apply functional_extensionality; intros; rewrite IH; simpl; f_equal). clear IH.
-
-    specialize (Taylor_agrees_at_a n (S n) a F).
-    assert (INR n <= INR (S n)).
-    {
-      rewrite S_INR.
-      apply Rlt_le.
-      rewrite Rplus_comm.
-      rewrite <- (Rplus_0_l (INR n)) at 1.
-      apply (Rplus_lt_compat_r (INR n)).
-      apply Rlt_0_1.
-    }
-    specialize (Taylor_agrees_at_a H). clear H.
-
-    assert (conclusion : Taylor (S n) a F = (fun x : R => D (iter D n F) a * (x - a) ^ S n / INR (fact (S n)) + Taylor n a F x)).
-    {
-      (* Try integrating both sides of Taylor_deriv to get an equation for "Taylor (S n) a F x" *)
-      (* apply nth_integration_constant in Taylor_agrees_at_a. *)
-      admit.
-    }
-    apply conclusion.
-    
 Admitted.
 
 Lemma Taylor_deriv :
