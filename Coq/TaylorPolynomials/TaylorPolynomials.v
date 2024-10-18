@@ -622,6 +622,80 @@ Proof.
     reflexivity.
 Qed.
 
+Lemma iter_D_additive :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (order : nat),
+    forall (f g : R -> R), iter D order (fun x => f x + g x) = fun x => iter D order f x + iter D order g x.
+Proof.
+  intros D D_additive D_homog order f g.
+  induction order.
+  - reflexivity.
+  - simpl.
+    rewrite <- (D_additive (iter D order f) (iter D order g)).
+    rewrite <- IHorder.
+    reflexivity.
+Qed.
+
+Lemma iter_D_homog :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (order : nat),
+    forall (f : R -> R), forall (s : R), iter D order (fun x => s * f x) = fun x => s * iter D order f x.
+Proof.
+  intros D D_additive D_homog order f s.
+  induction order.
+  - reflexivity.
+  - simpl.
+    rewrite <- (D_homog (iter D order f) s).
+    rewrite <- IHorder.
+    reflexivity.
+Qed.
+
+Lemma iter_D_additive_over_summation :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (degree order : nat) (F_ : nat -> R -> R) (x : R),
+    iter D order (summation F_ degree) x = summation (fun i => iter D order (F_ i)) degree x.
+Proof.
+  intros D D_additive D_homog degree order F x.
+  simpl.
+  induction degree as [|n IH]; intros.
+
+  - (* Base case: n = 0 *)
+    simpl.
+    replace (0) with (0*1) by field.
+    rewrite (iter_D_homog D D_additive D_homog order (fun _ => 1) 0).
+    field.
+  
+  - (* Inductive step: n -> S n *)
+    simpl.
+    rewrite <- IH.
+    rewrite (iter_D_additive D D_additive D_homog order).
+    reflexivity.
+Qed.
+
 Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (f g : R -> R) (n : nat),
@@ -885,6 +959,59 @@ Proof.
 
 
   admit.
+Admitted.
+
+Theorem Maclaurin_implem :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (F : R -> R) (n : nat),
+    Taylor n 0 F = fun x => summation (fun k x' => (iter D k F 0 / INR (fact k)) * x' ^ k) (S n) x. (* <---- TO DO: Check this assertion is valid with a couple examples *)
+Proof.
+  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F n.
+  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n 0 F)) in Taylor_degree.
+  specialize Taylor_agrees_at_a with (degree:=n) (order:=O) (a:=0) (F:=F).
+  pose proof Nat.le_0_l.
+  apply Taylor_agrees_at_a in H. clear Taylor_agrees_at_a. simpl in H.
+  destruct Taylor_degree as [c Taylor_degree].
+  rewrite Taylor_degree in H.
+  rewrite (summation_expand_lower_extensional (fun (i : nat) (x' : R) => c i * x' ^ i) n) in H.
+  assert (c 0%nat * 0 ^ 0 = c 0%nat).
+  {
+    ring.
+  }
+  rewrite H0 in H. clear H0.
+  assert (summation (fun (i : nat) (x' : R) => c (S i) * x' ^ S i) n 0 = 0).
+  {
+    induction n.
+    - reflexivity.
+    - assert (summation (fun (i : nat) (x' : R) => c (S i) * x' ^ S i) (S n) 0 = c (S n) * (0 * 0 ^ n) + summation (fun (i : nat) (x' : R) => c (S i) * (x' ^ (S i))) n 0) by reflexivity.
+      rewrite H0.
+      replace (c (S n) * (0 * 0 ^ n)) with 0 by ring.
+      rewrite IHn.
+      + ring.
+      + admit.
+      + admit.
+  }
+  rewrite H0 in H.
 Admitted.
 
 Lemma Taylor_deriv :
