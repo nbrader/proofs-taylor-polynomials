@@ -1224,9 +1224,12 @@ Print Assumptions quadratic_deriv.
 Print Assumptions cubic_deriv.
   quadratic_integral_
 Print Assumptions linear_integral_.
-
+  Taylor_1_example_lemma_1   <-- Should use this but assumes it instead
+  Taylor_1_example_lemma_2   <-- Should use this but assumes it instead
+  Taylor_1_example           <-- Should use this but assumes it instead
 Print Assumptions quadratic_integral_.
-
+  Taylor_1_example_lemma_2   <-- Should use this but assumes it instead
+  Taylor_1_example           <-- Should use this but assumes it instead
 Print Assumptions nth_integral_of_zero.
   nth_integration_constant
   Maclaurin_implem
