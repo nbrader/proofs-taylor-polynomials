@@ -925,9 +925,6 @@ Proof.
     reflexivity.
 Qed.
 
-
-(* Admitted *)
-
 Theorem nth_integration_constant :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -1110,7 +1107,7 @@ Proof.
   rewrite (Maclaurin_implem Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a (fun x' : R => F (x' + a)) n).
   apply functional_extensionality.
   intros.
-  
+
   admit.
 Admitted.
 
