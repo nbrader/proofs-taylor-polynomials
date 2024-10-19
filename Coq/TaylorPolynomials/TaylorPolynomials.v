@@ -12,6 +12,213 @@ I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
 
+Theorem quadratic_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  D (fun x => x*x) = fun x => 2*x.
+Proof.
+  intros.
+  rewrite (D_product_rule (fun x => x) (fun x => x)).
+  rewrite linear_deriv.
+  apply functional_extensionality.
+  intro.
+  ring.
+Qed.
+
+Theorem cubic_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  D (fun x => x*x*x) = fun x => 3*x*x.
+Proof.
+  intros.
+  rewrite (D_product_rule (fun x => x * x) (fun x => x)).
+  rewrite (D_product_rule (fun x => x) (fun x => x)).
+  rewrite linear_deriv.
+  apply functional_extensionality.
+  intro.
+  ring.
+Qed.
+
+Theorem linear_integral_ :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+  forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'.
+Proof.
+  intros.
+  split.
+  - intros.
+    pose proof (quadratic_deriv D linear_deriv D_product_rule).
+    assert (D (fun x : R => c / 2 * (x * x)) = (fun x : R => c * x)).
+    {
+      rewrite D_homog.
+      rewrite H0.
+      apply functional_extensionality.
+      intro.
+      field.
+    }
+    clear H0.
+    rewrite <- H1 in H. clear H1.
+    assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
+    assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
+    {
+      intro.
+      assert (D (fun _ : R => c0) = (fun _ : R => 0)).
+      {
+        apply (zero_integral (fun _ : R => c0)).
+        exists c0.
+        reflexivity.
+      }
+      rewrite H0. clear H0.
+      intro.
+      apply functional_extensionality.
+      intros.
+      field.
+    }
+    assert (forall (c0 : R) (f : R -> R), (fun x0 : R => D f x0 + D (fun _ : R => c0) x0) = (fun x0 : R => D (fun x : R => f x + c0) x0)).
+    {
+      intros.
+      apply functional_extensionality.
+      intro.
+      rewrite D_additive.
+      reflexivity.
+    }
+    assert (forall (c0 : R) (f : R -> R), D f = D (fun x : R => f x + c0)).
+    {
+      intros.
+      rewrite (H0 c0).
+      rewrite (H1 c0).
+      reflexivity.
+    }
+    clear H0 H1.
+    assert (forall (c0 : R) (f g : R -> R), (f = fun x => g x + c0) -> D f = D g).
+    {
+      intros.
+      rewrite H0.
+      symmetry.
+      rewrite <- (H2 c0).
+      apply functional_extensionality.
+      intro.
+      reflexivity.
+    }
+    clear H2.
+    apply integration_constant.
+    apply H.
+  - intros.
+    destruct H.
+    rewrite H.
+    rewrite D_additive.
+    replace x with (x * 1) by ring.
+    rewrite (D_homog (fun _ => 1) x).
+    rewrite unit_deriv.
+    replace (x * 0) with 0 by ring.
+    replace (D (fun x1 : R => 1 / 2 * c * x1 * x1)) with (fun x1 : R => c * x1).
+    {
+      apply functional_extensionality.
+      intro.
+      field.
+    }
+    apply functional_extensionality.
+    intro.
+    assert ((fun x1 : R => 1 / 2 * c * x1 * x1) = (fun x1 : R => 1 / 2 * c * (x1 * x1))) by (apply functional_extensionality; intro; ring).
+    rewrite H0.
+    rewrite (D_homog (fun x0 : R => x0 * x0) (1/2 * c)).
+    rewrite (quadratic_deriv D linear_deriv D_product_rule).
+    field.
+Qed.
+
+Theorem quadratic_integral_ :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+  forall (f : R -> R) (c : R), (D f = fun x => c*x*x) <-> exists (c' : R), f = fun x => (1/3)*c*x*x*x + c'.
+Proof.
+  intros D zero_integral constant_integral unit_deriv linear_deriv
+         D_additive D_homog D_product_rule integration_constant f c.
+
+  (* Step 1: Assume D f = fun x => c * x^2 *)
+  split.
+  - intro H.
+    (* We aim to show that f = (1/3) * c * x^3 + c' *)
+    
+    (* Step 2: Consider a candidate solution *)
+    (* Let g(x) = (1/3) * c * x^3. By differentiating this, we get g'(x) = c * x^2 *)
+    assert (H2 : D (fun x => (1/3) * c * (x*x*x)) = fun x => c * x*x).
+    { (* Derive this from the linearity and power rule of the derivative *)
+      (* Use D_homog and D_product_rule to handle the derivative of x^3 *)
+      (* Proof omitted, but follows from applying the hypothesis *)
+      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
+      rewrite (cubic_deriv D linear_deriv D_product_rule).
+      apply functional_extensionality.
+      intro.
+      field.
+    }
+    
+    assert (H1 : D (fun x => (1/3) * c * x*x*x) = fun x => c * x*x).
+    {
+      replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
+      apply H2.
+    }
+    
+    (* Step 3: Since D f = D g, apply integration_constant *)
+    specialize (integration_constant f (fun x => (1/3) * c * x*x*x)).
+    assert (D f = D (fun x => (1/3) * c * x*x*x)) by (rewrite H1; apply H).
+    specialize (integration_constant H0).
+    destruct integration_constant as [c' Hf].
+    exists c'.
+
+    (* Now, f = g + c', which means f = (1/3) * c * x^3 + c' *)
+    apply Hf.
+  
+  - intro Hf.
+    (* Assume f = (1/3) * c * x^3 + c', show D f = fun x => c * x^2 *)
+    destruct Hf as [c' Hf].
+    subst f.
+    (* Apply the derivative to the expression (1/3) * c * x^3 + c' *)
+    rewrite D_additive.
+    assert (D (fun _ : R => c') = (fun _ : R => 0)).
+    {
+      apply (zero_integral (fun _ : R => c')).
+      exists c'.
+      reflexivity.
+    }
+    rewrite H. clear H.
+    pose proof (cubic_deriv D linear_deriv D_product_rule).
+    assert (D (fun x : R => (1/3*c) * (x*x*x)) = (fun x : R => c * (x*x))).
+    {
+      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
+      rewrite (cubic_deriv D linear_deriv D_product_rule).
+      apply functional_extensionality.
+      intro.
+      field.
+    }
+    replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
+    apply functional_extensionality.
+    intro.
+    rewrite H0.
+    field.
+    (* Derive that D f = fun x => c * x^2 *)
+    (* Proof omitted for brevity, but follows directly *)
+Qed.
+
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)
 Theorem Taylor_0_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
@@ -494,213 +701,6 @@ Proof.
   ring.
 Qed.
 
-Theorem quadratic_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  D (fun x => x*x) = fun x => 2*x.
-Proof.
-  intros.
-  rewrite (D_product_rule (fun x => x) (fun x => x)).
-  rewrite linear_deriv.
-  apply functional_extensionality.
-  intro.
-  ring.
-Qed.
-
-Theorem cubic_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  D (fun x => x*x*x) = fun x => 3*x*x.
-Proof.
-  intros.
-  rewrite (D_product_rule (fun x => x * x) (fun x => x)).
-  rewrite (D_product_rule (fun x => x) (fun x => x)).
-  rewrite linear_deriv.
-  apply functional_extensionality.
-  intro.
-  ring.
-Qed.
-
-Theorem linear_integral :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
-  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
-  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
-  forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'.
-Proof.
-  intros.
-  split.
-  - intros.
-    pose proof (quadratic_deriv D linear_deriv D_product_rule).
-    assert (D (fun x : R => c / 2 * (x * x)) = (fun x : R => c * x)).
-    {
-      rewrite D_homog.
-      rewrite H0.
-      apply functional_extensionality.
-      intro.
-      field.
-    }
-    clear H0.
-    rewrite <- H1 in H. clear H1.
-    assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
-    assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
-    {
-      intro.
-      assert (D (fun _ : R => c0) = (fun _ : R => 0)).
-      {
-        apply (zero_integral (fun _ : R => c0)).
-        exists c0.
-        reflexivity.
-      }
-      rewrite H0. clear H0.
-      intro.
-      apply functional_extensionality.
-      intros.
-      field.
-    }
-    assert (forall (c0 : R) (f : R -> R), (fun x0 : R => D f x0 + D (fun _ : R => c0) x0) = (fun x0 : R => D (fun x : R => f x + c0) x0)).
-    {
-      intros.
-      apply functional_extensionality.
-      intro.
-      rewrite D_additive.
-      reflexivity.
-    }
-    assert (forall (c0 : R) (f : R -> R), D f = D (fun x : R => f x + c0)).
-    {
-      intros.
-      rewrite (H0 c0).
-      rewrite (H1 c0).
-      reflexivity.
-    }
-    clear H0 H1.
-    assert (forall (c0 : R) (f g : R -> R), (f = fun x => g x + c0) -> D f = D g).
-    {
-      intros.
-      rewrite H0.
-      symmetry.
-      rewrite <- (H2 c0).
-      apply functional_extensionality.
-      intro.
-      reflexivity.
-    }
-    clear H2.
-    apply integration_constant.
-    apply H.
-  - intros.
-    destruct H.
-    rewrite H.
-    rewrite D_additive.
-    replace x with (x * 1) by ring.
-    rewrite (D_homog (fun _ => 1) x).
-    rewrite unit_deriv.
-    replace (x * 0) with 0 by ring.
-    replace (D (fun x1 : R => 1 / 2 * c * x1 * x1)) with (fun x1 : R => c * x1).
-    {
-      apply functional_extensionality.
-      intro.
-      field.
-    }
-    apply functional_extensionality.
-    intro.
-    assert ((fun x1 : R => 1 / 2 * c * x1 * x1) = (fun x1 : R => 1 / 2 * c * (x1 * x1))) by (apply functional_extensionality; intro; ring).
-    rewrite H0.
-    rewrite (D_homog (fun x0 : R => x0 * x0) (1/2 * c)).
-    rewrite (quadratic_deriv D linear_deriv D_product_rule).
-    field.
-Qed.
-
-Theorem quadratic_integral :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
-  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
-  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
-  forall (f : R -> R) (c : R), (D f = fun x => c*x*x) <-> exists (c' : R), f = fun x => (1/3)*c*x*x*x + c'.
-Proof.
-  intros D zero_integral constant_integral unit_deriv linear_deriv
-         D_additive D_homog D_product_rule integration_constant f c.
-
-  (* Step 1: Assume D f = fun x => c * x^2 *)
-  split.
-  - intro H.
-    (* We aim to show that f = (1/3) * c * x^3 + c' *)
-    
-    (* Step 2: Consider a candidate solution *)
-    (* Let g(x) = (1/3) * c * x^3. By differentiating this, we get g'(x) = c * x^2 *)
-    assert (H2 : D (fun x => (1/3) * c * (x*x*x)) = fun x => c * x*x).
-    { (* Derive this from the linearity and power rule of the derivative *)
-      (* Use D_homog and D_product_rule to handle the derivative of x^3 *)
-      (* Proof omitted, but follows from applying the hypothesis *)
-      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
-      rewrite (cubic_deriv D linear_deriv D_product_rule).
-      apply functional_extensionality.
-      intro.
-      field.
-    }
-    
-    assert (H1 : D (fun x => (1/3) * c * x*x*x) = fun x => c * x*x).
-    {
-      replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
-      apply H2.
-    }
-    
-    (* Step 3: Since D f = D g, apply integration_constant *)
-    specialize (integration_constant f (fun x => (1/3) * c * x*x*x)).
-    assert (D f = D (fun x => (1/3) * c * x*x*x)) by (rewrite H1; apply H).
-    specialize (integration_constant H0).
-    destruct integration_constant as [c' Hf].
-    exists c'.
-
-    (* Now, f = g + c', which means f = (1/3) * c * x^3 + c' *)
-    apply Hf.
-  
-  - intro Hf.
-    (* Assume f = (1/3) * c * x^3 + c', show D f = fun x => c * x^2 *)
-    destruct Hf as [c' Hf].
-    subst f.
-    (* Apply the derivative to the expression (1/3) * c * x^3 + c' *)
-    rewrite D_additive.
-    assert (D (fun _ : R => c') = (fun _ : R => 0)).
-    {
-      apply (zero_integral (fun _ : R => c')).
-      exists c'.
-      reflexivity.
-    }
-    rewrite H. clear H.
-    pose proof (cubic_deriv D linear_deriv D_product_rule).
-    assert (D (fun x : R => (1/3*c) * (x*x*x)) = (fun x : R => c * (x*x))).
-    {
-      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
-      rewrite (cubic_deriv D linear_deriv D_product_rule).
-      apply functional_extensionality.
-      intro.
-      field.
-    }
-    replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
-    apply functional_extensionality.
-    intro.
-    rewrite H0.
-    field.
-    (* Derive that D f = fun x => c * x^2 *)
-    (* Proof omitted for brevity, but follows directly *)
-Qed.
-
 Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
   match n with
     | O => 0
@@ -1177,17 +1177,26 @@ Admitted.
 Closed under the global context
 *)
 Print Assumptions iter_expand_inner.
-
+  nth_pow_greater_deriv
+  nth_integral_of_zero
 
 (* 
 Axioms:
 ClassicalDedekindReals.sig_forall_dec : forall P : nat -> Prop, (forall n : nat, {P n} + {~ P n}) -> {n : nat | ~ P n} + {forall n : nat, P n}
 *)
 Print Assumptions Taylor_0_implem.
+  Taylor_deriv
 Print Assumptions iter_additive.
+  nth_integration_constant
 Print Assumptions iter_homog.
+  nth_integration_constant
 Print Assumptions iter_D_additive.
+  iter_D_additive_over_summation
+  Maclaurin_implem
 Print Assumptions iter_D_homog.
+  iter_D_additive_over_summation
+  nth_pow_greater_deriv
+  Maclaurin_implem
 
 
 (* 
@@ -1196,33 +1205,61 @@ ClassicalDedekindReals.sig_forall_dec : forall P : nat -> Prop, (forall n : nat,
 functional_extensionality_dep : forall (A : Type) (B : A -> Type) (f g : forall x : A, B x), (forall x : A, f x = g x) -> f = g
 *)
 Print Assumptions Taylor_1_implem.
+  Taylor_1_example_lemma_1
+  Taylor_deriv
 Print Assumptions Taylor_1_example_lemma_1.
+  Taylor_1_example
 Print Assumptions Taylor_1_example_lemma_2.
+  Taylor_1_example
 Print Assumptions Taylor_1_example.
 
 Print Assumptions nth_pow_deriv.
+  nth_pow_greater_deriv
+  poly_term_deriv
+  nth_integral_of_zero
 Print Assumptions poly_term_deriv.
-Print Assumptions quadratic_deriv.
-Print Assumptions cubic_deriv.
-Print Assumptions linear_integral.
-Print Assumptions quadratic_integral.
-Print Assumptions nth_integral_of_zero.
-Print Assumptions nth_integration_constant.
-Print Assumptions summation_expand_lower.
-Print Assumptions summation_expand_lower_extensional.
-Print Assumptions D_additive_over_summation.
-Print Assumptions iter_D_additive_over_summation.
-Print Assumptions distr_over_summation.
-Print Assumptions summation_irrelavance_of_large_coeffs.
 
+Print Assumptions quadratic_deriv.
+  linear_integral_
+Print Assumptions cubic_deriv.
+  quadratic_integral_
+Print Assumptions linear_integral_.
+
+Print Assumptions quadratic_integral_.
+
+Print Assumptions nth_integral_of_zero.
+  nth_integration_constant
+  Maclaurin_implem
+Print Assumptions nth_integration_constant.
+
+Print Assumptions summation_expand_lower.
+  summation_expand_lower_extensional
+  nth_integral_of_zero
+Print Assumptions summation_expand_lower_extensional.
+
+Print Assumptions D_additive_over_summation.
+  nth_integral_of_zero
+  Maclaurin_implem
+Print Assumptions iter_D_additive_over_summation.
+  Maclaurin_implem
+Print Assumptions distr_over_summation.
+
+Print Assumptions summation_irrelavance_of_large_coeffs.
+  Maclaurin_implem
 
 (* Admitted *)
 Print Assumptions nth_pow_greater_deriv.
+  Maclaurin_implem
 Print Assumptions nth_pow_equal_deriv.
+  Maclaurin_implem
 Print Assumptions nth_pow_lesser_deriv.
+  Maclaurin_implem
 Print Assumptions Maclaurin_implem.
+  Taylor_implem
 Print Assumptions Taylor_a_equiv.
+  Taylor_implem
 Print Assumptions Taylor_implem.
-Print Assumptions Taylor_deriv.
 
+Print Assumptions Taylor_deriv.
+  
 *)
