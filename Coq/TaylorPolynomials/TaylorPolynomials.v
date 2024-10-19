@@ -710,6 +710,16 @@ Proof.
     field.
 Qed.
 
+Lemma summation_irrelavance_of_large_coeffs :
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (n : nat) (F_ G_ : nat -> R -> R),
+
+  (forall (i : nat), (i <= n)%nat -> F_ i = G_ i) ->
+    summation F_ (S n) = summation G_ (S n).
+Proof.
+  admit.
+Admitted.
+
 Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (f g : R -> R) (n : nat),
@@ -973,67 +983,10 @@ Proof.
     admit.
   }
 
-  apply functional_extensionality.
-
+  apply summation_irrelavance_of_large_coeffs.
   intros.
-  induction n.
-  - simpl.
-    rewrite c_implem by auto.
-    reflexivity.
-  - 
-    (* simpl in *.
-    rewrite c_implem by auto.
-    rewrite IHn.
-    + simpl. *)
-
-
-  (* assert (nat_le_gt_dichotomy : forall (x y : nat), (x <= y)%nat \/ (x > y)%nat).
-  {
-    intros.
-    destruct (Nat.lt_total x y) as [Hlt | [Heq | Hgt]].
-    - (* x < y *)
-      left. apply Nat.lt_le_incl. assumption.
-    - (* x = y *)
-      left. rewrite Heq. apply Nat.le_refl.
-    - (* x > y *)
-      right. assumption.
-  }
-  specialize nat_le_gt_dichotomy with (y:=n).
-
-  intros x.
-
-  rewrite c_implem.
-
-  apply functional_extensionality. intros x.
-  apply functional_extensionality. intros k.
-  (* Case analysis on whether k <= n or k > n *)
-  destruct (nat_le_gt_dichotomy k) as [Hk_le_n | Hk_gt_n].
-
-  - (* Case 1: k <= n *)
-    apply Taylor_agrees_at_a in Hk_le_n.
-    admit.
-
-  - (* Case 2: k > n *)
-    apply Taylor_terms_finite in Hk_gt_n.
-    admit.
-
-  f_equal.
-
-  apply functional_extensionality. intros k.
-  apply functional_extensionality. intros x'.
-  f_equal.
-  
-  assert (Taylor_terms_finite : forall order : nat, (order > n)%nat -> iter D order (summation (fun (i : nat) (x' : R) => c i * x' ^ i) (S n)) 0 = iter D order (summation (fun (i : nat) (x' : R) => 0 * x' ^ i) (S n)) 0).
-  {
-    intros.
-    rewrite (iter_D_additive_over_summation D D_additive D_homog).
-    induction order.
-    - assert (~(0 > n)%nat) by inversion H.
-      contradiction.
-    - (* TO DO: I should just need to show that the (order+1)th derivative of a polynomial of degree n is 0.
-         I'm pretty sure I can do this without H or IHorder so I expect there's some redundancy in the above proof... *)
-      admit.
-  } *)
+  rewrite (c_implem i) by apply H.
+  reflexivity.
 Admitted.
 
 Theorem Taylor_implem :
