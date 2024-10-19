@@ -975,7 +975,19 @@ Proof.
 
   apply functional_extensionality.
 
-  assert (nat_le_gt_dichotomy : forall (x y : nat), (x <= y)%nat \/ (x > y)%nat).
+  intros.
+  induction n.
+  - simpl.
+    rewrite c_implem by auto.
+    reflexivity.
+  - 
+    (* simpl in *.
+    rewrite c_implem by auto.
+    rewrite IHn.
+    + simpl. *)
+
+
+  (* assert (nat_le_gt_dichotomy : forall (x y : nat), (x <= y)%nat \/ (x > y)%nat).
   {
     intros.
     destruct (Nat.lt_total x y) as [Hlt | [Heq | Hgt]].
@@ -990,7 +1002,9 @@ Proof.
 
   intros x.
 
-  (* apply functional_extensionality. intros x.
+  rewrite c_implem.
+
+  apply functional_extensionality. intros x.
   apply functional_extensionality. intros k.
   (* Case analysis on whether k <= n or k > n *)
   destruct (nat_le_gt_dichotomy k) as [Hk_le_n | Hk_gt_n].
