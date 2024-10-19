@@ -1170,36 +1170,59 @@ Proof.
     admit.
 Admitted.
 
-(*
-
-(* Closed under the global context *)
-Print Assumptions iter.
 
 (*
+
+(* 
+Closed under the global context
+*)
+Print Assumptions iter_expand_inner.
+
+
+(* 
 Axioms:
 ClassicalDedekindReals.sig_forall_dec : forall P : nat -> Prop, (forall n : nat, {P n} + {~ P n}) -> {n : nat | ~ P n} + {forall n : nat, P n}
 *)
 Print Assumptions Taylor_0_implem.
+Print Assumptions iter_additive.
+Print Assumptions iter_homog.
+Print Assumptions iter_D_additive.
+Print Assumptions iter_D_homog.
 
-(*
+
+(* 
 Axioms:
 ClassicalDedekindReals.sig_forall_dec : forall P : nat -> Prop, (forall n : nat, {P n} + {~ P n}) -> {n : nat | ~ P n} + {forall n : nat, P n}
 functional_extensionality_dep : forall (A : Type) (B : A -> Type) (f g : forall x : A, B x), (forall x : A, f x = g x) -> f = g
 *)
 Print Assumptions Taylor_1_implem.
 Print Assumptions Taylor_1_example_lemma_1.
-Print Assumptions nth_pow_deriv.
-Print Assumptions poly_term_deriv.
 Print Assumptions Taylor_1_example_lemma_2.
 Print Assumptions Taylor_1_example.
-Print Assumptions cubic_deriv.
+
+Print Assumptions nth_pow_deriv.
+Print Assumptions poly_term_deriv.
 Print Assumptions quadratic_deriv.
+Print Assumptions cubic_deriv.
 Print Assumptions linear_integral.
 Print Assumptions quadratic_integral.
+Print Assumptions nth_integral_of_zero.
+Print Assumptions nth_integration_constant.
+Print Assumptions summation_expand_lower.
+Print Assumptions summation_expand_lower_extensional.
+Print Assumptions D_additive_over_summation.
+Print Assumptions iter_D_additive_over_summation.
+Print Assumptions distr_over_summation.
+Print Assumptions summation_irrelavance_of_large_coeffs.
+
 
 (* Admitted *)
+Print Assumptions nth_pow_greater_deriv.
+Print Assumptions nth_pow_equal_deriv.
+Print Assumptions nth_pow_lesser_deriv.
+Print Assumptions Maclaurin_implem.
+Print Assumptions Taylor_a_equiv.
+Print Assumptions Taylor_implem.
 Print Assumptions Taylor_deriv.
-Print Assumptions fold_left_right_equiv.
-Print Assumptions Taylor_implem.          (*     <---- GOAL      *)
 
 *)
