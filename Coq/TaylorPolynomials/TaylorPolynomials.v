@@ -693,7 +693,6 @@ Proof.
 Qed.
 
 Lemma distr_over_summation :
-  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (n : nat) (F_ : nat -> R -> R) (s x : R),
     s * (summation F_ n) x = summation (fun i x' => s * (F_ i x')) n x.
 Proof.
@@ -711,14 +710,27 @@ Proof.
 Qed.
 
 Lemma summation_irrelavance_of_large_coeffs :
-  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (n : nat) (F_ G_ : nat -> R -> R),
 
   (forall (i : nat), (i <= n)%nat -> F_ i = G_ i) ->
     summation F_ (S n) = summation G_ (S n).
 Proof.
-  admit.
-Admitted.
+  intros.
+  simpl.
+  rewrite (H n) by auto.
+  apply functional_extensionality.
+  intros.
+  f_equal.
+  induction n.
+  - reflexivity.
+  - simpl.
+    rewrite IHn.
+    + rewrite (H n) by auto.
+      reflexivity.
+    + intros.
+      rewrite H by auto.
+      reflexivity.
+Qed.
 
 Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
