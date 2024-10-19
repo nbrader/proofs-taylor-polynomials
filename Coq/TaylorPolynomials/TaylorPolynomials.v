@@ -593,7 +593,6 @@ Proof.
 Qed.
 
 Lemma D_additive_over_summation :
-  (* Taylor n f is the Taylor polynomial of degree n of f *)
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -623,7 +622,6 @@ Proof.
 Qed.
 
 Lemma iter_D_additive :
-  (* Taylor n f is the Taylor polynomial of degree n of f *)
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -645,7 +643,6 @@ Proof.
 Qed.
 
 Lemma iter_D_homog :
-  (* Taylor n f is the Taylor polynomial of degree n of f *)
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -667,7 +664,6 @@ Proof.
 Qed.
 
 Lemma iter_D_additive_over_summation :
-  (* Taylor n f is the Taylor polynomial of degree n of f *)
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
 
@@ -694,6 +690,24 @@ Proof.
     rewrite <- IH.
     rewrite (iter_D_additive D D_additive D_homog order).
     reflexivity.
+Qed.
+
+Lemma distr_over_summation :
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (n : nat) (F_ : nat -> R -> R) (s x : R),
+    s * (summation F_ n) x = summation (fun i x' => s * (F_ i x')) n x.
+Proof.
+  intros.
+  induction n as [|n IH]; intros.
+
+  - (* Base case: n = 0 *)
+    simpl.
+    field.
+  
+  - (* Inductive step: n -> S n *)
+    simpl.
+    rewrite <- IH.
+    field.
 Qed.
 
 Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
@@ -938,10 +952,56 @@ Proof.
   intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F n.
   apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n 0 F)) in Taylor_degree.
   destruct Taylor_degree as [c Taylor_degree].
-  specialize Taylor_agrees_at_a with (degree:=n) (a:=0) (F:=F).
+  specialize Taylor_agrees_at_a with (degree:=n) (a:=0) (F:=F) as Taylor_agrees_at_0. clear Taylor_agrees_at_a.
   rewrite Taylor_degree in *. clear Taylor_degree.
+  
+  assert (c_implem : forall i : nat, (i <= n)%nat -> c i = iter D i F 0 / INR (fact i)).
+  {
+    intros i max_i_is_n.
+    specialize (Taylor_agrees_at_0 i).
+    rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
+    apply Taylor_agrees_at_0 in max_i_is_n as H. clear Taylor_agrees_at_0.
+    simpl in H.
+    assert (summation (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) n 0 = 0).
+    {
+      admit.
+    }
+    rewrite H0 in H. clear H0.
+    rewrite (iter_D_homog D D_additive D_homog) in H.
+    rewrite <- H.
+    simpl.
+    admit.
+  }
 
-  (* TO DO: I think I need to move the dichotomy up here because the f_equal below assumes the functions being summed over are equal but they don't have to be. *)
+  apply functional_extensionality.
+
+  assert (nat_le_gt_dichotomy : forall (x y : nat), (x <= y)%nat \/ (x > y)%nat).
+  {
+    intros.
+    destruct (Nat.lt_total x y) as [Hlt | [Heq | Hgt]].
+    - (* x < y *)
+      left. apply Nat.lt_le_incl. assumption.
+    - (* x = y *)
+      left. rewrite Heq. apply Nat.le_refl.
+    - (* x > y *)
+      right. assumption.
+  }
+  specialize nat_le_gt_dichotomy with (y:=n).
+
+  intros x.
+
+  (* apply functional_extensionality. intros x.
+  apply functional_extensionality. intros k.
+  (* Case analysis on whether k <= n or k > n *)
+  destruct (nat_le_gt_dichotomy k) as [Hk_le_n | Hk_gt_n].
+
+  - (* Case 1: k <= n *)
+    apply Taylor_agrees_at_a in Hk_le_n.
+    admit.
+
+  - (* Case 2: k > n *)
+    apply Taylor_terms_finite in Hk_gt_n.
+    admit.
 
   f_equal.
 
@@ -959,31 +1019,7 @@ Proof.
     - (* TO DO: I should just need to show that the (order+1)th derivative of a polynomial of degree n is 0.
          I'm pretty sure I can do this without H or IHorder so I expect there's some redundancy in the above proof... *)
       admit.
-  }
-  
-  assert (nat_le_gt_dichotomy : forall (x y : nat), (x <= y)%nat \/ (x > y)%nat).
-  {
-    intros.
-    destruct (Nat.lt_total x y) as [Hlt | [Heq | Hgt]].
-    - (* x < y *)
-      left. apply Nat.lt_le_incl. assumption.
-    - (* x = y *)
-      left. rewrite Heq. apply Nat.le_refl.
-    - (* x > y *)
-      right. assumption.
-  }
-  specialize nat_le_gt_dichotomy with (y:=n).
-
-  (* Case analysis on whether k <= n or k > n *)
-  destruct (nat_le_gt_dichotomy k) as [Hk_le_n | Hk_gt_n].
-
-  - (* Case 1: k <= n *)
-    apply Taylor_agrees_at_a in Hk_le_n.
-    admit.
-
-  - (* Case 2: k > n *)
-    apply Taylor_terms_finite in Hk_gt_n.
-    admit.
+  } *)
 Admitted.
 
 Theorem Taylor_implem :
