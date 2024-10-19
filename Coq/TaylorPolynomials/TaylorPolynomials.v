@@ -205,6 +205,90 @@ Proof.
   apply H0.
 Qed.
 
+Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (f g : R -> R) (n : nat),
+    iter D n (fun x => f x + g x) = fun x => iter D n f x + iter D n g x.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    reflexivity.
+  - simpl.
+    rewrite <- (D_additive (iter D n f) (iter D n g)).
+    rewrite <- IHn.
+    reflexivity.
+Qed.
+
+Lemma iter_homog : forall (D : (R -> R) -> (R -> R)),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (f : R -> R) (s : R) (n : nat),
+    iter D n (fun x => s * f x) = fun x => s * iter D n f x.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    reflexivity.
+  - simpl.
+    rewrite <- (D_homog (iter D n f) s).
+    rewrite <- IHn.
+    reflexivity.
+Qed.
+
+Lemma iter_expand_inner : forall (D : (R -> R) -> (R -> R)),
+  forall (f : R -> R) (n : nat),
+  iter D (S n) f = iter D n (D f).
+Proof.
+  induction n.
+  - simpl.
+    reflexivity.
+  - simpl in *.
+    rewrite IHn.
+    reflexivity.
+Qed.
+
+Lemma iter_D_additive :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (order : nat),
+    forall (f g : R -> R), iter D order (fun x => f x + g x) = fun x => iter D order f x + iter D order g x.
+Proof.
+  intros D D_additive D_homog order f g.
+  induction order.
+  - reflexivity.
+  - simpl.
+    rewrite <- (D_additive (iter D order f) (iter D order g)).
+    rewrite <- IHorder.
+    reflexivity.
+Qed.
+
+Lemma iter_D_homog :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (order : nat),
+    forall (f : R -> R), forall (s : R), iter D order (fun x => s * f x) = fun x => s * iter D order f x.
+Proof.
+  intros D D_additive D_homog order f s.
+  induction order.
+  - reflexivity.
+  - simpl.
+    rewrite <- (D_homog (iter D order f) s).
+    rewrite <- IHorder.
+    reflexivity.
+Qed.
+
 Theorem nth_pow_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
@@ -230,6 +314,62 @@ Proof.
     rewrite tech_pow_Rplus.
     reflexivity.
 Qed.
+
+Theorem nth_pow_greater_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n i : nat), (i > n)%nat -> iter D i (fun x => x^n) = fun _ => 0.
+Proof.
+  intros D unit_deriv linear_deriv D_additive D_homog D_product_rule n i i_gt_n.
+  assert (forall i : nat, (i > n)%nat -> exists j : nat, i = S j).
+  {
+    intros.
+    destruct i0.
+    - inversion H.
+    - exists i0. reflexivity.
+  }
+  apply H in i_gt_n as H0. clear H.
+  destruct H0 as [j H].
+  rewrite H.
+  induction n.
+  - rewrite iter_expand_inner.
+    simpl.
+    rewrite unit_deriv.
+    replace (fun _ : R => 0) with (fun _ : R => 0*0) by (apply functional_extensionality; intros; ring).
+    rewrite (iter_D_homog D D_additive D_homog).
+    apply functional_extensionality.
+    intros.
+    ring.
+  - rewrite iter_expand_inner.
+    replace (fun x : R => x ^ S n) with (fun x : R => x ^ (n+1)%nat) by (apply functional_extensionality; intros; rewrite Nat.add_1_r; reflexivity).
+    rewrite (nth_pow_deriv D linear_deriv D_product_rule n).
+    rewrite (iter_D_homog D D_additive D_homog).
+Admitted.
+
+Theorem nth_pow_equal_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n : nat), iter D n (fun x => x^n) = fun _ => INR (fact n).
+Proof.
+  intros.
+Admitted.
+
+Theorem nth_pow_lesser_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n i : nat), (i > n)%nat -> iter D i (fun x => x^n) = fun x => INR (fact n / fact (n-i)) * x^(n-i).
+Proof.
+  intros.
+Admitted.
 
 Theorem poly_term_deriv :
   (* Denote the derivative by D *)
@@ -621,48 +761,6 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma iter_D_additive :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-
-  (* Derivative properties *)
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-
-  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
-  forall (order : nat),
-    forall (f g : R -> R), iter D order (fun x => f x + g x) = fun x => iter D order f x + iter D order g x.
-Proof.
-  intros D D_additive D_homog order f g.
-  induction order.
-  - reflexivity.
-  - simpl.
-    rewrite <- (D_additive (iter D order f) (iter D order g)).
-    rewrite <- IHorder.
-    reflexivity.
-Qed.
-
-Lemma iter_D_homog :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-
-  (* Derivative properties *)
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-
-  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
-  forall (order : nat),
-    forall (f : R -> R), forall (s : R), iter D order (fun x => s * f x) = fun x => s * iter D order f x.
-Proof.
-  intros D D_additive D_homog order f s.
-  induction order.
-  - reflexivity.
-  - simpl.
-    rewrite <- (D_homog (iter D order f) s).
-    rewrite <- IHorder.
-    reflexivity.
-Qed.
-
 Lemma iter_D_additive_over_summation :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
@@ -730,48 +828,6 @@ Proof.
     + intros.
       rewrite H by auto.
       reflexivity.
-Qed.
-
-Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (f g : R -> R) (n : nat),
-    iter D n (fun x => f x + g x) = fun x => iter D n f x + iter D n g x.
-Proof.
-  intros.
-  induction n.
-  - simpl.
-    reflexivity.
-  - simpl.
-    rewrite <- (D_additive (iter D n f) (iter D n g)).
-    rewrite <- IHn.
-    reflexivity.
-Qed.
-
-Lemma iter_homog : forall (D : (R -> R) -> (R -> R)),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-  forall (f : R -> R) (s : R) (n : nat),
-    iter D n (fun x => s * f x) = fun x => s * iter D n f x.
-Proof.
-  intros.
-  induction n.
-  - simpl.
-    reflexivity.
-  - simpl.
-    rewrite <- (D_homog (iter D n f) s).
-    rewrite <- IHn.
-    reflexivity.
-Qed.
-
-Lemma iter_expand_inner : forall (D : (R -> R) -> (R -> R)),
-  forall (f : R -> R) (n : nat),
-  iter D (S n) f = iter D n (D f).
-Proof.
-  induction n.
-  - simpl.
-    reflexivity.
-  - simpl in *.
-    rewrite IHn.
-    reflexivity.
 Qed.
 
 Theorem nth_integral_of_zero :
@@ -982,16 +1038,12 @@ Proof.
     intros i max_i_is_n.
     specialize (Taylor_agrees_at_0 i).
     rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
-    apply Taylor_agrees_at_0 in max_i_is_n as H. clear Taylor_agrees_at_0.
-    simpl in H.
-    assert (summation (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) n 0 = 0).
-    {
-      admit.
-    }
-    rewrite H0 in H. clear H0.
-    rewrite (iter_D_homog D D_additive D_homog) in H.
-    rewrite <- H.
-    simpl.
+    apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
+    
+    replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_additive D_homog); reflexivity).
+    (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
+    (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
+    (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
     admit.
   }
 
