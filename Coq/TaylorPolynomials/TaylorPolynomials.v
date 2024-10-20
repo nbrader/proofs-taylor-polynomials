@@ -580,6 +580,17 @@ Proof.
     reflexivity.
 Qed. *)
 
+Theorem le_equiv : forall (n m : nat), (exists (k : nat), (n + k)%nat = m) <-> (n <= m)%nat.
+Proof.
+  split.
+  - intros.
+    destruct H.
+    rewrite <- H.
+    apply Nat.le_add_r.
+  - intros.
+    admit.
+Admitted.
+
 Theorem nth_pow_lesser_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
@@ -619,25 +630,11 @@ Proof.
                
                unfold lt in *.
 
-               assert (forall (n m : nat), (exists (k : nat), (n + k)%nat = m) -> (n <= m)%nat).
-               {
-                 intros.
-                 destruct H0.
-                 rewrite <- H0.
-                 apply Nat.le_add_r.
-               }
-
-               assert (forall (n m : nat), (n <= m)%nat -> (exists (k : nat), (n + k)%nat = m)).
-               {
-                 intros.
-                 admit.
-               }
-
-               apply H0.
-               apply H1 in IHn.
+               apply le_equiv.
+               apply le_equiv in IHn.
                destruct IHn.
                
-               rewrite <- H2.
+               rewrite <- H0.
                simpl.
                exists ((x0 + n * S x0)%nat).
                reflexivity.
@@ -717,6 +714,9 @@ Theorem nth_pow_greater_deriv :
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (n i : nat), (i > n)%nat -> iter D i (fun x => x^n) = fun _ => 0.
 Proof.
+  intros.
+  (* Use le_equiv and a new lemma for splitting and iteration into two applied after each other to reduce this to the above lemmas of nth_pow_lesser_deriv and nth_pow_equal_deriv *)
+
   (* intros D unit_deriv linear_deriv D_additive D_homog D_product_rule n i i_gt_n.
 
 
