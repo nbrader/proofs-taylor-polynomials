@@ -480,14 +480,13 @@ Lemma iter_D_homog :
   forall (D : (R -> R) -> (R -> R)),
 
   (* Derivative properties *)
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (order : nat),
     forall (f : R -> R), forall (s : R), iter D order (fun x => s * f x) = fun x => s * iter D order f x.
 Proof.
-  intros D D_additive D_homog order f s.
+  intros D D_homog order f s.
   induction order.
   - reflexivity.
   - simpl.
@@ -522,6 +521,192 @@ Proof.
     reflexivity.
 Qed.
 
+Lemma zero_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (x : R), D (fun _ => 0) x = (fun _ => 0) x.
+Proof.
+  intros.
+  replace (0) with (0*1) by field.
+  rewrite (D_homog (fun _ => 1) 0).
+  field.
+Qed.
+
+Lemma zero_deriv_extensional :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  D (fun _ => 0) = (fun _ => 0).
+Proof.
+  intros.
+  apply functional_extensionality.
+  intros.
+  apply (zero_deriv D D_homog).
+Qed.
+
+Lemma zero_nth_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (n : nat),
+  forall (x : R), iter D (n+1) (fun _ => 0) x = (fun _ => 0) x.
+Proof.
+  intros.
+  replace (0) with (0*1) by field.
+  rewrite (iter_D_homog D D_homog (n+1) (fun _ => 1) 0).
+  field.
+Qed.
+
+Lemma zero_nth_deriv_extensional :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (n : nat),
+  iter D (n+1) (fun _ => 0) = (fun _ => 0).
+Proof.
+  intros.
+  apply functional_extensionality.
+  intros.
+  apply (zero_nth_deriv D D_homog).
+Qed.
+
+(* Lemma max_i_0 : forall i : nat, Init.Nat.max i 0 = i.
+Proof.
+  intros i.
+  destruct i as [| i'].
+  - reflexivity.  (* max 0 0 = 0 *)
+  - simpl.        (* max (S i') 0 = S i' *)
+    reflexivity.
+Qed. *)
+
+Theorem nth_pow_lesser_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n i : nat), (i < n)%nat -> iter D i (fun x => x^n) = fun x => INR (fact n) / INR (fact (n-i)) * x^(n-i).
+Proof.
+  intros.
+  destruct n.
+  - inversion H.
+  - induction i.
+    + simpl.
+      rewrite Nat.add_comm.
+      rewrite Nat.mul_comm.
+      rewrite mult_n_Sm.
+      apply functional_extensionality.
+      intros.
+      replace (INR (fact n * S n) / INR (fact n * S n)) with (INR 1).
+      * simpl.
+        ring.
+      * unfold Rdiv.
+        rewrite Rinv_r.
+        -- reflexivity.
+        -- assert ((0 < fact n)%nat).
+           {
+             induction n.
+             - simpl.
+               auto.
+             - simpl.
+               assert ((0 < S n)%nat).
+               {
+                 unfold lt.
+                 apply le_n_S.
+                 apply Nat.le_0_l.
+               }
+               specialize (IHn H0). clear H0.
+               
+               unfold lt in *.
+
+               assert (forall (n m : nat), (exists (k : nat), (n + k)%nat = m) -> (n <= m)%nat).
+               {
+                 intros.
+                 destruct H0.
+                 rewrite <- H0.
+                 apply Nat.le_add_r.
+               }
+
+               assert (forall (n m : nat), (n <= m)%nat -> (exists (k : nat), (n + k)%nat = m)).
+               {
+                 intros.
+                 admit.
+               }
+
+               apply H0.
+               apply H1 in IHn.
+               destruct IHn.
+               
+               rewrite <- H2.
+               simpl.
+               exists ((x0 + n * S x0)%nat).
+               reflexivity.
+           }
+           admit.
+    + simpl.
+      admit.
+      
+      (* assert (i = O).
+      {
+        rewrite Nat.lt_succ_r in H.
+        apply (max_r i O) in H.
+        rewrite max_i_0 in H.
+        apply H.
+      }
+      clear H.
+      rewrite H0. clear H0.
+
+      simpl.
+      apply functional_extensionality.
+      intros.
+      field.
+    + unfold lt in H.
+      apply le_S_n in H.
+    
+      replace (fun x : R => x ^ 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
+    rewrite iter_expand_inner.
+    replace (fun x : R => x ^ S n) with (fun x : R => x ^ (n+1)%nat) by (apply functional_extensionality; intros; rewrite Nat.add_1_r; reflexivity).
+    rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+    rewrite (iter_D_homog D D_homog).
+    rewrite IHn.
+    simpl.
+    rewrite plus_INR.
+    rewrite plus_INR.
+    rewrite mult_INR.
+    rewrite Rmult_plus_distr_r.
+    simpl (INR 1).
+    rewrite Rmult_1_l.
+    rewrite Rplus_comm.
+    reflexivity. *)
+Admitted.
+
+Theorem nth_pow_equal_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n : nat), iter D n (fun x => x^n) = fun _ => INR (fact n).
+Proof.
+  intros.
+  induction n.
+  - reflexivity.
+  - rewrite iter_expand_inner.
+    replace (fun x : R => x ^ S n) with (fun x : R => x ^ (n+1)%nat) by (apply functional_extensionality; intros; rewrite Nat.add_1_r; reflexivity).
+    rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+    rewrite (iter_D_homog D D_homog).
+    rewrite IHn.
+    simpl.
+    rewrite plus_INR.
+    rewrite plus_INR.
+    rewrite mult_INR.
+    rewrite Rmult_plus_distr_r.
+    simpl (INR 1).
+    rewrite Rmult_1_l.
+    rewrite Rplus_comm.
+    reflexivity.
+Qed.
+
 Theorem nth_pow_greater_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
@@ -532,7 +717,10 @@ Theorem nth_pow_greater_deriv :
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (n i : nat), (i > n)%nat -> iter D i (fun x => x^n) = fun _ => 0.
 Proof.
-  intros D unit_deriv linear_deriv D_additive D_homog D_product_rule n i i_gt_n.
+  (* intros D unit_deriv linear_deriv D_additive D_homog D_product_rule n i i_gt_n.
+
+
+
   assert (forall i : nat, (i > n)%nat -> exists j : nat, i = S j).
   {
     intros.
@@ -542,40 +730,27 @@ Proof.
   }
   apply H in i_gt_n as H0. clear H.
   destruct H0 as [j H].
+
   rewrite H.
+  induction i.
+  - inversion H.
+  - 
+
+
+
   induction n.
   - rewrite iter_expand_inner.
     simpl.
     rewrite unit_deriv.
     replace (fun _ : R => 0) with (fun _ : R => 0*0) by (apply functional_extensionality; intros; ring).
-    rewrite (iter_D_homog D D_additive D_homog).
+    rewrite (iter_D_homog D D_homog).
     apply functional_extensionality.
     intros.
     ring.
   - rewrite iter_expand_inner.
     replace (fun x : R => x ^ S n) with (fun x : R => x ^ (n+1)%nat) by (apply functional_extensionality; intros; rewrite Nat.add_1_r; reflexivity).
     rewrite (nth_pow_deriv D linear_deriv D_product_rule n).
-    rewrite (iter_D_homog D D_additive D_homog).
-Admitted.
-
-Theorem nth_pow_equal_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (n : nat), iter D n (fun x => x^n) = fun _ => INR (fact n).
-Proof.
-  intros.
-Admitted.
-
-Theorem nth_pow_lesser_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (n i : nat), (i > n)%nat -> iter D i (fun x => x^n) = fun x => INR (fact n / fact (n-i)) * x^(n-i).
-Proof.
-  intros.
+    rewrite (iter_D_homog D D_homog). *)
 Admitted.
 
 Theorem poly_term_deriv :
@@ -750,9 +925,7 @@ Proof.
 
   - (* Base case: n = 0 *)
     simpl.
-    replace (0) with (0*1) by field.
-    rewrite (D_homog (fun _ => 1) 0).
-    field.
+    apply (zero_deriv D D_homog).
   
   - (* Inductive step: n -> S n *)
     simpl.
@@ -780,7 +953,7 @@ Proof.
   - (* Base case: n = 0 *)
     simpl.
     replace (0) with (0*1) by field.
-    rewrite (iter_D_homog D D_additive D_homog order (fun _ => 1) 0).
+    rewrite (iter_D_homog D D_homog order (fun _ => 1) 0).
     field.
   
   - (* Inductive step: n -> S n *)
@@ -1037,7 +1210,7 @@ Proof.
     rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
     apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
     
-    replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_additive D_homog); reflexivity).
+    replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
     (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
     (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
     (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
