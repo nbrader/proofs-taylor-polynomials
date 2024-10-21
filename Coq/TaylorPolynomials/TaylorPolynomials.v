@@ -1271,14 +1271,13 @@ Proof.
         field.
       + induction n.
         * reflexivity.
-        * simpl in *.
+        * specialize (IHn (Nat.le_0_l n)).
+          simpl in *.
           assert ((c (S n) * (0 * 0 ^ n) + summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0 + c 0%nat * 1) = (summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0 + c 0%nat * 1)) by ring.
           rewrite H in ith_deriv. clear H.
           replace (c (S n) * (0 * 0 ^ n) + summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) with (summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) by ring.
-          rewrite <- IHn.
-          -- reflexivity.
-          -- apply Nat.le_0_l.
-          -- apply ith_deriv.
+          rewrite <- (IHn ith_deriv).
+          reflexivity.
     - admit.
     (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
     (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
