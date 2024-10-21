@@ -1278,7 +1278,13 @@ Proof.
           replace (c (S n) * (0 * 0 ^ n) + summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) with (summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) by ring.
           rewrite <- (IHn ith_deriv).
           reflexivity.
-    - admit.
+    - assert ((S i' <= S n)%nat) by auto. clear max_i_is_n.
+      apply le_S_n in H.
+      apply IHi' in H.
+      + clear IHi'.
+        admit.
+      + clear IHi'.
+        admit.
     (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
     (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
     (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
