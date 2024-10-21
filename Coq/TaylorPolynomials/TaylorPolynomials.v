@@ -876,11 +876,33 @@ Proof.
   ring.
 Qed.
 
+(*
+  Make mconcat taking monoid, a function from the naturals to the monoid and the successor of the last input to that function and use it instead of summation.
+  Define the monoid of reals under addition, the monoid of functions from the reals to the reals under point-wise addition.
+*)
 Fixpoint summation (F_ : nat -> R -> R) (n : nat) : R -> R := fun (x : R) =>
   match n with
     | O => 0
     | S n' => F_ n' x + summation F_ n' x
   end.
+
+Fixpoint summation_R (c_ : nat -> R) (n : nat) : R :=
+  match n with
+    | O => 0
+    | S n' => c_ n' + summation_R c_ n'
+  end.
+
+Lemma summation_app :
+  forall (F_ : nat -> R -> R) (n : nat) (x : R),
+    summation F_ n x = summation_R (fun i => F_ i x) n.
+Proof.
+  intros.
+  induction n.
+  - reflexivity.
+  - simpl.
+    rewrite IHn.
+    reflexivity.
+Qed.
 
 Lemma summation_expand_lower :
   forall (F_ : nat -> R -> R) (n : nat) (x : R),
@@ -1263,6 +1285,39 @@ Proof.
     
     replace (fun i : nat => iter D i' (fun x' : R => c i * x' ^ i)) with (fun i : nat => fun x : R => c i * iter D i' (fun x' : R => x' ^ i) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
     
+    (* Check this is provable *)
+    assert (H0 : i' = 0%nat -> c i' = iter D i' F 0 / INR (fact i')).
+    {
+      intros H.
+      rewrite <- ith_deriv.
+      rewrite H.
+      rewrite summation_expand_lower.
+      simpl.
+      rewrite summation_app.
+
+      assert ((fun i : nat => c (S i) * (0 * 0 ^ i)) = fun _ => 0).
+      {
+        apply functional_extensionality.
+        intros.
+        ring.
+      }
+      rewrite H0. clear H0.
+
+      assert (summation_R (fun _ : nat => 0) n = 0).
+      {
+        induction n.
+        - reflexivity.
+        - simpl.
+          rewrite IHn.
+          + ring.
+          + rewrite H.
+            apply Nat.le_0_l.
+          + admit.
+      }
+      rewrite H0.
+      field.
+    }
+
     induction i'.
     - rewrite summation_expand_lower in ith_deriv.
       simpl in *.
@@ -1285,6 +1340,7 @@ Proof.
         admit.
       + clear IHi'.
         admit.
+      + admit.
     (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
     (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
     (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
