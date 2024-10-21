@@ -38,38 +38,6 @@ Proof.
     reflexivity.
 Qed.
 
-Theorem quadratic_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  D (fun x => x^2) = fun x => 2*x.
-Proof.
-  intros.
-  replace (fun x : R => x ^ 2) with (fun x : R => x ^ (1+1)) by auto.
-  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
-  apply functional_extensionality.
-  intros.
-  simpl.
-  ring.
-Qed.
-
-Theorem cubic_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  D (fun x => x^3) = fun x => 3*x*x.
-Proof.
-  intros.
-  replace (fun x : R => x ^ 3) with (fun x : R => x ^ (1+1+1)) by auto.
-  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
-  apply functional_extensionality.
-  intros.
-  simpl.
-  ring.
-Qed.
-
 Theorem linear_integral_ :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
@@ -86,17 +54,24 @@ Proof.
   intros.
   split.
   - intros.
-    pose proof (quadratic_deriv D linear_deriv D_product_rule).
+    assert (quadratic_deriv : D (fun x : R => x ^ 2) = (fun x : R => 2 * x)).
+    {
+      pose proof (nth_pow_deriv D linear_deriv D_product_rule 1).
+      simpl in *.
+      rewrite H0.
+      apply functional_extensionality.
+      intros.
+      ring.
+    }
     assert (D (fun x : R => c / 2 * (x^2)) = (fun x : R => c * x)).
     {
       rewrite D_homog.
-      rewrite H0.
+      rewrite quadratic_deriv.
       apply functional_extensionality.
       intro.
       field.
     }
-    clear H0.
-    rewrite <- H1 in H. clear H1.
+    rewrite <- H0 in H. clear H0.
     assert ((fun x : R => c / 2 * (x^2)) = (fun x : R => 1 / 2 * c * x^2)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
     assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
     {
@@ -143,6 +118,15 @@ Proof.
     apply integration_constant.
     apply H.
   - intros.
+    assert (quadratic_deriv : D (fun x : R => x ^ 2) = (fun x : R => 2 * x)).
+    {
+      pose proof (nth_pow_deriv D linear_deriv D_product_rule 1).
+      simpl in *.
+      rewrite H0.
+      apply functional_extensionality.
+      intros.
+      ring.
+    }
     destruct H.
     rewrite H.
     rewrite D_additive.
@@ -159,7 +143,7 @@ Proof.
     apply functional_extensionality.
     intro.
     rewrite (D_homog (fun x0 : R => x0^2) (1/2 * c)).
-    rewrite (quadratic_deriv D linear_deriv D_product_rule).
+    rewrite quadratic_deriv.
     field.
 Qed.
 
@@ -191,7 +175,16 @@ Proof.
       (* Use D_homog and D_product_rule to handle the derivative of x^3 *)
       (* Proof omitted, but follows from applying the hypothesis *)
       rewrite (D_homog (fun x : R => (x^3)) (1 / 3 * c)).
-      rewrite (cubic_deriv D linear_deriv D_product_rule).
+      assert (cubic_deriv : D (fun x : R => x^3) = (fun x : R => 3 * x^2)).
+      {
+        pose proof (nth_pow_deriv D linear_deriv D_product_rule 2).
+        simpl in *.
+        rewrite H0.
+        apply functional_extensionality.
+        intros.
+        ring.
+      }
+      rewrite cubic_deriv. clear cubic_deriv.
       apply functional_extensionality.
       intro.
       field.
@@ -226,11 +219,19 @@ Proof.
       reflexivity.
     }
     rewrite H. clear H.
-    pose proof (cubic_deriv D linear_deriv D_product_rule).
+    assert (cubic_deriv : D (fun x : R => x^3) = (fun x : R => 3 * x^2)).
+    {
+      pose proof (nth_pow_deriv D linear_deriv D_product_rule 2).
+      simpl in *.
+      rewrite H.
+      apply functional_extensionality.
+      intros.
+      ring.
+    }
     assert (D (fun x : R => (1/3*c) * (x^3)) = (fun x : R => c * (x^2))).
     {
       rewrite (D_homog (fun x : R => (x^3)) (1 / 3 * c)).
-      rewrite (cubic_deriv D linear_deriv D_product_rule).
+      rewrite cubic_deriv.
       apply functional_extensionality.
       intro.
       field.
@@ -238,7 +239,7 @@ Proof.
     replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
     apply functional_extensionality.
     intro.
-    rewrite H0.
+    rewrite H.
     field.
     (* Derive that D f = fun x => c * x^2 *)
     (* Proof omitted for brevity, but follows directly *)
@@ -1520,10 +1521,6 @@ Print Assumptions nth_pow_deriv.
   nth_integral_of_zero
 Print Assumptions poly_term_deriv.
 
-Print Assumptions quadratic_deriv.
-  linear_integral_
-Print Assumptions cubic_deriv.
-  quadratic_integral_
 Print Assumptions linear_integral_.
   Taylor_1_example_lemma_1   <-- Should use this but assumes it instead
   Taylor_1_example_lemma_2   <-- Should use this but assumes it instead
