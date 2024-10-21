@@ -1223,6 +1223,74 @@ Proof.
   reflexivity.
 Admitted.
 
+Theorem Maclaurin_implem_2 :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+
+  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
+  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (F : R -> R) (n : nat),
+    Taylor n 0 F = summation (fun k x' => (iter D k F 0 / INR (fact k)) * x' ^ k) (S n). (* <---- TO DO: Check this assertion is valid with a couple examples *)
+Proof.
+  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F n.
+  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n 0 F)) in Taylor_degree.
+  destruct Taylor_degree as [c Taylor_degree].
+  specialize Taylor_agrees_at_a with (degree:=n) (a:=0) (F:=F) as Taylor_agrees_at_0. clear Taylor_agrees_at_a.
+  rewrite Taylor_degree in *. clear Taylor_degree.
+  
+  assert (c_implem : forall i : nat, (i <= n)%nat -> c i = iter D i F 0 / INR (fact i)).
+  {
+    intros i' max_i_is_n.
+    specialize (Taylor_agrees_at_0 i').
+    rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
+    apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
+    
+    replace (fun i : nat => iter D i' (fun x' : R => c i * x' ^ i)) with (fun i : nat => fun x : R => c i * iter D i' (fun x' : R => x' ^ i) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
+    
+    induction i'.
+    - rewrite summation_expand_lower in ith_deriv.
+      simpl in *.
+      replace (summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) with 0 in ith_deriv.
+      + rewrite <- ith_deriv.
+        field.
+      + induction n.
+        * reflexivity.
+        * simpl in *.
+          assert ((c (S n) * (0 * 0 ^ n) + summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0 + c 0%nat * 1) = (summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0 + c 0%nat * 1)) by ring.
+          rewrite H in ith_deriv. clear H.
+          replace (c (S n) * (0 * 0 ^ n) + summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) with (summation (fun (i : nat) (x' : R) => c (S i) * (x' * x' ^ i)) n 0) by ring.
+          rewrite <- IHn.
+          -- reflexivity.
+          -- apply Nat.le_0_l.
+          -- apply ith_deriv.
+    - admit.
+    (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
+    (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
+    (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
+  }
+
+  apply summation_irrelavance_of_large_coeffs.
+  intros.
+  rewrite (c_implem i) by apply H.
+  reflexivity.
+Admitted.
+
 Theorem Taylor_a_equiv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
