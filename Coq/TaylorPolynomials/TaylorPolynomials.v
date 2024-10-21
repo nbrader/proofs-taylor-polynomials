@@ -12,18 +12,45 @@ I'm going to avoid having to define differentiation, limits etc.
 As such, I'll assume only the properties of differentiation I require.
 *)
 
+Theorem nth_pow_deriv :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (n : nat), D (fun x => x^(n+1)) = fun x => INR (n+1) * x^n.
+Proof.
+  intros D linear_deriv D_product_rule.
+  induction n as [|n IH]; intros.
+  - simpl.
+    replace (fun x : R => x * 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
+    replace (1 * 1) with (1) by ring.
+    apply linear_deriv.
+  - replace (fun x : R => x ^ (S n + 1)) with (fun x : R => x * x ^ (S n)) by (apply functional_extensionality; intros; rewrite pow_add; rewrite pow_1; rewrite Rmult_comm; auto).
+    rewrite D_product_rule.
+    rewrite linear_deriv.
+    replace (fun x0 : R => x0 ^ S n) with (fun x : R => x ^ (n + 1)) by (apply functional_extensionality; intros; f_equal; apply Nat.add_1_r).
+    rewrite IH.
+    apply functional_extensionality.
+    intros.
+    replace (1 * x ^ S n) with (x ^ S n) by ring.
+    replace (x * (INR (n + 1) * x ^ n)) with ((INR (n + 1) * x ^ (S n))) by (simpl; ring).
+    rewrite tech_pow_Rplus.
+    reflexivity.
+Qed.
+
 Theorem quadratic_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
   forall (linear_deriv : D (fun x => x) = fun x => 1),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  D (fun x => x*x) = fun x => 2*x.
+  D (fun x => x^2) = fun x => 2*x.
 Proof.
   intros.
-  rewrite (D_product_rule (fun x => x) (fun x => x)).
-  rewrite linear_deriv.
+  replace (fun x : R => x ^ 2) with (fun x : R => x ^ (1+1)) by auto.
+  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
   apply functional_extensionality.
-  intro.
+  intros.
+  simpl.
   ring.
 Qed.
 
@@ -32,14 +59,14 @@ Theorem cubic_deriv :
   forall (D : (R -> R) -> (R -> R)),
   forall (linear_deriv : D (fun x => x) = fun x => 1),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  D (fun x => x*x*x) = fun x => 3*x*x.
+  D (fun x => x^3) = fun x => 3*x*x.
 Proof.
   intros.
-  rewrite (D_product_rule (fun x => x * x) (fun x => x)).
-  rewrite (D_product_rule (fun x => x) (fun x => x)).
-  rewrite linear_deriv.
+  replace (fun x : R => x ^ 3) with (fun x : R => x ^ (1+1+1)) by auto.
+  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
   apply functional_extensionality.
-  intro.
+  intros.
+  simpl.
   ring.
 Qed.
 
@@ -54,13 +81,13 @@ Theorem linear_integral_ :
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
-  forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x*x + c'.
+  forall (f : R -> R) (c : R), (D f = fun x => c*x) <-> exists (c' : R), f = fun x => (1/2)*c*x^2 + c'.
 Proof.
   intros.
   split.
   - intros.
     pose proof (quadratic_deriv D linear_deriv D_product_rule).
-    assert (D (fun x : R => c / 2 * (x * x)) = (fun x : R => c * x)).
+    assert (D (fun x : R => c / 2 * (x^2)) = (fun x : R => c * x)).
     {
       rewrite D_homog.
       rewrite H0.
@@ -70,7 +97,7 @@ Proof.
     }
     clear H0.
     rewrite <- H1 in H. clear H1.
-    assert ((fun x : R => c / 2 * (x * x)) = (fun x : R => 1 / 2 * c * x * x)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
+    assert ((fun x : R => c / 2 * (x^2)) = (fun x : R => 1 / 2 * c * x^2)) by (apply functional_extensionality; intro; field). rewrite H0 in H. clear H0.
     assert (forall (c0 : R) (f : R -> R), D f = (fun x0 : R => D f x0 + D (fun _ : R => c0) x0)).
     {
       intro.
@@ -123,7 +150,7 @@ Proof.
     rewrite (D_homog (fun _ => 1) x).
     rewrite unit_deriv.
     replace (x * 0) with 0 by ring.
-    replace (D (fun x1 : R => 1 / 2 * c * x1 * x1)) with (fun x1 : R => c * x1).
+    replace (D (fun x1 : R => 1 / 2 * c * x1^2)) with (fun x1 : R => c * x1).
     {
       apply functional_extensionality.
       intro.
@@ -131,9 +158,7 @@ Proof.
     }
     apply functional_extensionality.
     intro.
-    assert ((fun x1 : R => 1 / 2 * c * x1 * x1) = (fun x1 : R => 1 / 2 * c * (x1 * x1))) by (apply functional_extensionality; intro; ring).
-    rewrite H0.
-    rewrite (D_homog (fun x0 : R => x0 * x0) (1/2 * c)).
+    rewrite (D_homog (fun x0 : R => x0^2) (1/2 * c)).
     rewrite (quadratic_deriv D linear_deriv D_product_rule).
     field.
 Qed.
@@ -149,7 +174,7 @@ Theorem quadratic_integral_ :
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
-  forall (f : R -> R) (c : R), (D f = fun x => c*x*x) <-> exists (c' : R), f = fun x => (1/3)*c*x*x*x + c'.
+  forall (f : R -> R) (c : R), (D f = fun x => c*x^2) <-> exists (c' : R), f = fun x => (1/3)*c*x^3 + c'.
 Proof.
   intros D zero_integral constant_integral unit_deriv linear_deriv
          D_additive D_homog D_product_rule integration_constant f c.
@@ -161,26 +186,26 @@ Proof.
     
     (* Step 2: Consider a candidate solution *)
     (* Let g(x) = (1/3) * c * x^3. By differentiating this, we get g'(x) = c * x^2 *)
-    assert (H2 : D (fun x => (1/3) * c * (x*x*x)) = fun x => c * x*x).
+    assert (H2 : D (fun x => (1/3) * c * (x^3)) = fun x => c * x^2).
     { (* Derive this from the linearity and power rule of the derivative *)
       (* Use D_homog and D_product_rule to handle the derivative of x^3 *)
       (* Proof omitted, but follows from applying the hypothesis *)
-      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
+      rewrite (D_homog (fun x : R => (x^3)) (1 / 3 * c)).
       rewrite (cubic_deriv D linear_deriv D_product_rule).
       apply functional_extensionality.
       intro.
       field.
     }
     
-    assert (H1 : D (fun x => (1/3) * c * x*x*x) = fun x => c * x*x).
+    assert (H1 : D (fun x => (1/3) * c * x^3) = fun x => c * x^2).
     {
-      replace (fun x0 : R => 1 / 3 * c * x0 * x0 * x0) with (fun x : R => (1/3*c) * (x*x*x)) by (apply functional_extensionality; intro; field).
+      replace (fun x0 : R => 1 / 3 * c * x0^3) with (fun x : R => (1/3*c) * (x^3)) by (apply functional_extensionality; intro; field).
       apply H2.
     }
     
     (* Step 3: Since D f = D g, apply integration_constant *)
-    specialize (integration_constant f (fun x => (1/3) * c * x*x*x)).
-    assert (D f = D (fun x => (1/3) * c * x*x*x)) by (rewrite H1; apply H).
+    specialize (integration_constant f (fun x => (1/3) * c * x^3)).
+    assert (D f = D (fun x => (1/3) * c * x^3)) by (rewrite H1; apply H).
     specialize (integration_constant H0).
     destruct integration_constant as [c' Hf].
     exists c'.
@@ -202,9 +227,9 @@ Proof.
     }
     rewrite H. clear H.
     pose proof (cubic_deriv D linear_deriv D_product_rule).
-    assert (D (fun x : R => (1/3*c) * (x*x*x)) = (fun x : R => c * (x*x))).
+    assert (D (fun x : R => (1/3*c) * (x^3)) = (fun x : R => c * (x^2))).
     {
-      rewrite (D_homog (fun x : R => (x*x*x)) (1 / 3 * c)).
+      rewrite (D_homog (fun x : R => (x^3)) (1 / 3 * c)).
       rewrite (cubic_deriv D linear_deriv D_product_rule).
       apply functional_extensionality.
       intro.
@@ -492,32 +517,6 @@ Proof.
   - simpl.
     rewrite <- (D_homog (iter D order f) s).
     rewrite <- IHorder.
-    reflexivity.
-Qed.
-
-Theorem nth_pow_deriv :
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-  forall (linear_deriv : D (fun x => x) = fun x => 1),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (n : nat), D (fun x => x^(n+1)) = fun x => INR (n+1) * x^n.
-Proof.
-  intros D linear_deriv D_product_rule.
-  induction n as [|n IH]; intros.
-  - simpl.
-    replace (fun x : R => x * 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
-    replace (1 * 1) with (1) by ring.
-    apply linear_deriv.
-  - replace (fun x : R => x ^ (S n + 1)) with (fun x : R => x * x ^ (S n)) by (apply functional_extensionality; intros; rewrite pow_add; rewrite pow_1; rewrite Rmult_comm; auto).
-    rewrite D_product_rule.
-    rewrite linear_deriv.
-    replace (fun x0 : R => x0 ^ S n) with (fun x : R => x ^ (n + 1)) by (apply functional_extensionality; intros; f_equal; apply Nat.add_1_r).
-    rewrite IH.
-    apply functional_extensionality.
-    intros.
-    replace (1 * x ^ S n) with (x ^ S n) by ring.
-    replace (x * (INR (n + 1) * x ^ n)) with ((INR (n + 1) * x ^ (S n))) by (simpl; ring).
-    rewrite tech_pow_Rplus.
     reflexivity.
 Qed.
 
