@@ -15,6 +15,16 @@ Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
 Require Import Psatz.
 
+
+(*
+    Return to Lemmas.v when proven.
+*)
+Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> (exists c, (c * fact (m - i))%nat = fact m).
+Proof.
+  
+Admitted.
+
+
 (*
     Return to IteratedDifferentiation.v when proven.
 *)
@@ -76,20 +86,13 @@ Proof.
         -- rewrite <- (fact_simpl k).
            rewrite k_implem. clear k_implem.
            rewrite <- (Nat.sub_succ_l i n H0).
-           assert (forall (m : nat), (i <= m)%nat -> (exists c, (c * fact (m - i))%nat = fact m)).
-           {
-             clear D linear_deriv D_homog D_product_rule H0 n k x.
-             intros.
-             exists (fact i).
-             admit.
-           }
-           assert (i <= S n)%nat by lia.
-
-           destruct (H (S n) H1) as [c H2]. clear H.
-           rewrite <- H2.
+           assert (i <= S n)%nat as H by lia.
+           destruct (split_factorial i (S n) H) as [c H1].
+           rewrite <- H1.
            rewrite Nat.mul_comm.
            apply Nat.divide_factor_l.
 Admitted.
+
 
 (*
     Return to IteratedDifferentiation.v when proven.
