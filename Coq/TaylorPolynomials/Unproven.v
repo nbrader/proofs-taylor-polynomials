@@ -14,7 +14,8 @@ Require Import TaylorPolynomials.IteratedDifferentiation.
 Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
 Require Import Psatz.
-Search fact.
+
+
 (*
     Return to IteratedDifferentiation.v when proven.
 *)
