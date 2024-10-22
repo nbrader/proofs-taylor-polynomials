@@ -15,107 +15,51 @@ Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
 Require Import Psatz.
 
+
 (*
     Return to IteratedDifferentiation.v when proven.
 *)
-Theorem nth_pow_lesser_deriv :
+Theorem nth_pow_less_or_equal_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
   forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (n i : nat), (i < n)%nat -> iter D i (fun x => x^n) = fun x => INR (fact n) / INR (fact (n-i)) * x^(n-i).
+  forall (n i : nat), (i <= n)%nat -> iter D i (fun x => x^n) = fun x => INR (fact n) / INR (fact (n-i)) * x^(n-i).
 Proof.
   intros.
-  destruct n.
-  - inversion H.
-  - induction i.
+  induction i.
+  - simpl in *.
+    apply functional_extensionality.
+    intros.
+    replace (n - 0)%nat with n by lia.
+    replace (x ^ n) with (1 * (x ^ n)) at 1 by ring.
+    f_equal.
+    field.
+    apply not_0_INR.
+    induction n.
     + simpl.
+      apply Nat.neq_sym.
+      apply O_S.
+    + specialize (IHn (Nat.le_0_l n)).
+      simpl.
       rewrite Nat.add_comm.
       rewrite Nat.mul_comm.
       rewrite mult_n_Sm.
-      apply functional_extensionality.
-      intros.
-      replace (INR (fact n * S n) / INR (fact n * S n)) with (INR 1).
-      * simpl.
-        ring.
-      * unfold Rdiv.
-        rewrite Rinv_r.
-        -- reflexivity.
-        -- assert ((0 < fact n)%nat).
-           {
-             induction n.
-             - simpl.
-               auto.
-             - simpl.
-               assert ((0 < S n)%nat).
-               {
-                 unfold lt.
-                 apply le_n_S.
-                 apply Nat.le_0_l.
-               }
-               specialize (IHn H0). clear H0.
-               
-               unfold lt in *.
-
-               apply le_equiv.
-               apply le_equiv in IHn.
-               destruct IHn.
-               
-               rewrite <- H0.
-               simpl.
-               exists ((x0 + n * S x0)%nat).
-               reflexivity.
-           }
-           clear H.
-           apply lt_INR in H0.
-           rewrite mult_INR.
-           simpl in H0.
-           apply Rmult_integral_contrapositive.
-           split.
-           ++ apply Rgt_not_eq.
-              apply Rlt_gt.
-              apply H0.
-           ++ apply Rgt_not_eq.
-              apply Rlt_gt.
-              apply lt_0_INR.
-              unfold lt.
-              apply le_n_S.
-              apply Nat.le_0_l.
-    + simpl.
-      admit.
-      
-      (* assert (i = O).
-      {
-        rewrite Nat.lt_succ_r in H.
-        apply (max_r i O) in H.
-        rewrite max_i_0 in H.
-        apply H.
-      }
-      clear H.
-      rewrite H0. clear H0.
-
-      simpl.
-      apply functional_extensionality.
-      intros.
-      field.
-    + unfold lt in H.
-      apply le_S_n in H.
-    
-      replace (fun x : R => x ^ 1) with (fun x : R => x) by (apply functional_extensionality; intros; ring).
-    rewrite iter_expand_inner.
-    replace (fun x : R => x ^ S n) with (fun x : R => x ^ (n+1)%nat) by (apply functional_extensionality; intros; rewrite Nat.add_1_r; reflexivity).
-    rewrite (nth_pow_deriv D linear_deriv D_product_rule).
-    rewrite (iter_D_homog D D_homog).
-    rewrite IHn.
-    simpl.
-    rewrite plus_INR.
-    rewrite plus_INR.
-    rewrite mult_INR.
-    rewrite Rmult_plus_distr_r.
-    simpl (INR 1).
-    rewrite Rmult_1_l.
-    rewrite Rplus_comm.
-    reflexivity. *)
+      apply INR_not_0.
+      rewrite mult_INR.
+      apply Rmult_integral_contrapositive.
+      split.
+      * apply not_0_INR.
+        apply IHn.
+      * apply Rgt_not_eq.
+        apply Rlt_gt.
+        apply lt_0_INR.
+        unfold lt.
+        apply le_n_S.
+        apply Nat.le_0_l.
+  - rewrite iter_expand_inner.
+    admit.
 Admitted.
 
 
