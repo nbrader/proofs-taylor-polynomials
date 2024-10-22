@@ -66,7 +66,21 @@ Proof.
                exists ((x0 + n * S x0)%nat).
                reflexivity.
            }
-           admit.
+           clear H.
+           apply lt_INR in H0.
+           rewrite mult_INR.
+           simpl in H0.
+           apply Rmult_integral_contrapositive.
+           split.
+           ++ apply Rgt_not_eq.
+              apply Rlt_gt.
+              apply H0.
+           ++ apply Rgt_not_eq.
+              apply Rlt_gt.
+              apply lt_0_INR.
+              unfold lt.
+              apply le_n_S.
+              apply Nat.le_0_l.
     + simpl.
       admit.
       
