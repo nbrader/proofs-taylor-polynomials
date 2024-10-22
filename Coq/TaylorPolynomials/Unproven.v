@@ -36,8 +36,19 @@ Proof.
     f_equal.
     rewrite Nat.div_same by apply fact_neq_0.
     reflexivity.
-  - rewrite iter_expand_inner.
-    admit.
+  - destruct n.
+    + inversion H.
+    + assert (i <= n)%nat by lia.
+      clear H.
+      assert (i <= S n)%nat by lia.
+      apply IHi in H. clear IHi.
+      replace (iter D (S i) (fun x : R => x ^ S n)) with (D (iter D i (fun x : R => x ^ S n))) by reflexivity.
+      rewrite H. clear H.
+      replace (S n) with (n+1)%nat by ring.
+
+      (* rewrite (nth_pow_deriv D linear_deriv D_product_rule). *)
+      
+      admit.
 Admitted.
 
 
