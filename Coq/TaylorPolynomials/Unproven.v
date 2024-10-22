@@ -15,7 +15,6 @@ Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
 Require Import Psatz.
 
-Search fact.
 (*
     Return to IteratedDifferentiation.v when proven.
 *)
@@ -77,14 +76,14 @@ Proof.
         -- rewrite <- (fact_simpl k).
            rewrite k_implem. clear k_implem.
            rewrite <- (Nat.sub_succ_l i n H0).
-           assert (forall (m : nat), (S i <= m)%nat -> (exists c, (c * fact (m - i))%nat = fact m)).
+           assert (forall (m : nat), (i <= m)%nat -> (exists c, (c * fact (m - i))%nat = fact m)).
            {
              clear D linear_deriv D_homog D_product_rule H0 n k x.
              intros.
              exists (fact i).
              admit.
            }
-           assert (S i <= S n)%nat by lia.
+           assert (i <= S n)%nat by lia.
 
            destruct (H (S n) H1) as [c H2]. clear H.
            rewrite <- H2.
