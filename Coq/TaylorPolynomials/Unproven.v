@@ -19,9 +19,10 @@ Require Import Psatz.
 (*
     Return to Lemmas.v when proven.
 *)
-Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> (exists c, (c * fact (m - i))%nat = fact m).
+Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> ((fact i * fact (m - i))%nat = fact m).
 Proof.
-  
+  intros.
+
 Admitted.
 
 
@@ -87,11 +88,10 @@ Proof.
            rewrite k_implem. clear k_implem.
            rewrite <- (Nat.sub_succ_l i n H0).
            assert (i <= S n)%nat as H by lia.
-           destruct (split_factorial i (S n) H) as [c H1].
-           rewrite <- H1.
+           rewrite <- (split_factorial i (S n) H).
            rewrite Nat.mul_comm.
            apply Nat.divide_factor_l.
-Admitted.
+Qed.
 
 
 (*
