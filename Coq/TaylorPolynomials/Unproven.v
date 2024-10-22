@@ -52,13 +52,13 @@ Proof.
       }
       destruct H as [k H].
       assert (k = (n-i)%nat) as k_implem by lia.
-      rewrite H.
+      rewrite H. clear H.
       rewrite D_homog.
       rewrite (nth_pow_deriv D linear_deriv D_product_rule).
       apply functional_extensionality.
       intros.
       replace (INR (fact (S n) / fact (k + 1)) * (INR (k + 1) * x ^ k)) with (INR (fact (S n) / fact k) * x ^ k).
-      * rewrite k_implem.
+      * rewrite k_implem. clear k_implem.
         rewrite Nat.sub_succ.
         reflexivity.
       * rewrite <- Rmult_assoc.
@@ -71,15 +71,26 @@ Proof.
         rewrite <- (Nat.Lcm0.divide_div_mul_exact (fact (S n)) (S k * fact k) (S k)).
         -- rewrite Nat.Div0.div_mul_cancel_l.
            ++ reflexivity.
-           ++ rewrite k_implem.
+           ++ rewrite k_implem. clear k_implem.
               apply Nat.neq_sym.
               apply O_S.
         -- rewrite <- (fact_simpl k).
-           rewrite k_implem.
-           admit.
-Admitted.
+           rewrite k_implem. clear k_implem.
+           rewrite <- (Nat.sub_succ_l i n H0).
+           assert (forall (m : nat), (S i <= m)%nat -> (exists c, (c * fact (m - i))%nat = fact m)).
+           {
+             clear D linear_deriv D_homog D_product_rule H0 n k x.
+             intros.
+             exists (fact i).
+             admit.
+           }
+           assert (S i <= S n)%nat by lia.
 
-Search Nat.divide.
+           destruct (H (S n) H1) as [c H2]. clear H.
+           rewrite <- H2.
+           rewrite Nat.mul_comm.
+           apply Nat.divide_factor_l.
+Admitted.
 
 (*
     Return to IteratedDifferentiation.v when proven.
