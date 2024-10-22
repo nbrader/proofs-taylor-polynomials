@@ -11,23 +11,9 @@ Require Import CoqUtilLib.Iteration.
 
 Require Import TaylorPolynomials.Differentiation.
 Require Import TaylorPolynomials.IteratedDifferentiation.
+Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
-
-
-(*
-    Return to Lemmas.v when proven.
-*)
-Theorem le_equiv : forall (n m : nat), (exists (k : nat), (n + k)%nat = m) <-> (n <= m)%nat.
-Proof.
-  split.
-  - intros.
-    destruct H.
-    rewrite <- H.
-    apply Nat.le_add_r.
-  - intros.
-    admit.
-Admitted.
-
+Require Import Psatz.
 
 (*
     Return to IteratedDifferentiation.v when proven.
