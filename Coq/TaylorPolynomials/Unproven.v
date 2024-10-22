@@ -20,10 +20,16 @@ Require Import Psatz.
 (*
     Return to Lemmas.v when proven.
 *)
-Lemma fact_product_equiv : forall (i : nat), fact i = product_nat (fun x => S x) (S i).
+Lemma fact_product_equiv : forall (i : nat), fact i = product_nat (fun x => S x) i.
 Proof.
-  admit.
-Admitted.
+  intros.
+  induction i.
+  - simpl.
+    reflexivity.
+  - replace (fact (S i)) with ((S i) * fact i)%nat by (simpl; reflexivity).
+    rewrite IHi. clear IHi.
+    reflexivity.
+Qed.
 
 
 (*
@@ -31,7 +37,13 @@ Admitted.
 *)
 Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => (m - i) + S x) i)%nat = fact m).
 Proof.
-  admit.
+  intros.
+  rewrite !fact_product_equiv.
+  induction i, m.
+  - reflexivity.
+  - admit. (*  <---- This seems untrue... *)
+  - admit.
+  - admit.
 Admitted.
 
 

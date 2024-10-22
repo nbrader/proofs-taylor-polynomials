@@ -44,8 +44,22 @@ Proof.
   induction n.
   - simpl.
     ring.
-  (* - replace (product F_ (S (S n)) x) with (F_ (S n) x + product F_ (S n) x) by auto. *)
+  (* - replace (product F_ (S (S n)) x) with (F_ (S n) x * product F_ (S n) x) by auto. *)
   - replace (product (fun (i : nat) (x' : nat) => F_ (S i) x') (S n) x) with (F_ (S n) x * product (fun (i : nat) (x' : nat) => F_ (S i) x') n x) by auto.
+    rewrite <- Nat.mul_assoc.
+    rewrite <- IHn. clear IHn.
+    reflexivity.
+Qed.
+
+Lemma product_nat_expand_lower :
+  forall (c_ : nat -> nat) (n : nat),
+    product_nat c_ (S n) = product_nat (fun i => c_ (S i)) n * c_ O.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    ring.
+  - replace (product_nat (fun (i : nat) => c_ (S i)) (S n)) with (c_ (S n) * product_nat (fun (i : nat) => c_ (S i)) n) by auto.
     rewrite <- Nat.mul_assoc.
     rewrite <- IHn. clear IHn.
     reflexivity.
