@@ -2,20 +2,20 @@
 -R TaylorPolynomials TaylorPolynomials
 -R CoqUtilLib CoqUtilLib
 -R FreeMonoid FreeMonoid
-TaylorPolynomials/TaylorPolynomials.v
+CoqUtilLib/FunctionLemmas.v
+CoqUtilLib/Iteration.v
 CoqUtilLib/ListFunctions.v
 CoqUtilLib/OptionFunctions.v
-CoqUtilLib/FunctionLemmas.v
 FreeMonoid/Category.v
 FreeMonoid/ExtraLemmas.v
 FreeMonoid/HomExampleBoolOrToNatMax1.v
-FreeMonoid/MonoidExampleBoolOr.v
-FreeMonoid/MonoidExampleNatMax1.v
-FreeMonoid/MonoidExampleEndo.v
-FreeMonoid/MonoidExampleAddNeutral.v
 FreeMonoid/MonoidExampleAddAbsorbing.v
+FreeMonoid/MonoidExampleAddNeutral.v
+FreeMonoid/MonoidExampleBoolOr.v
+FreeMonoid/MonoidExampleEndo.v
 FreeMonoid/MonoidExampleFirst.v
 FreeMonoid/MonoidExampleLast.v
+FreeMonoid/MonoidExampleNatMax1.v
 FreeMonoid/MonoidFree.v
 FreeMonoid/MonoidFreeTest.v
 FreeMonoid/MonoidHom.v
@@ -23,3 +23,11 @@ FreeMonoid/StructMagma.v
 FreeMonoid/StructMonoid.v
 FreeMonoid/StructSemigroup.v
 FreeMonoid/TypeCategory.v
+TaylorPolynomials/Differentiation.v
+TaylorPolynomials/Examples.v
+TaylorPolynomials/Integration.v
+TaylorPolynomials/IteratedDifferentiation.v
+TaylorPolynomials/Lemmas.v
+TaylorPolynomials/Summation.v
+TaylorPolynomials/TaylorPolynomials.v
+TaylorPolynomials/Unproven.v
