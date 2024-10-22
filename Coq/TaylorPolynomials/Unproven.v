@@ -29,7 +29,7 @@ Admitted.
 (*
     Return to Lemmas.v when proven.
 *)
-Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m - i))%nat = fact m).
+Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> ((fact (m - i) * product_nat (fun x => i + S x) (m - i))%nat = fact m).
 Proof.
   admit.
 Admitted.
@@ -99,7 +99,7 @@ Proof.
            assert (i <= S n)%nat as H by lia.
            rewrite <- (split_factorial i (S n) H).
            rewrite Nat.mul_comm.
-           apply Nat.divide_factor_l.
+           apply Nat.divide_factor_r.
 Qed.
 
 
