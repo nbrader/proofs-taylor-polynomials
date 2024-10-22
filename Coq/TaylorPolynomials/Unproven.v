@@ -15,7 +15,7 @@ Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
 Require Import Psatz.
 
-
+Search fact.
 (*
     Return to IteratedDifferentiation.v when proven.
 *)
@@ -45,13 +45,41 @@ Proof.
       apply IHi in H. clear IHi.
       replace (iter D (S i) (fun x : R => x ^ S n)) with (D (iter D i (fun x : R => x ^ S n))) by reflexivity.
       rewrite H. clear H.
-      replace (S n) with (n+1)%nat by ring.
-
-      (* rewrite (nth_pow_deriv D linear_deriv D_product_rule). *)
-      
-      admit.
+      assert (exists k, (S n - i)%nat = (k+1)%nat).
+      {
+        exists (n-i)%nat.
+        lia.
+      }
+      destruct H as [k H].
+      assert (k = (n-i)%nat) as k_implem by lia.
+      rewrite H.
+      rewrite D_homog.
+      rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+      apply functional_extensionality.
+      intros.
+      replace (INR (fact (S n) / fact (k + 1)) * (INR (k + 1) * x ^ k)) with (INR (fact (S n) / fact k) * x ^ k).
+      * rewrite k_implem.
+        rewrite Nat.sub_succ.
+        reflexivity.
+      * rewrite <- Rmult_assoc.
+        rewrite <- mult_INR.
+        replace (k + 1)%nat with (S k) by lia.
+        rewrite (fact_simpl k).
+        f_equal.
+        f_equal.
+        rewrite (Nat.mul_comm (fact (S n) / (S k * fact k)) (S k)).
+        rewrite <- (Nat.Lcm0.divide_div_mul_exact (fact (S n)) (S k * fact k) (S k)).
+        -- rewrite Nat.Div0.div_mul_cancel_l.
+           ++ reflexivity.
+           ++ rewrite k_implem.
+              apply Nat.neq_sym.
+              apply O_S.
+        -- rewrite <- (fact_simpl k).
+           rewrite k_implem.
+           admit.
 Admitted.
 
+Search Nat.divide.
 
 (*
     Return to IteratedDifferentiation.v when proven.
