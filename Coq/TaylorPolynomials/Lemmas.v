@@ -1,43 +1,23 @@
-Require Import Coq.Reals.Reals.
-Require Import Psatz.
-
+Require Import Coq.Arith.Arith.
 
 Theorem le_equiv : forall (n m : nat), (exists (k : nat), (n + k)%nat = m) <-> (n <= m)%nat.
 Proof.
   split.
-  - intros.
-    destruct H.
+  - (* -> *) intros [k H].
     rewrite <- H.
     apply Nat.le_add_r.
-  - intros.
-    induction n, m.
-    + simpl.
+  - (* <- *) intros H.
+    induction H.
+    + (* Base case: n = m *)
       exists 0%nat.
+      simpl.
+      rewrite <- plus_n_O.
       reflexivity.
-    + simpl.
-      exists (S m).
+    + (* Inductive case: n <= m -> n <= S m *)
+      destruct IHle as [k Hk].
+      exists (S k).
+      simpl.
+      rewrite <- Hk.
+      rewrite plus_n_Sm.
       reflexivity.
-    + inversion H.
-    + apply le_S_n in H.
-      apply le_S in H as H0.
-      apply IHn in H0. clear IHn.
-      destruct H0 as [k H0].
-      assert (k <> 0%nat).
-      {
-        lia.
-        (* unfold not.
-        intros.
-        rewrite H1 in H0. clear H1.
-        replace (n + 0)%nat with n in H0 by ring.
-        rewrite H0 in H. *)
-      }
-      destruct k.
-      * contradiction.
-      * clear H1.
-        exists k.
-        rewrite <- H0. clear H0.
-        rewrite (Nat.add_comm n (S k)).
-        simpl.
-        rewrite (Nat.add_comm k n).
-        reflexivity.
 Qed.
