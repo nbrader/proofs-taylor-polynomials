@@ -10,13 +10,11 @@ Proof.
     induction H.
     + (* Base case: n = m *)
       exists 0%nat.
-      simpl.
       rewrite <- plus_n_O.
       reflexivity.
     + (* Inductive case: n <= m -> n <= S m *)
       destruct IHle as [k Hk].
       exists (S k).
-      simpl.
       rewrite <- Hk.
       rewrite plus_n_Sm.
       reflexivity.
