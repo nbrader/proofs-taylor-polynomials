@@ -1,3 +1,6 @@
 [submodule "Coq/CoqUtilLib"]
 	path = Coq/CoqUtilLib
 	url = https://github.com/nbrader/proofs-coq-util-lib
+[submodule "Coq/FreeMonoid"]
+	path = Coq/FreeMonoid
+	url = https://github.com/nbrader/proofs-free-monoid-lib
