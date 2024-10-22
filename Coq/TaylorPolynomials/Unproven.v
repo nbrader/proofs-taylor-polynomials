@@ -95,7 +95,7 @@ Theorem nth_pow_greater_deriv :
   forall (n i : nat), (i > n)%nat -> iter D i (fun x => x^n) = fun _ => 0.
 Proof.
   intros.
-  (* Use le_equiv and a new lemma for splitting and iteration into two applied after each other to reduce this to the above lemmas of nth_pow_lesser_deriv and nth_pow_equal_deriv *)
+  (* Use le_equiv and a new lemma for splitting iteration into two applied after each other to reduce this to the above lemmas of nth_pow_lesser_deriv and nth_pow_equal_deriv *)
 
   (* intros D unit_deriv linear_deriv D_additive D_homog D_product_rule n i i_gt_n.
 
