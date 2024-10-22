@@ -20,7 +20,7 @@ Require Import Psatz.
 (*
     Return to Lemmas.v when proven.
 *)
-Lemma split_dec : forall (i : nat), fact i = product_nat (fun x => S x) (S i).
+Lemma fact_product_equiv : forall (i : nat), fact i = product_nat (fun x => S x) (S i).
 Proof.
   admit.
 Admitted.
