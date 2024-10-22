@@ -13,16 +13,25 @@ Require Import TaylorPolynomials.Differentiation.
 Require Import TaylorPolynomials.IteratedDifferentiation.
 Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
+Require Import TaylorPolynomials.Product.
 Require Import Psatz.
 
 
 (*
     Return to Lemmas.v when proven.
 *)
-Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> ((fact i * fact (m - i))%nat = fact m).
+Lemma split_dec : forall (i : nat), fact i = product_nat (fun x => S x) (S i).
 Proof.
-  intros.
+  admit.
+Admitted.
 
+
+(*
+    Return to Lemmas.v when proven.
+*)
+Lemma split_factorial : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m - i))%nat = fact m).
+Proof.
+  admit.
 Admitted.
 
 

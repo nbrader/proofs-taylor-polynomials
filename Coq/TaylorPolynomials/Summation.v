@@ -61,6 +61,7 @@ Proof.
   intros.
   apply summation_expand_lower.
 Qed.
+
 Lemma distr_over_summation :
   forall (n : nat) (F_ : nat -> R -> R) (s x : R),
     s * (summation F_ n) x = summation (fun i x' => s * (F_ i x')) n x.
