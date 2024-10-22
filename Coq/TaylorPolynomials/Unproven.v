@@ -10,6 +10,7 @@ Require Import CoqUtilLib.FunctionLemmas.
 Require Import CoqUtilLib.Iteration.
 
 Require Import TaylorPolynomials.Differentiation.
+Require Import TaylorPolynomials.IteratedDifferentiation.
 Require Import TaylorPolynomials.Summation.
 
 
