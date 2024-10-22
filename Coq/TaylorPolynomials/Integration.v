@@ -341,14 +341,15 @@ Proof.
   {
     simpl in *.
     unfold Rminus.
-    rewrite iter_additive by (intros; apply D_additive).
+
+    rewrite (iter_D_additive D D_additive n f (fun x => - g x)).
     rewrite D_additive.
     rewrite f_and_g_agree_at_nth_D.
     rewrite <- D_additive.
-    rewrite <- iter_additive by (intros; apply D_additive).
+    rewrite <- (iter_D_additive D D_additive).
     replace (fun x : R => g x + - g x) with (fun _ : R => 0) by (apply functional_extensionality; intros; ring).
     replace 0 with (0*1) by field.
-    rewrite (iter_homog D D_homog (fun _ => 1) 0) by (intros; apply D_homog).
+    rewrite (iter_D_homog D D_homog n (fun _ => 1)).
     rewrite D_homog.
     apply functional_extensionality.
     intros.

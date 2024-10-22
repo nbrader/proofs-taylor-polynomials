@@ -14,36 +14,6 @@ Require Import TaylorPolynomials.Summation.
 Require Import TaylorPolynomials.Unproven.
 
 
-Lemma iter_additive : forall (D : (R -> R) -> (R -> R)),
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (f g : R -> R) (n : nat),
-    iter D n (fun x => f x + g x) = fun x => iter D n f x + iter D n g x.
-Proof.
-  intros.
-  induction n.
-  - simpl.
-    reflexivity.
-  - simpl.
-    rewrite <- (D_additive (iter D n f) (iter D n g)).
-    rewrite <- IHn.
-    reflexivity.
-Qed.
-
-Lemma iter_homog : forall (D : (R -> R) -> (R -> R)),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-  forall (f : R -> R) (s : R) (n : nat),
-    iter D n (fun x => s * f x) = fun x => s * iter D n f x.
-Proof.
-  intros.
-  induction n.
-  - simpl.
-    reflexivity.
-  - simpl.
-    rewrite <- (D_homog (iter D n f) s).
-    rewrite <- IHn.
-    reflexivity.
-Qed.
-
 Lemma iter_expand_inner : forall (D : (R -> R) -> (R -> R)),
   forall (f : R -> R) (n : nat),
   iter D (S n) f = iter D n (D f).
@@ -62,13 +32,12 @@ Lemma iter_D_additive :
 
   (* Derivative properties *)
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (order : nat),
     forall (f g : R -> R), iter D order (fun x => f x + g x) = fun x => iter D order f x + iter D order g x.
 Proof.
-  intros D D_additive D_homog order f g.
+  intros D D_additive order f g.
   induction order.
   - reflexivity.
   - simpl.
@@ -310,6 +279,6 @@ Proof.
   - (* Inductive step: n -> S n *)
     simpl.
     rewrite <- IH.
-    rewrite (iter_D_additive D D_additive D_homog order).
+    rewrite (iter_D_additive D D_additive order).
     reflexivity.
 Qed.
