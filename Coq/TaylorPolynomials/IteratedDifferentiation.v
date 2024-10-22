@@ -11,7 +11,6 @@ Require Import CoqUtilLib.Iteration.
 
 Require Import TaylorPolynomials.Differentiation.
 Require Import TaylorPolynomials.Summation.
-Require Import TaylorPolynomials.Unproven.
 
 
 Lemma iter_expand_inner : forall (D : (R -> R) -> (R -> R)),
