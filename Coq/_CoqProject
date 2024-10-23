@@ -29,6 +29,7 @@ TaylorPolynomials/Integration.v
 TaylorPolynomials/IteratedDifferentiation.v
 TaylorPolynomials/Lemmas.v
 TaylorPolynomials/Summation.v
+TaylorPolynomials/MonoidConcat.v
 TaylorPolynomials/Product.v
 TaylorPolynomials/TaylorPolynomials.v
 TaylorPolynomials/Unproven.v
