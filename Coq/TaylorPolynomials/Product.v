@@ -1,12 +1,5 @@
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
-Require Import Coq.Lists.List.
-Import ListNotations.
-
-Require Import CoqUtilLib.OptionFunctions.
-Require Import CoqUtilLib.ListFunctions.
-Require Import CoqUtilLib.FunctionLemmas.
-Require Import CoqUtilLib.Iteration.
 
 (*
   Make mconcat taking monoid, a function from the naturals to the monoid and the successor of the last input to that function and use it instead of product.
