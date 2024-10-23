@@ -223,7 +223,7 @@ Proof.
     admit.
   }
 
-  apply summation_irrelavance_of_large_coeffs.
+  apply summation_irrelevance_of_large_coeffs.
   intros.
   rewrite (c_implem i) by apply H.
   reflexivity.
@@ -330,7 +330,7 @@ Proof.
     (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
   }
 
-  apply summation_irrelavance_of_large_coeffs.
+  apply summation_irrelevance_of_large_coeffs.
   intros.
   rewrite (c_implem i) by apply H.
   reflexivity.
@@ -529,7 +529,7 @@ Print Assumptions iter_D_additive_over_summation.
   Maclaurin_implem
 Print Assumptions distr_over_summation.
 
-Print Assumptions summation_irrelavance_of_large_coeffs.
+Print Assumptions summation_irrelevance_of_large_coeffs.
   Maclaurin_implem
 
 (* Admitted *)

@@ -68,7 +68,7 @@ Proof.
   apply product_expand_lower.
 Qed.
 
-Lemma product_irrelavance_of_large_coeffs :
+Lemma product_irrelevance_of_large_coeffs :
   forall (n : nat) (F_ G_ : nat -> nat -> nat),
 
   (forall (i : nat), (i <= n)%nat -> F_ i = G_ i) ->

@@ -1,14 +1,3 @@
-Require Import Coq.Reals.Reals.
-Require Import Coq.Logic.FunctionalExtensionality.
-Require Import Coq.Lists.List.
-Import ListNotations.
-
-Require Import CoqUtilLib.OptionFunctions.
-Require Import CoqUtilLib.ListFunctions.
-Require Import CoqUtilLib.FunctionLemmas.
-Require Import CoqUtilLib.Iteration.
-
-Require Import Coq.Init.Datatypes.
 Require Import FreeMonoid.StructMonoid.
 
 
@@ -39,7 +28,7 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma mconcat_irrelavance_of_large_coeffs :
+Lemma mconcat_irrelevance_of_large_coeffs :
   forall (A : Type) `{Hmon : Monoid A} (n : nat) (F_ G_ : nat -> A),
 
   (forall (i : nat), (i <= n)%nat -> F_ i = G_ i) ->

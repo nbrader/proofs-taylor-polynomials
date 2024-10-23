@@ -73,7 +73,7 @@ Proof.
     field.
 Qed.
 
-Lemma summation_irrelavance_of_large_coeffs :
+Lemma summation_irrelevance_of_large_coeffs :
   forall (n : nat) (F_ G_ : nat -> R -> R),
 
   (forall (i : nat), (i <= n)%nat -> F_ i = G_ i) ->
