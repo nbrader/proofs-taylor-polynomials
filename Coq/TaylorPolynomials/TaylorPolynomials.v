@@ -1,3 +1,11 @@
+(*
+
+This project serves as a way for me to practice proving theorms in Coq.
+For a much better library which proves Taylor's Thoerem, see the following:
+  http://coquelicot.saclay.inria.fr/html/Coquelicot.Derive.html
+
+*)
+
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Lists.List.
