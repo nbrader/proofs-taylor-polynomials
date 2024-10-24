@@ -16,6 +16,7 @@ FreeMonoid/MonoidExampleEndo.v
 FreeMonoid/MonoidExampleFirst.v
 FreeMonoid/MonoidExampleLast.v
 FreeMonoid/MonoidExampleNatMax1.v
+FreeMonoid/MonoidExampleRealsPlus.v
 FreeMonoid/MonoidFree.v
 FreeMonoid/MonoidFreeTest.v
 FreeMonoid/MonoidHom.v
