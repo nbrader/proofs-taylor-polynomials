@@ -19,6 +19,7 @@ FreeMonoid/MonoidExampleNatMax1.v
 FreeMonoid/MonoidExampleRealsPlus.v
 FreeMonoid/MonoidExampleRealsMult.v
 FreeMonoid/MonoidExampleExtendToFunction.v
+FreeMonoid/MonoidExampleRealsPlusFunction.v
 FreeMonoid/MonoidFree.v
 FreeMonoid/MonoidFreeTest.v
 FreeMonoid/MonoidHom.v
