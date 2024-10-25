@@ -1,7 +1,12 @@
-Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
-Open Scope R_scope.
+Require Import Coq.Reals.Reals.
 
+Require Import FreeMonoid.MonoidExampleRealsPlus.
+Require Import FreeMonoid.MonoidExampleExtendToFunction.
+
+Require Import TaylorPolynomials.MonoidConcat.
+
+Definition FunctionToRealsMonoid (A : Type) := @ExtendToFunctionMonoid A R RplusMagma RplusSemigroup RplusMonoid.
 
 (*
   Make mconcat taking monoid, a function from the naturals to the monoid and the successor of the last input to that function and use it instead of summation.
@@ -18,6 +23,36 @@ Fixpoint summation_R (c_ : nat -> R) (n : nat) : R :=
     | O => 0
     | S n' => c_ n' + summation_R c_ n'
   end.
+
+Lemma summation_R_mconcat_equiv :
+  summation_R = @mconcat _ _ _ RplusMonoid.
+Proof.
+  apply functional_extensionality.
+  intros f.
+  apply functional_extensionality.
+  intros x.
+  induction x.
+  - simpl.
+    reflexivity.
+  - simpl.
+    rewrite IHx.
+    reflexivity.
+Qed.
+
+Lemma summation_mconcat_equiv :
+  summation = @mconcat _ _ _ (FunctionToRealsMonoid R).
+Proof.
+  apply functional_extensionality.
+  intros f.
+  apply functional_extensionality.
+  intros x.
+  induction x.
+  - simpl.
+    reflexivity.
+  - simpl.
+    rewrite IHx.
+    reflexivity.
+Qed.
 
 Lemma summation_app :
   forall (F_ : nat -> R -> R) (n : nat) (x : R),
@@ -36,14 +71,10 @@ Lemma summation_expand_lower :
     summation F_ (S n) x = summation (fun i x' => F_ (S i) x') n x + F_ O x.
 Proof.
   intros.
-  induction n.
-  - simpl.
-    ring.
-  (* - replace (summation F_ (S (S n)) x) with (F_ (S n) x + summation F_ (S n) x) by auto. *)
-  - replace (summation (fun (i : nat) (x' : R) => F_ (S i) x') (S n) x) with (F_ (S n) x + summation (fun (i : nat) (x' : R) => F_ (S i) x') n x) by auto.
-    rewrite Rplus_assoc.
-    rewrite <- IHn. clear IHn.
-    reflexivity.
+  rewrite summation_mconcat_equiv.
+  rewrite mconcat_expand_lower.
+  simpl.
+  reflexivity.
 Qed.
 
 Lemma summation_expand_lower_extensional :
@@ -80,18 +111,7 @@ Lemma summation_irrelevance_of_large_coeffs :
     summation F_ (S n) = summation G_ (S n).
 Proof.
   intros.
-  simpl.
-  rewrite (H n) by auto.
-  apply functional_extensionality.
-  intros.
-  f_equal.
-  induction n.
-  - reflexivity.
-  - simpl.
-    rewrite IHn.
-    + rewrite (H n) by auto.
-      reflexivity.
-    + intros.
-      rewrite H by auto.
-      reflexivity.
+  rewrite summation_mconcat_equiv.
+  apply mconcat_irrelevance_of_large_coeffs.
+  apply H.
 Qed.
