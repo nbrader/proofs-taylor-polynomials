@@ -24,9 +24,6 @@ Proof.
       reflexivity.
 Qed.
 
-(*
-    Return to Lemmas.v when proven.
-*)
 Lemma fact_product_equiv : forall (i : nat), fact i = product_nat (fun x => S x) i.
 Proof.
   intros.
@@ -38,9 +35,6 @@ Proof.
     reflexivity.
 Qed.
 
-(*
-    Return to Lemmas.v when proven.
-*)
 Lemma split_factorial_lt : forall (i m : nat), (i < m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
 Proof.
   intros.
@@ -101,13 +95,13 @@ Proof.
       + left.
         unfold lt.
         apply le_n_S.
-        apply H.
+        exact H.
     - intros.
       destruct H.
       + unfold lt in H.
         apply le_S in H.
         apply le_S_n in H.
-        apply H.
+        exact H.
       + rewrite H.
         apply le_n.
 Qed.
@@ -118,7 +112,7 @@ Proof.
     apply le_split in H.
     destruct H.
     - apply split_factorial_lt.
-      apply H.
+      exact H.
     - apply split_factorial_eq.
-      apply H.
+      exact H.
 Qed.
