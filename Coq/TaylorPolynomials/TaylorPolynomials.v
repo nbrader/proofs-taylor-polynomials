@@ -335,7 +335,7 @@ Proof.
       + admit.
     (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
     (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
-    (* nth_pow_lesser_deriv    <-- Yet to be proved but should help prove this *)
+    (* nth_pow_less_or_equal_deriv    <-- Yet to be proved but should help prove this *)
   }
 
   apply summation_irrelevance_of_large_coeffs.
