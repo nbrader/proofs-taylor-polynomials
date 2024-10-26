@@ -79,21 +79,36 @@ Proof.
         --lia.
 Qed.
 
-Lemma split_factorial_2 : forall (i m : nat), (i = m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
+Lemma split_factorial_2 : forall (i m : nat), (i = m)%nat -> (fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m.
 Proof.
   intros.
-  rewrite !fact_product_equiv.
   rewrite H.
-  induction m.
-  - reflexivity.
-  - simpl.
-    admit.
-Admitted.
+  replace (m - m)%nat with 0%nat by lia.
+  simpl.
+  replace (fact m * 1)%nat with (fact m)%nat by lia.
+  reflexivity.
+Qed.
 
-Lemma split_factorial_3 : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
+Lemma split_factorial_3 : forall (P : nat -> nat -> Prop) (i m : nat), ((i < m)%nat -> P i m) -> ((i = m)%nat -> P i m) -> ((i <= m)%nat -> P i m).
 Proof.
-    admit.
-Admitted.
+    intros.
+    destruct H1.
+    - apply H0.
+      reflexivity.
+    - apply H.
+      unfold lt.
+      apply le_n_S.
+      apply H1.
+Qed.
+
+Lemma split_factorial_4 : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
+Proof.
+    intros.
+    apply (split_factorial_3 (fun i m => (fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m) i m).
+    - apply split_factorial.
+    - apply split_factorial_2.
+    - apply H.
+Qed.
 
 (*
     Return to IteratedDifferentiation.v when proven.
@@ -157,7 +172,7 @@ Proof.
            rewrite k_implem. clear k_implem.
            rewrite <- (Nat.sub_succ_l i n H0).
            assert (S n - i <= S n)%nat as H by lia.
-           rewrite <- (split_factorial_3 ((S n) - i) (S n) H).
+           rewrite <- (split_factorial_4 ((S n) - i) (S n) H).
            rewrite Nat.mul_comm.
            apply Nat.divide_factor_r.
 Qed.
