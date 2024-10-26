@@ -196,6 +196,8 @@ Theorem Maclaurin_implem :
   (* Derivative properties *)
   forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
@@ -211,28 +213,37 @@ Theorem Maclaurin_implem :
   forall (F : R -> R) (n : nat),
     Taylor n 0 F = summation (fun k x' => (iter D k F 0 / INR (fact k)) * x' ^ k) (S n). (* <---- TO DO: Check this assertion is valid with a couple examples *)
 Proof.
-  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F n.
+  intros Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F n.
   apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n 0 F)) in Taylor_degree.
   destruct Taylor_degree as [c Taylor_degree].
   specialize Taylor_agrees_at_a with (degree:=n) (a:=0) (F:=F) as Taylor_agrees_at_0. clear Taylor_agrees_at_a.
   rewrite Taylor_degree in *. clear Taylor_degree.
-  
-  assert (c_implem : forall i : nat, (i <= n)%nat -> c i = iter D i F 0 / INR (fact i)).
-  {
-    intros i max_i_is_n.
-    specialize (Taylor_agrees_at_0 i).
-    rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
-    apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
-    
-    replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
-    (* nth_pow_greater_deriv   <-- should help prove this *)
-    (* nth_pow_less_or_equal_deriv    <-- should help prove this *)
-    admit.
-  }
 
   apply summation_irrelevance_of_large_coeffs.
-  intros.
-  rewrite (c_implem i) by apply H.
+  intros i max_i_is_n.
+  specialize (Taylor_agrees_at_0 i).
+  
+  assert (c_implem : c i = iter D i F 0 / INR (fact i)).
+  {
+    rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
+    apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
+    replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
+    rewrite <- ith_deriv.
+
+    pose proof (nth_pow_less_or_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_less_or_equal_deriv.
+    pose proof (nth_pow_greater_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_greater_deriv.
+    
+    induction i, n.
+    - simpl.
+      field.
+    - simpl.
+      admit.
+    - simpl.
+      admit.
+    - simpl.
+      admit.
+  }
+  rewrite c_implem by apply H.
   reflexivity.
 Admitted.
 
