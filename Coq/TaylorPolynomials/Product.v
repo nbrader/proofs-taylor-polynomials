@@ -58,6 +58,14 @@ Proof.
     reflexivity.
 Qed.
 
+Lemma product_nat_expand_upper :
+  forall (c_ : nat -> nat) (n : nat),
+    product_nat c_ (S n) = c_ n * product_nat c_ n.
+Proof.
+  intros.
+  reflexivity.
+Qed.
+
 Lemma product_expand_lower_extensional :
   forall (F_ : nat -> nat -> nat) (n : nat),
     product F_ (S n) = fun x => product (fun i x' => F_ (S i) x') n x * F_ O x.

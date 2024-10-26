@@ -52,7 +52,7 @@ Theorem Taylor_0_implem :
   forall (F : R -> R), forall (a : R), Taylor 0%nat a F = fun (x : R) => F a.
 Proof.
   intros Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a.
-
+  
   assert (Taylor_0_deriv_is_0 : forall (a : R) (F : R -> R), D (Taylor 0%nat a F) = fun x => 0).
   {
     intros.
