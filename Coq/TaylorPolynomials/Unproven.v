@@ -32,15 +32,10 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma neq_implies_gt_or_lt (x y : nat) : (x <> y)%nat -> (x > y)%nat \/ (y > x)%nat.
-Proof.
-  lia.
-Qed.
-
 (*
     Return to Lemmas.v when proven.
 *)
-Lemma split_factorial : forall (i m : nat), (i < m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
+Lemma split_factorial_lt : forall (i m : nat), (i < m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
 Proof.
   intros.
   rewrite !fact_product_equiv.
@@ -79,7 +74,7 @@ Proof.
         --lia.
 Qed.
 
-Lemma split_factorial_2 : forall (i m : nat), (i = m)%nat -> (fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m.
+Lemma split_factorial_eq : forall (i m : nat), (i = m)%nat -> (fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m.
 Proof.
   intros.
   rewrite H.
@@ -89,25 +84,37 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma split_factorial_3 : forall (P : nat -> nat -> Prop) (i m : nat), ((i < m)%nat -> P i m) -> ((i = m)%nat -> P i m) -> ((i <= m)%nat -> P i m).
+Lemma le_equiv : forall (i m : nat), (i <= m)%nat <-> ((i < m)%nat \/ (i = m)%nat).
 Proof.
     intros.
-    destruct H1.
-    - apply H0.
-      reflexivity.
-    - apply H.
-      unfold lt.
-      apply le_n_S.
-      apply H1.
+    split.
+    - intros.
+      destruct H.
+      + right.
+        reflexivity.
+      + left.
+        unfold lt.
+        apply le_n_S.
+        apply H.
+    - intros.
+      destruct H.
+      + unfold lt in H.
+        apply le_S in H.
+        apply le_S_n in H.
+        apply H.
+      + rewrite H.
+        apply le_n.
 Qed.
 
-Lemma split_factorial_4 : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
+Lemma split_factorial_le : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
 Proof.
     intros.
-    apply (split_factorial_3 (fun i m => (fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m) i m).
-    - apply split_factorial.
-    - apply split_factorial_2.
-    - apply H.
+    apply le_equiv in H.
+    destruct H.
+    - apply split_factorial_lt.
+      apply H.
+    - apply split_factorial_eq.
+      apply H.
 Qed.
 
 (*
@@ -172,11 +179,10 @@ Proof.
            rewrite k_implem. clear k_implem.
            rewrite <- (Nat.sub_succ_l i n H0).
            assert (S n - i <= S n)%nat as H by lia.
-           rewrite <- (split_factorial_4 ((S n) - i) (S n) H).
+           rewrite <- (split_factorial_le ((S n) - i) (S n) H).
            rewrite Nat.mul_comm.
            apply Nat.divide_factor_r.
 Qed.
-
 
 (*
     Return to IteratedDifferentiation.v when proven.
