@@ -225,9 +225,8 @@ Proof.
     apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
     
     replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
-    (* nth_pow_greater_deriv   <-- Yet to be proved but should help prove this *)
-    (* nth_pow_equal_deriv     <-- Yet to be proved but should help prove this *)
-    (* nth_pow_less_or_equal_deriv    <-- Yet to be proved but should help prove this *)
+    (* nth_pow_greater_deriv   <-- should help prove this *)
+    (* nth_pow_less_or_equal_deriv    <-- should help prove this *)
     admit.
   }
 
