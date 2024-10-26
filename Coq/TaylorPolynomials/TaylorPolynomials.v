@@ -236,11 +236,13 @@ Proof.
     induction i, n.
     - simpl.
       field.
-    - simpl.
+    - rewrite summation_expand_lower.
+      (* Show summation (fun (i : nat) (x' : R) => c (S i) * iter D 0 (fun x'0 : R => x'0 ^ S i) x') (S n) 0 is equal to 0 *)
       admit.
-    - simpl.
-      admit.
-    - simpl.
+    - inversion max_i_is_n.
+    - assert (i <= n)%nat by (apply le_S_n; apply max_i_is_n).
+      apply le_S in H.
+      specialize (IHi H). clear H.
       admit.
   }
   rewrite c_implem by apply H.
