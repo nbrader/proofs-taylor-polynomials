@@ -1,121 +1,12 @@
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
-Require Import Coq.Lists.List.
-Require Import Coq.Arith.Compare_dec.
-Import ListNotations.
-Open Scope R_scope.
 
-Require Import CoqUtilLib.OptionFunctions.
-Require Import CoqUtilLib.ListFunctions.
-Require Import CoqUtilLib.FunctionLemmas.
 Require Import CoqUtilLib.Iteration.
 
 Require Import TaylorPolynomials.Differentiation.
-Require Import TaylorPolynomials.IteratedDifferentiation.
 Require Import TaylorPolynomials.Lemmas.
-Require Import TaylorPolynomials.Summation.
-Require Import TaylorPolynomials.Product.
 Require Import Psatz.
-Require Import Lia.
 
-(*
-    Return to Lemmas.v when proven.
-*)
-Lemma fact_product_equiv : forall (i : nat), fact i = product_nat (fun x => S x) i.
-Proof.
-  intros.
-  induction i.
-  - simpl.
-    reflexivity.
-  - replace (fact (S i)) with ((S i) * fact i)%nat by (simpl; reflexivity).
-    rewrite IHi. clear IHi.
-    reflexivity.
-Qed.
-
-(*
-    Return to Lemmas.v when proven.
-*)
-Lemma split_factorial_lt : forall (i m : nat), (i < m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
-Proof.
-  intros.
-  rewrite !fact_product_equiv.
-  induction i, m.
-  - reflexivity.
-  - simpl.
-    rewrite Nat.add_0_r.
-    reflexivity.
-  - inversion H.
-  - apply le_S in H.
-    apply le_S_n in H.
-    apply IHi in H as H2. clear IHi.
-    rewrite <- H2.
-    rewrite product_nat_expand_upper at 1.
-    rewrite (Nat.mul_comm (S i) (product_nat (fun x : nat => S x) i)).
-    rewrite <- Nat.mul_assoc.
-    f_equal.
-    replace (S m - i)%nat with (S (S m - S i)).
-    + rewrite product_nat_expand_lower at 1.
-      replace (i + 1)%nat with (S i) by lia.
-      rewrite Nat.mul_comm.
-      replace (fun x : nat => (S i + S x)%nat) with (fun i0 : nat => (i + S (S i0))%nat).
-      -- reflexivity.
-      -- apply functional_extensionality.
-         intros.
-         lia.
-    + destruct i.
-      * simpl.
-        rewrite Nat.sub_0_r.
-        reflexivity.
-      * apply le_S_n in H.
-        simpl.
-        rewrite Nat.sub_succ_r.
-        rewrite Nat.succ_pred.
-        --reflexivity.
-        --lia.
-Qed.
-
-Lemma split_factorial_eq : forall (i m : nat), (i = m)%nat -> (fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m.
-Proof.
-  intros.
-  rewrite H.
-  replace (m - m)%nat with 0%nat by lia.
-  simpl.
-  replace (fact m * 1)%nat with (fact m)%nat by lia.
-  reflexivity.
-Qed.
-
-Lemma le_equiv : forall (i m : nat), (i <= m)%nat <-> ((i < m)%nat \/ (i = m)%nat).
-Proof.
-    intros.
-    split.
-    - intros.
-      destruct H.
-      + right.
-        reflexivity.
-      + left.
-        unfold lt.
-        apply le_n_S.
-        apply H.
-    - intros.
-      destruct H.
-      + unfold lt in H.
-        apply le_S in H.
-        apply le_S_n in H.
-        apply H.
-      + rewrite H.
-        apply le_n.
-Qed.
-
-Lemma split_factorial_le : forall (i m : nat), (i <= m)%nat -> ((fact i * product_nat (fun x => i + S x) (m-i))%nat = fact m).
-Proof.
-    intros.
-    apply le_equiv in H.
-    destruct H.
-    - apply split_factorial_lt.
-      apply H.
-    - apply split_factorial_eq.
-      apply H.
-Qed.
 
 (*
     Return to IteratedDifferentiation.v when proven.
