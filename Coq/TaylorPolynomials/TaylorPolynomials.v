@@ -41,17 +41,17 @@ Theorem Taylor_0_implem :
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
-  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+  forall (Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0),
 
   (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
-  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+  forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
 
   (*
     Given the above then Taylor 1%nat a F must have this implementation: fun x => (D F a)*(x-a) + F a
   *)
   forall (F : R -> R), forall (a : R), Taylor 0%nat a F = fun (x : R) => F a.
 Proof.
-  intros Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a.
+  intros.
   
   assert (Taylor_0_deriv_is_0 : forall (a : R) (F : R -> R), D (Taylor 0%nat a F) = fun x => 0).
   {
@@ -87,10 +87,10 @@ Theorem Taylor_1_implem :
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
-  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+  forall (Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0),
 
   (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
-  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+  forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
 
   (*
     Given the above then Taylor 1%nat a F must have this implementation: fun x => (D F a)*(x-a) + F a
@@ -103,7 +103,7 @@ Proof.
          Taylor_1_equals_F_at_a
          Taylor_1_deriv_equals_F_deriv_at_a
          F a. *)
-  intros Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a.
+  intros.
   (*
     Givens:
       lin_f''(x) = 0
@@ -204,16 +204,16 @@ Theorem Maclaurin_implem :
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
-  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+  forall (Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0),
 
   (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
-  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+  forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (n : nat),
     Taylor n 0 F = summation (fun k x' => (iter D k F 0 / INR (fact k)) * x' ^ k) (S n). (* <---- TO DO: Check this assertion is valid with a couple examples *)
 Proof.
-  intros Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F n.
+  intros.
   apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant (S n) (Taylor n 0 F)) in Taylor_degree.
   destruct Taylor_degree as [c Taylor_degree].
   specialize Taylor_agrees_at_a with (degree:=n) (a:=0) (F:=F) as Taylor_agrees_at_0. clear Taylor_agrees_at_a.
@@ -341,33 +341,6 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem Taylor_a_equiv :
-  (* Taylor n f is the Taylor polynomial of degree n of f *)
-  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
-
-  (* Denote the derivative by D *)
-  forall (D : (R -> R) -> (R -> R)),
-
-  (* Derivative properties *)
-  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
-  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
-  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
-  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
-  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
-  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
-
-  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
-  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
-
-  (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
-  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
-
-  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
-  forall (F : R -> R) (a : R) (n : nat),
-    Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a).
-Proof.
-Admitted.
-
 Theorem Taylor_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -386,17 +359,20 @@ Theorem Taylor_implem :
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
-  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+  forall (Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0),
 
   (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
-  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+  forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
+
+  (* This assumptions gives the meaning of the parameter a: It's a way to select a point about which to expand. *)
+  forall (Taylor_a_equiv : forall (F : R -> R) (a : R) (n : nat), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)),
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
     Taylor n a F = summation (fun k x' => (iter D k F a / INR (fact k)) * (x' - a) ^ k) (S n). (* <---- TO DO: Check this assertion is valid with a couple examples *)
 Proof.
-  intros Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n.
-  rewrite (Taylor_a_equiv Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n).
+  intros.
+  rewrite Taylor_a_equiv.
   rewrite (Maclaurin_implem Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a (fun x' : R => F (x' + a)) n).
   apply functional_extensionality.
   intros.
@@ -422,18 +398,19 @@ Lemma Taylor_deriv :
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
-  (forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0) ->
+  forall (Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0),
 
   (* The mth derivative of the Taylor polynomial of degree n at a where m <= n is equal to the mth derivative of F applied to a *)
-  (forall (degree order : nat) (a : R) (F : R -> R), (le order degree) -> iter D order (Taylor degree a F) a = iter D order F a) ->
+  forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
+
+  (* This assumptions gives the meaning of the parameter a: It's a way to select a point about which to expand. *)
+  forall (Taylor_a_equiv : forall (F : R -> R) (a : R) (n : nat), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)),
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
     D (Taylor (S n) a F) = Taylor n a (D F).
 Proof.
-  intros Taylor D zero_integral constant_integral
-         unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant
-         Taylor_degree Taylor_agrees_at_a F a.
+  intros.
   induction n as [|n IH]; intros.
 
   - (* Base case: n = 0 *)
