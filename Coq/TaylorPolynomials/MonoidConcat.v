@@ -1,3 +1,8 @@
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Arith.
+Require Import Ring.
+Require Import Coq.ssr.ssrfun.
+
 Require Import FreeMonoid.StructMonoid.
 
 
@@ -30,7 +35,6 @@ Qed.
 
 Lemma mconcat_irrelevance_of_large_coeffs :
   forall (A : Type) `{Hmon : Monoid A} (n : nat) (F_ G_ : nat -> A),
-
   (forall (i : nat), (i <= n)%nat -> F_ i = G_ i) ->
     mconcat A F_ (S n) = mconcat A G_ (S n).
 Proof.
@@ -49,7 +53,7 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma mconcat_n_identities (A : Type) `{Hmon : Monoid A} (n : nat):
+Lemma mconcat_n_identities (A : Type) `{Hmon : Monoid A} (n : nat) :
   mconcat A (fun _ => mn_id) n = mn_id.
 Proof.
   intros.
@@ -60,4 +64,44 @@ Proof.
     simpl.
     rewrite mn_left_id.
     reflexivity.
+Qed.
+
+Lemma split_mconcat (A : Type) `{Hmon : Monoid A} (c_ : nat -> A) (i n : nat) :
+   commutative m_op ->
+   (i <= n)%nat -> mconcat A c_ n  = m_op (mconcat A c_ i) (mconcat A (fun j => c_ (j+i)) (n-i)).
+Proof.
+    intros commutative max_i_is_n.
+    induction i.
+    - simpl.
+      rewrite mn_left_id.
+      assert ((fun j : nat => c_ (j + 0)) = c_).
+      {
+        apply functional_extensionality.
+        intros.
+        replace (x+0) with x by ring.
+        reflexivity.
+      }
+      rewrite H1. clear H1.
+      rewrite Nat.sub_0_r.
+      reflexivity.
+    - apply le_S in max_i_is_n as H1.
+      apply le_S_n in H1.
+      apply IHi in H1 as H1. clear IHi.
+
+      simpl.
+      rewrite H1.
+      rewrite <- Nat.sub_succ.
+      rewrite Nat.sub_succ_l by apply max_i_is_n.
+      rewrite mconcat_expand_lower.
+
+      rewrite commutative.
+      rewrite <- sg_assoc.
+      rewrite commutative.
+
+      replace (0 + i) with i by ring.
+      replace (fun i0 : nat => c_ (S i0 + i)) with (fun j : nat => c_ (j + S i)).
+      + reflexivity.
+      + apply functional_extensionality. intros.
+        replace (x + S i) with (S x + i) by ring.
+        reflexivity.
 Qed.
