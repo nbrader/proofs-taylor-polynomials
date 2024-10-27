@@ -127,6 +127,18 @@ Proof.
   apply H.
 Qed.
 
+Lemma summation_R_irrelevance_of_large_coeffs :
+  forall (n : nat) (c_ d_ : nat -> R),
+
+  (forall (i : nat), (i <= n)%nat -> c_ i = d_ i) ->
+    summation_R c_ (S n) = summation_R d_ (S n).
+Proof.
+  intros.
+  rewrite summation_R_mconcat_equiv.
+  apply mconcat_irrelevance_of_large_coeffs.
+  apply H.
+Qed.
+
 Lemma summation_n_zeros (n : nat):
   summation_R (fun _ => 0) n = 0.
 Proof.
@@ -135,7 +147,7 @@ Proof.
   apply mconcat_n_identities.
 Qed.
 
-Lemma split_summation (c_ : nat -> R) (i n : nat) :
+Lemma split_summation_R (c_ : nat -> R) (i n : nat) :
    (i <= n)%nat -> summation_R c_ n  = summation_R (fun j => c_ (j+i)%nat) (n-i) + summation_R c_ i.
 Proof.
   intros.
