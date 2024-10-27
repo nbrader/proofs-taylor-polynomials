@@ -243,9 +243,26 @@ Proof.
     {
       assert (summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = summation_R (fun _ : nat => 0) (n - i)).
       {
-        (* apply summation_irrelevance_of_large_coeffs. *)
-        (* pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (j + S i) i) as nth_pow_greater_than_or_equal_to_deriv. *)
-        admit.
+        case (n - i)%nat.
+        - reflexivity.
+        - intros.
+          apply (summation_R_irrelevance_of_large_coeffs n0 (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (fun _ : nat => 0)).
+          intros.
+
+          assert (i <= i0 + S i)%nat.
+          {
+            rewrite <- Nat.add_succ_comm.
+            apply Nat.le_add_l.
+          }
+          
+          pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (i0 + S i) i) as nth_pow_greater_than_or_equal_to_deriv.
+          rewrite (nth_pow_greater_than_or_equal_to_deriv H0).
+          assert (0 ^ (i0 + S i - i) = 0).
+          {
+            admit.
+          }
+          rewrite H1.
+          ring.
       }
       rewrite H. clear H.
       apply summation_n_zeros.
@@ -259,8 +276,26 @@ Proof.
     {
       assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) (n - i)).
       {
-        (* apply summation_irrelevance_of_large_coeffs. *)
-        pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv.
+        (* case (n - i)%nat.
+        - reflexivity.
+        - intros.
+          apply (summation_R_irrelevance_of_large_coeffs n0 (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (fun _ : nat => 0)).
+          intros.
+
+          assert (i <= i0 + S i)%nat.
+          {
+            rewrite <- Nat.add_succ_comm.
+            apply Nat.le_add_l.
+          }
+          
+          pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv.
+          rewrite (nth_pow_greater_than_or_equal_to_deriv H0).
+          assert (0 ^ (i0 + S i - i) = 0).
+          {
+            admit.
+          }
+          rewrite H1.
+          ring. *)
         admit.
       }
       rewrite H. clear H.
