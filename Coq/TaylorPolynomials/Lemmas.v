@@ -1,5 +1,6 @@
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Arith.
 
 Require Import TaylorPolynomials.Product.
 Require Import Psatz.
@@ -115,4 +116,16 @@ Proof.
       exact H.
     - apply split_factorial_eq.
       exact H.
+Qed.
+
+Lemma nat_total_ord : forall n m : nat, n <= m \/ n > m.
+Proof.
+  intros n m.
+  destruct (Nat.lt_total n m) as [Hlt | [Heq | Hgt]].
+  - (* Case n < m *)
+    left. apply Nat.lt_le_incl. assumption.
+  - (* Case n = m *)
+    left. rewrite Heq. apply Nat.le_refl.
+  - (* Case m < n *)
+    right. assumption.
 Qed.
