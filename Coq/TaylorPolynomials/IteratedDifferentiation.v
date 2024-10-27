@@ -257,19 +257,20 @@ Lemma iter_D_chain_of_linear :
   forall (D_chain_rule : forall (f g : R -> R), D (fun x => f (g x)) = fun x => D f (g x) * D g x),
 
   forall (F : R -> R) (a : R),
-  forall (n : nat),
-    iter D n (fun x' : R => F (x' + a)) 0 = iter D n F a.
+  forall (order : nat),
+    iter D order (fun x' : R => F (x' + a)) 0 = iter D order F a.
 Proof.
   intros.
-  induction n.
+  induction order.
   - simpl.
     rewrite Rplus_0_l.
     reflexivity.
   - admit.
-    (* rewrite iter_expand_inner.
+  (* rewrite iter_expand_inner. *)
+    (* simpl.
+    rewrite (D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a).
     simpl.
-    rewrite IHn.
-    rewrite (D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a). *)
+    rewrite IHn. *)
 Admitted.
 
 Lemma iter_D_chain_of_linear_example :
