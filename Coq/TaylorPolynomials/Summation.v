@@ -132,5 +132,5 @@ Lemma summation_n_zeros (n : nat):
 Proof.
   intros.
   rewrite summation_R_mconcat_equiv.
-  apply summation_n_identities.
+  apply mconcat_n_identities.
 Qed.

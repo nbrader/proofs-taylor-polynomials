@@ -49,7 +49,7 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma summation_n_identities (A : Type) `{Hmon : Monoid A} (n : nat):
+Lemma mconcat_n_identities (A : Type) `{Hmon : Monoid A} (n : nat):
   mconcat A (fun _ => mn_id) n = mn_id.
 Proof.
   intros.
