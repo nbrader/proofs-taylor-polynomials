@@ -67,13 +67,12 @@ Proof.
 Qed.
 
 Lemma split_mconcat (A : Type) `{Hmon : Monoid A} (c_ : nat -> A) (i n : nat) :
-   commutative m_op ->
-   (i <= n)%nat -> mconcat A c_ n  = m_op (mconcat A c_ i) (mconcat A (fun j => c_ (j+i)) (n-i)).
+   (i <= n)%nat -> mconcat A c_ n  = m_op (mconcat A (fun j => c_ (j+i)) (n-i)) (mconcat A c_ i).
 Proof.
-    intros commutative max_i_is_n.
+    intros max_i_is_n.
     induction i.
     - simpl.
-      rewrite mn_left_id.
+      rewrite mn_right_id.
       assert ((fun j : nat => c_ (j + 0)) = c_).
       {
         apply functional_extensionality.
@@ -94,9 +93,7 @@ Proof.
       rewrite Nat.sub_succ_l by apply max_i_is_n.
       rewrite mconcat_expand_lower.
 
-      rewrite commutative.
       rewrite <- sg_assoc.
-      rewrite commutative.
 
       replace (0 + i) with i by ring.
       replace (fun i0 : nat => c_ (S i0 + i)) with (fun j : nat => c_ (j + S i)).
