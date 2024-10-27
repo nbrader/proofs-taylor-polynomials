@@ -244,3 +244,30 @@ Proof.
     rewrite (iter_D_additive D D_additive order).
     reflexivity.
 Qed.
+
+Lemma iter_D_chain_of_linear :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_chain_rule : forall (f g : R -> R), D (fun x => f (g x)) = fun x => D f (g x) * D g x),
+
+  forall (F : R -> R) (a : R),
+  forall (n : nat),
+    iter D n (fun x' : R => F (x' + a)) 0 = iter D n F a.
+Proof.
+  intros.
+  induction n.
+  - simpl.
+    rewrite Rplus_0_l.
+    reflexivity.
+  - admit.
+    (* rewrite iter_expand_inner.
+    simpl.
+    rewrite IHn.
+    rewrite (D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a). *)
+Admitted.

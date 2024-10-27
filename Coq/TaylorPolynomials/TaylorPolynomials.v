@@ -356,6 +356,7 @@ Theorem Taylor_implem :
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (D_chain_rule : forall (f g : R -> R), D (fun x => f (g x)) = fun x => D f (g x) * D g x),
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
@@ -376,9 +377,15 @@ Proof.
   rewrite (Maclaurin_implem Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a (fun x' : R => F (x' + a)) n).
   apply functional_extensionality.
   intros.
-
-  admit.
-Admitted.
+  rewrite summation_app.
+  rewrite summation_app.
+  f_equal.
+  apply functional_extensionality.
+  intros i.
+  f_equal.
+  f_equal.
+  apply (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
+Qed.
 
 Lemma Taylor_deriv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
