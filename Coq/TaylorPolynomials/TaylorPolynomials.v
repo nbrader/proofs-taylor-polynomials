@@ -25,7 +25,6 @@ Require Import TaylorPolynomials.Integration.
 Require Import TaylorPolynomials.IteratedDifferentiation.
 Require Import TaylorPolynomials.Lemmas.
 Require Import TaylorPolynomials.Summation.
-Require Import TaylorPolynomials.Unproven.
 
 
 (* Proof that the linearisation of a function must be the Taylor polynomial of it of degree 1. *)

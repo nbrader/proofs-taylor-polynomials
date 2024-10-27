@@ -36,4 +36,3 @@ TaylorPolynomials/Summation.v
 TaylorPolynomials/MonoidConcat.v
 TaylorPolynomials/Product.v
 TaylorPolynomials/TaylorPolynomials.v
-TaylorPolynomials/Unproven.v
