@@ -48,3 +48,16 @@ Proof.
       rewrite H1 by auto.
       reflexivity.
 Qed.
+
+Lemma summation_n_identities (A : Type) `{Hmon : Monoid A} (n : nat):
+  mconcat A (fun _ => mn_id) n = mn_id.
+Proof.
+  intros.
+  induction n.
+  - reflexivity.
+  - simpl.
+    rewrite IHn.
+    simpl.
+    rewrite mn_left_id.
+    reflexivity.
+Qed.
