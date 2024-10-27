@@ -291,29 +291,25 @@ Proof.
 
     assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
     {
-      assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) (n - i)).
+      assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) i).
       {
-        (* case (n - i)%nat.
+        case i.
         - reflexivity.
         - intros.
-          apply (summation_R_irrelevance_of_large_coeffs n0 (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (fun _ : nat => 0)).
+          apply (summation_R_irrelevance_of_large_coeffs n0 (fun i0 : nat => c i0 * iter D (S n0) (fun x' : R => x' ^ i0) 0) (fun _ : nat => 0)).
           intros.
 
-          assert (i <= i0 + S i)%nat.
+          assert (S n0 > i0)%nat.
           {
-            rewrite <- Nat.add_succ_comm.
-            apply Nat.le_add_l.
+            unfold gt.
+            unfold lt.
+            apply le_n_S.
+            apply H.
           }
           
-          pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv.
-          rewrite (nth_pow_greater_than_or_equal_to_deriv H0).
-          assert (0 ^ (i0 + S i - i) = 0).
-          {
-            admit.
-          }
-          rewrite H1.
-          ring. *)
-        admit.
+          pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 (S n0)) as nth_pow_less_than_deriv.
+          rewrite (nth_pow_less_than_deriv H0).
+          ring.
       }
       rewrite H. clear H.
       apply summation_n_zeros.
@@ -343,7 +339,7 @@ Proof.
   }
   rewrite c_implem by apply H.
   reflexivity.
-Admitted.
+Qed.
 
 Theorem Taylor_a_equiv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
