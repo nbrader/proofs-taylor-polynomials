@@ -87,6 +87,17 @@ Proof.
   apply summation_expand_lower.
 Qed.
 
+Lemma summation_R_expand_lower :
+  forall (c_ : nat -> R) (n : nat),
+    summation_R c_ (S n) = summation_R (fun i => c_ (S i)) n + c_ O.
+Proof.
+  intros.
+  rewrite summation_R_mconcat_equiv.
+  rewrite mconcat_expand_lower.
+  simpl.
+  reflexivity.
+Qed.
+
 Lemma distr_over_summation :
   forall (n : nat) (F_ : nat -> R -> R) (s x : R),
     s * (summation F_ n) x = summation (fun i x' => s * (F_ i x')) n x.
@@ -114,4 +125,12 @@ Proof.
   rewrite summation_mconcat_equiv.
   apply mconcat_irrelevance_of_large_coeffs.
   apply H.
+Qed.
+
+Lemma summation_n_zeros (n : nat):
+  summation_R (fun _ => 0) n = 0.
+Proof.
+  intros.
+  rewrite summation_R_mconcat_equiv.
+  apply summation_n_identities.
 Qed.
