@@ -271,3 +271,58 @@ Proof.
     rewrite IHn.
     rewrite (D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a). *)
 Admitted.
+
+Lemma iter_D_chain_of_linear_example :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (D_chain_rule : forall (f g : R -> R), D (fun x => f (g x)) = fun x => D f (g x) * D g x),
+
+  exists (F : R -> R) (a : R),
+  exists (n : nat),
+    iter D n (fun x' : R => F (x' + a)) 0 = iter D n F a.
+Proof.
+  intros.
+  exists (fun x => x^3).
+  exists 10.
+  exists 2%nat.
+  unfold iter.
+  rewrite (D_chain_rule (fun x => x^3) (fun x => x + 10)).
+  replace (0 + 10) with 10 by ring.
+  replace 3%nat with (2+1)%nat by ring.
+  rewrite D_additive.
+  rewrite linear_deriv.
+  replace 10 with (10*1) by ring.
+  rewrite D_homog.
+  rewrite unit_deriv.
+  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+  rewrite D_product_rule.
+  rewrite D_product_rule.
+  rewrite D_product_rule.
+  replace 2%nat with (1+1)%nat by ring.
+  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+  replace (INR (1 + 1 + 1)) with (INR (1 + 1 + 1) * 1) by ring.
+  rewrite D_homog.
+  rewrite unit_deriv.
+  rewrite D_additive.
+  rewrite D_product_rule.
+  rewrite (D_chain_rule (fun x => x^(1+1)) (fun x => x + 10 * 1)).
+  rewrite D_additive.
+  rewrite D_product_rule.
+  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+  rewrite unit_deriv.
+  rewrite linear_deriv.
+  replace 10 with (10*1) by ring.
+  rewrite D_homog.
+  rewrite unit_deriv.
+  replace 0 with (0*1) by ring.
+  rewrite D_homog.
+  rewrite unit_deriv.
+  ring.
+Qed.
