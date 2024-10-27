@@ -93,7 +93,7 @@ Proof.
   apply (zero_nth_deriv D D_homog).
 Qed.
 
-Theorem nth_pow_less_or_equal_deriv :
+Theorem nth_pow_greater_than_or_equal_to_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
   forall (linear_deriv : D (fun x => x) = fun x => 1),
@@ -184,7 +184,7 @@ Proof.
     reflexivity.
 Qed.
 
-Theorem nth_pow_greater_deriv :
+Theorem nth_pow_less_than_deriv :
   (* Denote the derivative by D *)
   forall (D : (R -> R) -> (R -> R)),
   forall (unit_deriv : D (fun x => 1) = fun _ => 0),
