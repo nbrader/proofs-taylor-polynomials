@@ -241,13 +241,14 @@ Proof.
     replace (S n - S i)%nat with (n - i)%nat by auto.
     assert (summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = 0).
     {
-      assert ((summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i)) = (summation_R (fun _ : nat => 0) (n - i))).
+      assert (summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = summation_R (fun _ : nat => 0) (n - i)).
       {
         (* apply summation_irrelevance_of_large_coeffs. *)
         (* pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (j + S i) i) as nth_pow_greater_than_or_equal_to_deriv. *)
         admit.
       }
-      admit.
+      rewrite H. clear H.
+      apply summation_n_zeros.
     }
     rewrite H. clear H.
     rewrite Rplus_0_l.
@@ -256,13 +257,14 @@ Proof.
 
     assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
     {
-      assert ((summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i)) = (summation_R (fun _ : nat => 0) (n - i))).
+      assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) (n - i)).
       {
         (* apply summation_irrelevance_of_large_coeffs. *)
         pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv.
         admit.
       }
-      admit.
+      rewrite H. clear H.
+      apply summation_n_zeros.
     }
     rewrite H. clear H.
     rewrite Rplus_0_r.
