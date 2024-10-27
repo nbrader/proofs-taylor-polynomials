@@ -230,51 +230,62 @@ Proof.
     replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
     rewrite <- ith_deriv. clear ith_deriv.
 
-    (* 
-    pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule) as nth_pow_greater_than_or_equal_to_deriv.
-    pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_equal_deriv.
-    pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv. *)
-
     rewrite summation_app.
-    (* 
-      ARCHIVED PARTIAL PROOF BELOW:
-
-      The following was a previous attempt which I'm keeping until the new plan works. I don't like the use of "if then else" as it introduces a new concept unnecessarily and makes each subgoal harder to read.
-
-    assert ((fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) = (fun i0 : nat => c i0 * (if i0 <? i then (fun _ => 0) else (fun x' : R => INR (fact i0 / fact (i0 - i)) * x' ^ (i0 - i))) 0)).
+    assert (S i <= S n)%nat.
     {
-      apply functional_extensionality.
-      intros i0.
-      case_eq (i0 <? i).
-      + intros.
-        apply Nat.ltb_lt in H.
-        rewrite (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 i H).
-        reflexivity.
-      + intros.
-        apply Nat.ltb_ge in H.
-        rewrite (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule i0 i H).
-        reflexivity.
+      apply le_n_S in max_i_is_n.
+      apply max_i_is_n.
+    }
+    rewrite (split_summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) (S i) (S n) H). clear H.
+
+    replace (S n - S i)%nat with (n - i)%nat by auto.
+    assert (summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = 0).
+    {
+      assert ((summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i)) = (summation_R (fun _ : nat => 0) (n - i))).
+      {
+        (* apply summation_irrelevance_of_large_coeffs. *)
+        (* pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (j + S i) i) as nth_pow_greater_than_or_equal_to_deriv. *)
+        admit.
+      }
+      admit.
     }
     rewrite H. clear H.
-    *)
+    rewrite Rplus_0_l.
 
+    rewrite (split_summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i (S i) (Nat.le_succ_diag_r i)).
 
+    assert (summation_R (fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
+    {
+      assert ((summation_R (fun j : nat => c (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i)) = (summation_R (fun _ : nat => 0) (n - i))).
+      {
+        (* apply summation_irrelevance_of_large_coeffs. *)
+        pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv.
+        admit.
+      }
+      admit.
+    }
+    rewrite H. clear H.
+    rewrite Rplus_0_r.
 
-    (* NEW PLAN *)
-
-    (* write a lemma for splitting summation_R into three expressions: terms of degree less than i, the term of degree i and the terms with degree greater than i. *)
-    (* reduce the terms of degree less than i to zero by nth_pow_less_than_deriv *)
-        (* pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv. *)
-
-    (* reduce the terms of degree greater than i to zero by nth_pow_greater_than_or_equal_to_deriv *)
-        (* pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule) as nth_pow_greater_than_or_equal_to_deriv. *)
-
-    (* reduce the term of degree i by nth_pow_equal_deriv *)
-        (* pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_equal_deriv. *)
-      
-    (* prove equality *)
-
-    admit.
+    assert (summation_R (fun j : nat => c (j + i)%nat * iter D i (fun x' : R => x' ^ (j + i)) 0) (S i - i) = INR (fact i) * c i).
+    {
+      assert ((S i - i)%nat = S O).
+      {
+        rewrite Nat.sub_succ_l.
+        - rewrite Nat.sub_diag.
+          reflexivity.
+        - apply Nat.le_refl.
+      }
+      rewrite H. clear H.
+      simpl.
+      pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_equal_deriv.
+      rewrite nth_pow_equal_deriv.
+      ring.
+    }
+    rewrite H. clear H.
+    field.
+    apply not_0_INR.
+    apply fact_neq_0.
   }
   rewrite c_implem by apply H.
   reflexivity.
