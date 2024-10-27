@@ -259,7 +259,24 @@ Proof.
           rewrite (nth_pow_greater_than_or_equal_to_deriv H0).
           assert (0 ^ (i0 + S i - i) = 0).
           {
-            admit.
+            assert (exists c : nat, (i0 + S i - i)%nat = S c).
+            {
+              exists i0.
+              assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1.
+              {
+                rewrite Nat.sub_succ_l.
+                - rewrite Nat.sub_diag.
+                  reflexivity.
+                - apply Nat.le_refl.
+              }
+              rewrite <- Nat.add_sub_assoc by apply Nat.le_succ_diag_r.
+              rewrite succ_i_minus_i_is_1 by apply le_n_S.
+              ring.
+            }
+            destruct H1.
+            rewrite H1. clear H1.
+            simpl.
+            ring.
           }
           rewrite H1.
           ring.
@@ -306,14 +323,14 @@ Proof.
 
     assert (summation_R (fun j : nat => c (j + i)%nat * iter D i (fun x' : R => x' ^ (j + i)) 0) (S i - i) = INR (fact i) * c i).
     {
-      assert ((S i - i)%nat = S O).
+      assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1.
       {
         rewrite Nat.sub_succ_l.
         - rewrite Nat.sub_diag.
           reflexivity.
         - apply Nat.le_refl.
       }
-      rewrite H. clear H.
+      rewrite succ_i_minus_i_is_1. clear succ_i_minus_i_is_1.
       simpl.
       pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_equal_deriv.
       rewrite nth_pow_equal_deriv.
