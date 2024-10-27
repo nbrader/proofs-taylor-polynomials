@@ -134,3 +134,12 @@ Proof.
   rewrite summation_R_mconcat_equiv.
   apply mconcat_n_identities.
 Qed.
+
+Lemma split_summation (c_ : nat -> R) (i n : nat) :
+   (i <= n)%nat -> summation_R c_ n  = summation_R (fun j => c_ (j+i)%nat) (n-i) + summation_R c_ i.
+Proof.
+  intros.
+  rewrite summation_R_mconcat_equiv.
+  apply split_mconcat.
+  apply H.
+Qed.
