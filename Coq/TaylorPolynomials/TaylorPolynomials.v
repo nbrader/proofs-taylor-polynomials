@@ -228,22 +228,53 @@ Proof.
     rewrite (iter_D_additive_over_summation D D_additive D_homog) in Taylor_agrees_at_0.
     apply Taylor_agrees_at_0 in max_i_is_n as ith_deriv. clear Taylor_agrees_at_0.
     replace (fun i0 : nat => iter D i (fun x' : R => c i0 * x' ^ i0)) with (fun i0 : nat => fun x : R => c i0 * iter D i (fun x' : R => x' ^ i0) x) in ith_deriv by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
-    rewrite <- ith_deriv.
+    rewrite <- ith_deriv. clear ith_deriv.
 
-    pose proof (nth_pow_less_or_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_less_or_equal_deriv.
-    pose proof (nth_pow_greater_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_greater_deriv.
-    
-    induction i, n.
-    - simpl.
-      field.
-    - rewrite summation_expand_lower.
-      (* Show summation (fun (i : nat) (x' : R) => c (S i) * iter D 0 (fun x'0 : R => x'0 ^ S i) x') (S n) 0 is equal to 0 *)
-      admit.
-    - inversion max_i_is_n.
-    - assert (i <= n)%nat by (apply le_S_n; apply max_i_is_n).
-      apply le_S in H.
-      specialize (IHi H). clear H.
-      admit.
+    (* 
+    pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule) as nth_pow_greater_than_or_equal_to_deriv.
+    pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_equal_deriv.
+    pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv. *)
+
+    rewrite summation_app.
+    (* 
+      ARCHIVED PARTIAL PROOF BELOW:
+
+      The following was a previous attempt which I'm keeping until the new plan works. I don't like the use of "if then else" as it introduces a new concept unnecessarily and makes each subgoal harder to read.
+
+    assert ((fun i0 : nat => c i0 * iter D i (fun x' : R => x' ^ i0) 0) = (fun i0 : nat => c i0 * (if i0 <? i then (fun _ => 0) else (fun x' : R => INR (fact i0 / fact (i0 - i)) * x' ^ (i0 - i))) 0)).
+    {
+      apply functional_extensionality.
+      intros i0.
+      case_eq (i0 <? i).
+      + intros.
+        apply Nat.ltb_lt in H.
+        rewrite (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 i H).
+        reflexivity.
+      + intros.
+        apply Nat.ltb_ge in H.
+        rewrite (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule i0 i H).
+        reflexivity.
+    }
+    rewrite H. clear H.
+    *)
+
+
+
+    (* NEW PLAN *)
+
+    (* write a lemma for splitting summation_R into three expressions: terms of degree less than i, the term of degree i and the terms with degree greater than i. *)
+    (* reduce the terms of degree less than i to zero by nth_pow_less_than_deriv *)
+        (* pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule) as nth_pow_less_than_deriv. *)
+
+    (* reduce the terms of degree greater than i to zero by nth_pow_greater_than_or_equal_to_deriv *)
+        (* pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule) as nth_pow_greater_than_or_equal_to_deriv. *)
+
+    (* reduce the term of degree i by nth_pow_equal_deriv *)
+        (* pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule) as nth_pow_equal_deriv. *)
+      
+    (* prove equality *)
+
+    admit.
   }
   rewrite c_implem by apply H.
   reflexivity.
@@ -286,6 +317,8 @@ Theorem Taylor_implem :
   (* Derivative properties *)
   forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
   forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
@@ -301,9 +334,9 @@ Theorem Taylor_implem :
   forall (F : R -> R) (a : R) (n : nat),
     Taylor n a F = summation (fun k x' => (iter D k F a / INR (fact k)) * (x' - a) ^ k) (S n). (* <---- TO DO: Check this assertion is valid with a couple examples *)
 Proof.
-  intros Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n.
+  intros Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n.
   rewrite (Taylor_a_equiv Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a F a n).
-  rewrite (Maclaurin_implem Taylor D zero_integral constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a (fun x' : R => F (x' + a)) n).
+  rewrite (Maclaurin_implem Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule integration_constant Taylor_degree Taylor_agrees_at_a (fun x' : R => F (x' + a)) n).
   apply functional_extensionality.
   intros.
 
@@ -394,7 +427,7 @@ Print Assumptions iter_D_additive.
   Maclaurin_implem
 Print Assumptions iter_D_homog.
   iter_D_additive_over_summation
-  nth_pow_greater_deriv
+  nth_pow_less_than_deriv
   Maclaurin_implem
 
 
@@ -413,7 +446,7 @@ Print Assumptions Taylor_1_example_lemma_2.
 Print Assumptions Taylor_1_example.
 
 Print Assumptions nth_pow_deriv.
-  nth_pow_greater_deriv
+  nth_pow_less_than_deriv
   poly_term_deriv
   nth_integral_of_zero
 Print Assumptions poly_term_deriv.
@@ -446,11 +479,11 @@ Print Assumptions summation_irrelevance_of_large_coeffs.
   Maclaurin_implem
 
 (* Admitted *)
-Print Assumptions nth_pow_greater_deriv.
+Print Assumptions nth_pow_less_than_deriv.
   Maclaurin_implem
 Print Assumptions nth_pow_equal_deriv.
   Maclaurin_implem
-Print Assumptions nth_pow_lesser_deriv.
+Print Assumptions nth_pow_greater_than_or_equal_to_deriv.
   Maclaurin_implem
 Print Assumptions Maclaurin_implem.
   Taylor_implem
