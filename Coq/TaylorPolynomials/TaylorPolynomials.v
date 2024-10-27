@@ -402,6 +402,7 @@ Lemma Taylor_deriv :
   forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
   forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
   forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (D_chain_rule : forall (f g : R -> R), D (fun x => f (g x)) = fun x => D f (g x) * D g x),
   forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
 
   (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
@@ -418,35 +419,65 @@ Lemma Taylor_deriv :
     D (Taylor (S n) a F) = Taylor n a (D F).
 Proof.
   intros.
-  induction n as [|n IH]; intros.
+  
+  rewrite (Taylor_implem Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule D_chain_rule integration_constant Taylor_degree Taylor_agrees_at_a Taylor_a_equiv F a ((S n))).
+  rewrite (Taylor_implem Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule D_chain_rule integration_constant Taylor_degree Taylor_agrees_at_a Taylor_a_equiv (D F) a n).
 
-  - (* Base case: n = 0 *)
-    assert (Taylor_agrees_at_a_0 : Taylor 0%nat a F a = F a) by (apply (Taylor_agrees_at_a 0%nat 0%nat a F (Nat.le_refl 0))).
-    (* assert (Taylor_agrees_at_a_1 : forall (a0 : R), Taylor 0%nat a0 F a0 = F a) by (intros; apply (Taylor_agrees_at_a 0%nat 0%nat a F (Nat.le_refl 0))). *)
-    assert (Taylor_agrees_at_a_1 : Taylor 0%nat a (D F) = fun (x : R) => D F a) by (apply (Taylor_0_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a (D F) a)).
-    assert (Taylor_agrees_at_a_2 : Taylor 1%nat a F = (fun x : R => D F a * (x - a) + F a)) by (apply (Taylor_1_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a)).
+  apply functional_extensionality.
+  intros.
+  replace (D (summation (fun (k : nat) (x' : R) => iter D k F a / INR (fact k) * (x' - a) ^ k) (S (S n))) x) with (iter D 1%nat (summation (fun (k : nat) (x' : R) => iter D k F a / INR (fact k) * (x' - a) ^ k) (S (S n))) x) by reflexivity.
+  rewrite (iter_D_additive_over_summation D D_additive D_homog (S (S n)) 1%nat (fun (k : nat) (x' : R) => iter D k F a / INR (fact k) * (x' - a) ^ k) x).
+  rewrite summation_expand_lower.
 
-    rewrite Taylor_agrees_at_a_1.
-    rewrite Taylor_agrees_at_a_2.
-
-    apply functional_extensionality.
-    intros.
-    rewrite D_additive.
-    replace (F a) with (F a * 1) by ring.
-    rewrite D_homog.
-    rewrite D_homog.
-    unfold Rminus.
-    rewrite D_additive.
-    replace (- a) with (- a * 1) by ring.
+  assert (iter D 1 (fun x' : R => iter D 0 F a / INR (fact 0) * (x' - a) ^ 0) x = 0).
+  {
+    simpl.
     rewrite D_homog.
     rewrite unit_deriv.
-    rewrite linear_deriv.
-    field.
-  
-  - (* Inductive step: n -> S n *)
-    admit.
-Admitted.
+    ring.
+  }
+  rewrite H. clear H.
 
+  rewrite Rplus_0_r.
+
+  f_equal.
+  apply functional_extensionality.
+  intros i.
+
+  apply functional_extensionality.
+  intros x'.
+  
+  replace (iter D 1) with D by reflexivity.
+  rewrite D_homog.
+  rewrite iter_expand_inner.
+  unfold Rminus at 1.
+  rewrite (D_chain_rule (fun x0 : R => x0 ^ S i) (fun x0 : R => x0 + - a)).
+  rewrite D_additive.
+  replace (-a) with (-a * 1) by ring.
+  rewrite D_homog.
+  rewrite linear_deriv.
+  rewrite unit_deriv.
+
+  replace (S i) with (i+1)%nat by ring.
+  rewrite (nth_pow_deriv D linear_deriv D_product_rule).
+  replace (x' + - a * 1) with (x' - a) by ring.
+  replace (1 + - a * 0) with 1 by ring.
+  rewrite Rmult_1_r.
+  rewrite <- Rmult_assoc.
+  f_equal.
+  rewrite <- Rmult_div_swap.
+  rewrite <- Rmult_div_assoc.
+  replace (i + 1)%nat with (S i) by ring.
+  rewrite fact_simpl.
+  rewrite mult_INR.
+  rewrite Rdiv_mult_distr.
+  rewrite Rdiv_diag.
+  - field.
+    apply INR_fact_neq_0.
+  - apply not_0_INR.
+    apply not_eq_sym.
+    exact (O_S i).
+Qed.
 
 (*
 
