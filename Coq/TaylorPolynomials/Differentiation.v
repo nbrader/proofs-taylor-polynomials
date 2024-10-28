@@ -124,3 +124,27 @@ Proof.
   replace (1 + a * 0) with 1 by ring.
   ring.
 Qed.
+
+Lemma D_chain_of_linear_general :
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (unit_deriv : D (fun x => 1) = fun _ => 0),
+  forall (linear_deriv : D (fun x => x) = fun x => 1),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_chain_rule : forall (f g : R -> R), D (fun x => f (g x)) = fun x => D f (g x) * D g x),
+
+  forall (F : R -> R) (a b : R),
+    D (fun x' : R => F (x' + a)) b = D F (b + a).
+Proof.
+  intros.
+  rewrite D_chain_rule.
+  rewrite D_additive.
+  rewrite linear_deriv.
+  replace (fun _ : R => a) with (fun _ : R => a*1) by (apply functional_extensionality; intros; ring).
+  rewrite D_homog.
+  rewrite unit_deriv.
+  ring.
+Qed.
