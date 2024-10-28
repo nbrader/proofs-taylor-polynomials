@@ -365,7 +365,7 @@ Theorem Taylor_implem :
   forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
 
   (* This assumptions gives the meaning of the parameter a: It's a way to select a point about which to expand. *)
-  forall (Taylor_a_equiv : forall (F : R -> R) (a : R) (n : nat), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)),
+  forall (Taylor_a_equiv : forall (F : R -> R) (a : R) (n : nat), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)), (* FUTURE WORK: I'm uncertain if this assumption is necessary given the above. *)
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
@@ -411,7 +411,7 @@ Lemma Taylor_deriv :
   forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
 
   (* This assumptions gives the meaning of the parameter a: It's a way to select a point about which to expand. *)
-  forall (Taylor_a_equiv : forall (F : R -> R) (a : R) (n : nat), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)),
+  forall (Taylor_a_equiv : forall (F : R -> R) (a : R) (n : nat), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)), (* FUTURE WORK: I'm uncertain if this assumption is necessary given the above. *)
 
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (F : R -> R) (a : R) (n : nat),
