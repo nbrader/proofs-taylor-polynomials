@@ -367,42 +367,41 @@ Theorem Taylor_a_equiv :
   (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
   forall (n : nat) (a : R) (F : R -> R), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a).
 Proof.
-  intros Taylor D zero_integral constant_integral unit_deriv linear_deriv D_additive D_homog D_product_rule D_chain_rule integration_constant Taylor_degree Taylor_agrees_at_a n.
-  induction n.
-  - intros.
-    specialize Taylor_degree with (n := 0%nat) (a := a) (F := F) as Taylor_degree_1.
-    simpl iter in Taylor_degree_1.
-    apply zero_integral in Taylor_degree_1.
-    destruct Taylor_degree_1 as [c1 Taylor_degree_1].
+  intros.
+  
+  specialize Taylor_degree with (n := n) (a := a) (F := F) as Taylor_degree_1.
+  specialize Taylor_degree with (n := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_degree_2.
 
-    specialize Taylor_degree with (n := 0%nat) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_degree_2.
-    simpl iter in Taylor_degree_2.
-    apply zero_integral in Taylor_degree_2.
-    destruct Taylor_degree_2 as [c2 Taylor_degree_2].
+  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant) in Taylor_degree_1.
+  destruct Taylor_degree_1 as [c1_ Taylor_degree_1].
+  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant) in Taylor_degree_2.
+  destruct Taylor_degree_2 as [c2_ Taylor_degree_2].
 
-    rewrite Taylor_degree_1.
-    rewrite Taylor_degree_2.
+  rewrite Taylor_degree_1.
+  rewrite Taylor_degree_2.
 
-    apply functional_extensionality.
-    intros.
+  apply functional_extensionality.
+  intros.
 
-    specialize Taylor_agrees_at_a with (degree := 0%nat) (order := 0%nat) (a := a) (F := F) as Taylor_agrees_at_a_1.
-    specialize (Taylor_agrees_at_a_1 (Nat.le_refl O)).
-    simpl in Taylor_agrees_at_a_1.
-    rewrite Taylor_degree_1 in Taylor_agrees_at_a_1.
+  specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := a) (F := F) as Taylor_agrees_at_a_1.
+  specialize (Taylor_agrees_at_a_1 (Nat.le_refl n)).
+  simpl in Taylor_agrees_at_a_1.
+  rewrite Taylor_degree_1 in Taylor_agrees_at_a_1. clear Taylor_degree_1.
 
-    specialize Taylor_agrees_at_a with (degree := 0%nat) (order := 0%nat) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_agrees_at_a_2.
-    specialize (Taylor_agrees_at_a_2 (Nat.le_refl O)).
-    simpl in Taylor_agrees_at_a_2.
-    rewrite Taylor_degree_2 in Taylor_agrees_at_a_2.
-    replace (0 + a) with (a) in Taylor_agrees_at_a_2 by ring.
+  specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_agrees_at_a_2.
+  specialize (Taylor_agrees_at_a_2 (Nat.le_refl n)).
+  simpl in Taylor_agrees_at_a_2.
+  rewrite Taylor_degree_2 in Taylor_agrees_at_a_2. clear Taylor_degree_2.
 
-    rewrite Taylor_agrees_at_a_1.
-    rewrite Taylor_agrees_at_a_2.
+  rewrite summation_app.
+  rewrite summation_app.
 
-    reflexivity.
-  - intros.
-    admit.
+  f_equal.
+
+  apply functional_extensionality.
+  intros i.
+  
+  admit.
 Admitted.
 
 Theorem Taylor_implem :
