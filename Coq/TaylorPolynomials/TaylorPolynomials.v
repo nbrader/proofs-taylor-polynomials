@@ -340,6 +340,32 @@ Proof.
   reflexivity.
 Qed.
 
+Theorem Taylor_nth :
+  (* Taylor n f is the Taylor polynomial of degree n of f *)
+  forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
+
+  (* Denote the derivative by D *)
+  forall (D : (R -> R) -> (R -> R)),
+
+  (* Derivative properties *)
+  forall (constant_integral : forall (f : R -> R) (c : R), (D f = fun x => c) <-> exists (c' : R), f = fun x => c*x + c'),
+  forall (D_additive : forall (f g : R -> R), D (fun x => f x + g x) = fun x => D f x + D g x),
+  forall (D_homog : forall (f : R -> R), forall (s : R), D (fun x => s * f x) = fun x => s * D f x),
+  forall (D_product_rule : forall (f g : R -> R), D (fun x => f x * g x) = fun x => D f x * g x + f x * D g x),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)), (* <-- Not true for functions with discontinuities *)
+
+  (* The (n+1)th derivative of any Taylor polynomial of degree n of F is zero *)
+  forall (Taylor_degree : forall (n : nat) (a : R) (F : R -> R), iter D (S n) (Taylor n a F) = fun x => 0),
+
+  (* The implementation of the Taylor polynomial of degree n at a for F must be the sum of the first n terms of the Taylor series: *)
+  forall (n : nat) (a : R) (F : R -> R), exists c_ : nat -> R, Taylor n a F = summation (fun (i : nat) (x' : R) => c_ i * x' ^ i) (S n).
+Proof.
+  intros.
+  pose proof (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant).
+  apply H.
+  apply Taylor_degree.
+Qed.
+
 Theorem Taylor_a_equiv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -369,16 +395,13 @@ Theorem Taylor_a_equiv :
 Proof.
   intros.
   
-  specialize Taylor_degree with (n := n) (a := a) (F := F) as Taylor_degree_1.
-  specialize Taylor_degree with (n := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_degree_2.
+  specialize (Taylor_nth Taylor D constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree) with (n := n) (a := a) (F := F) as Taylor_nth_1.
+  destruct Taylor_nth_1 as [c1_ Taylor_nth_1].
+  specialize (Taylor_nth Taylor D constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree) with (n := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_nth_2.
+  destruct Taylor_nth_2 as [c2_ Taylor_nth_2].
 
-  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant) in Taylor_degree_1.
-  destruct Taylor_degree_1 as [c1_ Taylor_degree_1].
-  apply (nth_integral_of_zero D constant_integral D_additive D_homog D_product_rule integration_constant) in Taylor_degree_2.
-  destruct Taylor_degree_2 as [c2_ Taylor_degree_2].
-
-  rewrite Taylor_degree_1.
-  rewrite Taylor_degree_2.
+  rewrite Taylor_nth_1.
+  rewrite Taylor_nth_2.
 
   apply functional_extensionality.
   intros.
@@ -386,22 +409,38 @@ Proof.
   specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := a) (F := F) as Taylor_agrees_at_a_1.
   specialize (Taylor_agrees_at_a_1 (Nat.le_refl n)).
   simpl in Taylor_agrees_at_a_1.
-  rewrite Taylor_degree_1 in Taylor_agrees_at_a_1. clear Taylor_degree_1.
+  rewrite Taylor_nth_1 in Taylor_agrees_at_a_1. clear Taylor_nth_1.
 
   specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_agrees_at_a_2.
   specialize (Taylor_agrees_at_a_2 (Nat.le_refl n)).
   simpl in Taylor_agrees_at_a_2.
-  rewrite Taylor_degree_2 in Taylor_agrees_at_a_2. clear Taylor_degree_2.
+  rewrite Taylor_nth_2 in Taylor_agrees_at_a_2. clear Taylor_nth_2.
 
-  rewrite summation_app.
-  rewrite summation_app.
+  assert (c1_ = fun i => iter D i F a / INR (fact i)). (* I think this should be some kind of summation *)
+  {
+    admit.
+  }
+
+  assert (c2_ = fun i => iter D i F 0 / INR (fact i)).
+  {
+    admit.
+  }
+
+  rewrite (summation_app (fun (i : nat) (x' : R) => c2_ i * x' ^ i)).
+  rewrite <- (summation_app (fun (i : nat) (x' : R) => c2_ i * (x' - a) ^ i)).
+
+  rewrite H.
+  rewrite H0.
 
   f_equal.
 
   apply functional_extensionality.
   intros i.
-  
+
+  apply functional_extensionality.
+  intros x'.
   admit.
+
 Admitted.
 
 Theorem Taylor_implem :
