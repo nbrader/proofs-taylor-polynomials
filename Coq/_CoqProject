@@ -27,6 +27,7 @@ FreeMonoid/StructMagma.v
 FreeMonoid/StructMonoid.v
 FreeMonoid/StructSemigroup.v
 FreeMonoid/TypeCategory.v
+TaylorPolynomials/Combinatorics.v
 TaylorPolynomials/Differentiation.v
 TaylorPolynomials/Examples.v
 TaylorPolynomials/Integration.v

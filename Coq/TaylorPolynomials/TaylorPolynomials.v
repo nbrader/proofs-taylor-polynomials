@@ -9,6 +9,8 @@ For a much better library which proves Taylor's Thoerem, see the following:
 Require Import Coq.Reals.Reals.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Lists.List.
+Require Import Coq.Reals.Rfunctions.
+Require Import Psatz.
 Import ListNotations.
 Open Scope R_scope.
 
@@ -20,6 +22,7 @@ Require Import CoqUtilLib.Iteration.
 Require Import FreeMonoid.MonoidFree.
 Require Import FreeMonoid.StructMonoid.
 
+Require Import TaylorPolynomials.Combinatorics.
 Require Import TaylorPolynomials.Differentiation.
 Require Import TaylorPolynomials.Integration.
 Require Import TaylorPolynomials.IteratedDifferentiation.
@@ -419,7 +422,7 @@ Proof.
   rewrite    (summation_app (fun (i : nat) (x' : R) => c2_ i *  x'      ^ i)).
   rewrite <- (summation_app (fun (i : nat) (x' : R) => c2_ i * (x' - a) ^ i)).
 
-  assert (c1_ = fun j => summation_R_from_and_to (fun i : nat => (iter D i F a / INR (fact i)) * (-a) ^ (i-j)) j n).
+  assert (c1_ = fun j => summation_R_from_and_to (fun i : nat => (iter D i F a / INR (fact i)) * INR (from_n_choose_k i j) * (-a) ^ (i-j)) j n).
   {
     admit.
   }
@@ -432,15 +435,19 @@ Proof.
   rewrite H.
   rewrite H0.
 
-  f_equal.
+  assert (exists (n : nat), summation (fun (i : nat) (x' : R) => summation_R_from_and_to (fun i0 : nat => iter D i0 F a / INR (fact i0) * INR (from_n_choose_k i0 i) * (- a) ^ (i0 - i)) i n * x' ^ i) (S n) x = summation (fun (i : nat) (x' : R) => iter D i F a / INR (fact i) * (x' - a) ^ i) (S n) x).
+  {
+      exists 4%nat.
+      unfold summation_R_from_and_to.
+      simpl.
+      ring.
+  }
 
-  apply functional_extensionality.
-  intros i.
-
-  apply functional_extensionality.
-  intros x'.
+  unfold summation_R_from_and_to.
+  rewrite summation_app.
+  rewrite summation_app.
+  unfold from_n_choose_k.
   admit.
-
 Admitted.
 
 Theorem Taylor_implem :
