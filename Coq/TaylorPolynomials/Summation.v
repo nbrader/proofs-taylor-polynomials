@@ -24,6 +24,8 @@ Fixpoint summation_R (c_ : nat -> R) (n : nat) : R :=
     | S n' => c_ n' + summation_R c_ n'
   end.
 
+Definition summation_R_from_and_to (c_ : nat -> R) (n_first : nat) (n_last : nat) : R := summation_R (fun i => c_ (n_first + i)%nat) (n_last - n_first + 1)%nat.
+
 Lemma summation_R_mconcat_equiv :
   summation_R = @mconcat _ _ _ RplusMonoid.
 Proof.

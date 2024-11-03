@@ -416,18 +416,18 @@ Proof.
   simpl in Taylor_agrees_at_a_2.
   rewrite Taylor_nth_2 in Taylor_agrees_at_a_2. clear Taylor_nth_2.
 
-  assert (c1_ = fun i => iter D i F a / INR (fact i)). (* I think this should be some kind of summation *)
-  {
-    admit.
-  }
-
-  assert (c2_ = fun i => iter D i F 0 / INR (fact i)).
-  {
-    admit.
-  }
-
-  rewrite (summation_app (fun (i : nat) (x' : R) => c2_ i * x' ^ i)).
+  rewrite    (summation_app (fun (i : nat) (x' : R) => c2_ i *  x'      ^ i)).
   rewrite <- (summation_app (fun (i : nat) (x' : R) => c2_ i * (x' - a) ^ i)).
+
+  assert (c1_ = fun j => summation_R_from_and_to (fun i : nat => (iter D i F a / INR (fact i)) * (-a) ^ (i-j)) j n).
+  {
+    admit.
+  }
+
+  assert (c2_ = fun i => iter D i F a / INR (fact i)).
+  {
+    admit.
+  }
 
   rewrite H.
   rewrite H0.
