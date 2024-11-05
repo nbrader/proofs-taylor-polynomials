@@ -508,8 +508,7 @@ Proof.
               rewrite Rdiv_mult_l_l by (apply not_0_INR; apply not_eq_sym; apply O_S).
               replace (INR (fact (x0 + S x1) / (fact (S x0) * fact (S x1))) / INR (fact (x0 + S x1))) with ((INR (fact (x0 + S x1) / (fact x0 * fact (S x1))) / INR (fact (x0 + S x1))) * / INR (S x0)).
               --- rewrite <- IHx0.
-                  assert (fact_S : forall n : nat, fact (S n) = ((S n) * fact n)%nat) by (simpl; reflexivity).
-                  rewrite fact_S.
+                  rewrite fact_simpl.
                   rewrite <- Rinv_mult.
                   rewrite <- mult_INR.
                   rewrite <- mult_INR.
@@ -522,21 +521,12 @@ Proof.
                   replace (fact (x0 + S x1) / (S x0 * fact x0 * fact (S x1)))%nat with (fact (x0 + S x1) / (fact x0 * fact (S x1)) / S x0)%nat.
                   *** admit.
                   *** admit.
-           ** induction x0, x1.
-              --- simpl.
-                  exists 1%nat.
-                  reflexivity.
+           ** induction x0.
               --- exists 1%nat.
                   simpl (fact 1).
                   rewrite Nat.mul_1_l.
                   rewrite Nat.mul_1_l.
                   rewrite Nat.add_0_l.
-                  reflexivity.
-              --- exists 1%nat.
-                  simpl (fact 1).
-                  rewrite Nat.mul_1_l.
-                  rewrite Nat.mul_1_r.
-                  rewrite Nat.add_1_r.
                   reflexivity.
               --- admit.
            (* rewrite <- Nat.Div0.div_mul_cancel_l. *)
