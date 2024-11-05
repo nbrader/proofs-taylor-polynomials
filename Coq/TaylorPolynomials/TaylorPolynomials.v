@@ -503,51 +503,8 @@ Proof.
         -- replace (fact (S x0 + S x1)) with (S (x0 + S x1) * fact (x0 + S x1))%nat by (rewrite Nat.add_succ_l; rewrite fact_simpl; reflexivity).
            rewrite mult_INR.
            rewrite mult_INR.
-           rewrite Nat.Lcm0.divide_div_mul_exact.
-           ** rewrite mult_INR.
-              rewrite Rdiv_mult_l_l by (apply not_0_INR; apply not_eq_sym; apply O_S).
-              replace (INR (fact (x0 + S x1) / (fact (S x0) * fact (S x1))) / INR (fact (x0 + S x1))) with ((INR (fact (x0 + S x1) / (fact x0 * fact (S x1))) / INR (fact (x0 + S x1))) * / INR (S x0)).
-              --- rewrite <- IHx0.
-                  rewrite fact_simpl.
-                  rewrite <- Rinv_mult.
-                  rewrite <- mult_INR.
-                  rewrite <- mult_INR.
-                  rewrite <- (Nat.mul_assoc (fact x0) (fact (S x1)) (S x0)).
-                  rewrite (Nat.mul_comm (fact (S x1)) (S x0)).
-                  rewrite (Nat.mul_assoc (fact x0) (S x0) (fact (S x1))).
-                  rewrite (Nat.mul_comm (fact x0) (S x0)).
-                  reflexivity.
-              --- replace (fact (S x0) * fact (S x1))%nat with ((S x0) * fact x0 * fact (S x1))%nat by (simpl; reflexivity).
-                  replace (fact (x0 + S x1) / (S x0 * fact x0 * fact (S x1)))%nat with (fact (x0 + S x1) / (fact x0 * fact (S x1)) / S x0)%nat.
-                  *** admit.
-                  *** admit.
-           ** induction x0.
-              --- exists 1%nat.
-                  simpl (fact 1).
-                  rewrite Nat.mul_1_l.
-                  rewrite Nat.mul_1_l.
-                  rewrite Nat.add_0_l.
-                  reflexivity.
-              --- admit.
-           (* rewrite <- Nat.Div0.div_mul_cancel_l. *)
 
-        (* rewrite <- (split_factorial_le x0 (x0 + x1) (Nat.le_add_r x0 x1)).
-        replace (x0 + x1 - x0)%nat with x1 by (rewrite Nat.add_comm; rewrite <- (Nat.add_sub_assoc x1 x0 x0 (Nat.le_refl x0)); rewrite Nat.sub_diag; ring). *)
-
-
-        (* Search fact.
-
-        rewrite Rinv_div.
-        fold (Rdiv (fact x0 * fact x1) (INR (fact (x0 + x1)))).
-        Search Rinv.
-        rewrite <- mult_INR.
-        rewrite <- Rmult_div_swap.
-        rewrite <- Rmult_div_assoc.
-        Search INR.
-        Search Nat.div.
-
-        rewrite Rdiv_def.
-        rewrite Rmult_div_swap. *)
+           admit.
     - simpl.
       replace (n + 0)%nat with n by ring.
       rewrite Rplus_0_r.
