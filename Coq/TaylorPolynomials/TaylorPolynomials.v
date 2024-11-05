@@ -369,6 +369,10 @@ Proof.
   apply Taylor_degree.
 Qed.
 
+(* pascal_step2 *)
+(* pascal_step3 *)
+(* simpl_fact *)
+
 Theorem Taylor_a_equiv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -447,7 +451,105 @@ Proof.
   rewrite summation_app.
   rewrite summation_app.
   unfold from_n_choose_k.
-  admit.
+  simpl.
+  replace (n - n + 1)%nat with 1%nat by (rewrite Nat.sub_diag; ring).
+  replace (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact (n + i - n))) * (- a) ^ (n + i - n)) with (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i).
+  + replace (summation_R (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i) 1) with (summation_R (fun i : nat => (iter D (n + i) F a / INR (fact n * fact i)) * (- a) ^ i) 1).
+    - replace (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact (i + i0)) * INR (fact (i + i0) / (fact i * fact (i + i0 - i))) * (- a) ^ (i + i0 - i)) (n - i + 1) * x ^ i) with (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact i * fact i0) * (- a) ^ i0) (n - i + 1) * x ^ i).
+      * simpl.
+        rewrite Nat.add_0_r.
+        rewrite Rplus_0_r.
+        rewrite Rmult_1_r.
+        rewrite Nat.mul_1_r.
+        admit.
+      * apply functional_extensionality.
+        intros.
+        f_equal.
+        f_equal.
+        apply functional_extensionality.
+        intros.
+        replace (x0 + x1 - x0)%nat with x1%nat by (rewrite Nat.add_comm; rewrite <- (Nat.add_sub_assoc x1 x0 x0 (Nat.le_refl x0)); rewrite Nat.sub_diag; ring).
+        f_equal.
+        rewrite Rdiv_def.
+        rewrite Rdiv_def.
+        rewrite Rmult_assoc.
+        f_equal.
+        rewrite Rmult_comm.
+        rewrite <- Rdiv_def.
+
+        (*
+        Goal: / INR (fact x0 * fact x1) = INR (fact (x0 + x1) / (fact x0 * fact x1)) / INR (fact (x0 + x1))
+
+        This would be easily proven if we weren't dealing with division of natural numbers.
+        *)
+
+        induction x0, x1.
+        -- simpl.
+           field.
+        -- simpl (fact 0).
+           rewrite Nat.mul_1_l.
+           rewrite Nat.add_0_l.
+           rewrite (Nat.div_same (fact (S x1)) (fact_neq_0 (S x1))).
+           rewrite INR_1.
+           rewrite Rdiv_1_l.
+           reflexivity.
+        -- simpl (fact 0).
+           rewrite Nat.mul_1_r.
+           rewrite Nat.add_0_r.
+           rewrite (Nat.div_same (fact (S x0)) (fact_neq_0 (S x0))).
+           rewrite INR_1.
+           rewrite Rdiv_1_l.
+           reflexivity.
+        -- replace (fact (S x0 + S x1)) with (S (x0 + S x1) * fact (x0 + S x1))%nat by (rewrite Nat.add_succ_l; rewrite fact_simpl; reflexivity).
+           rewrite mult_INR.
+           rewrite mult_INR.
+           rewrite Nat.Lcm0.divide_div_mul_exact.
+           ** rewrite mult_INR.
+              rewrite Rdiv_mult_l_l by (apply not_0_INR; apply not_eq_sym; apply O_S).
+              replace (INR (fact (x0 + S x1) / (fact (S x0) * fact (S x1))) / INR (fact (x0 + S x1))) with ((INR (fact (x0 + S x1) / (fact x0 * fact (S x1))) / INR (fact (x0 + S x1))) * / INR (S x0)).
+              --- rewrite <- IHx0.
+                  
+                  (**)
+                  admit.
+              --- replace (fact (S x0) * fact (S x1))%nat with ((S x0) * fact x0 * fact (S x1))%nat by (simpl; reflexivity).
+                  replace (fact (x0 + S x1) / (S x0 * fact x0 * fact (S x1)))%nat with (fact (x0 + S x1) / (fact x0 * fact (S x1)) / S x0)%nat.
+                  *** admit.
+                  *** admit.
+           ** admit.
+           (* rewrite <- Nat.Div0.div_mul_cancel_l. *)
+
+        (* rewrite <- (split_factorial_le x0 (x0 + x1) (Nat.le_add_r x0 x1)).
+        replace (x0 + x1 - x0)%nat with x1 by (rewrite Nat.add_comm; rewrite <- (Nat.add_sub_assoc x1 x0 x0 (Nat.le_refl x0)); rewrite Nat.sub_diag; ring). *)
+
+
+        (* Search fact.
+
+        rewrite Rinv_div.
+        fold (Rdiv (fact x0 * fact x1) (INR (fact (x0 + x1)))).
+        Search Rinv.
+        rewrite <- mult_INR.
+        rewrite <- Rmult_div_swap.
+        rewrite <- Rmult_div_assoc.
+        Search INR.
+        Search Nat.div.
+
+        rewrite Rdiv_def.
+        rewrite Rmult_div_swap. *)
+    - simpl.
+      replace (n + 0)%nat with n by ring.
+      rewrite Rplus_0_r.
+      rewrite Rplus_0_r.
+      rewrite Rmult_1_r.
+      rewrite Rmult_1_r.
+      rewrite Nat.mul_1_r.
+      rewrite (Nat.div_same (fact n) (fact_neq_0 n)).
+      rewrite INR_1.
+      rewrite Rmult_1_r.
+      reflexivity.
+  + apply functional_extensionality.
+    intros.
+    replace (n + x0 - n)%nat with x0%nat by (rewrite Nat.add_comm; rewrite <- (Nat.add_sub_assoc x0 n n (Nat.le_refl n)); rewrite Nat.sub_diag; ring).
+    ring.
 Admitted.
 
 Theorem Taylor_implem :
