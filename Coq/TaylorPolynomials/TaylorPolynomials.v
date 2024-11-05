@@ -522,7 +522,23 @@ Proof.
                   replace (fact (x0 + S x1) / (S x0 * fact x0 * fact (S x1)))%nat with (fact (x0 + S x1) / (fact x0 * fact (S x1)) / S x0)%nat.
                   *** admit.
                   *** admit.
-           ** admit.
+           ** induction x0, x1.
+              --- simpl.
+                  exists 1%nat.
+                  reflexivity.
+              --- exists 1%nat.
+                  simpl (fact 1).
+                  rewrite Nat.mul_1_l.
+                  rewrite Nat.mul_1_l.
+                  rewrite Nat.add_0_l.
+                  reflexivity.
+              --- exists 1%nat.
+                  simpl (fact 1).
+                  rewrite Nat.mul_1_l.
+                  rewrite Nat.mul_1_r.
+                  rewrite Nat.add_1_r.
+                  reflexivity.
+              --- admit.
            (* rewrite <- Nat.Div0.div_mul_cancel_l. *)
 
         (* rewrite <- (split_factorial_le x0 (x0 + x1) (Nat.le_add_r x0 x1)).
