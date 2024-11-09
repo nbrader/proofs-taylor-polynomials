@@ -1,8 +1,8 @@
 The aim of this project is to prove that a Taylor Polynomials must have their usual form if we specify the properties it should have.
 
-Be aware, this project serves as a way for me to practice proving theorms in Coq.
+Be aware, this project serves as a way for me to practice proving theorems in Coq.
 
-For a much better library which proves Taylor's Thoerem, see the following:
+For a much better library which proves Taylor's Theorem, see the following:
   http://coquelicot.saclay.inria.fr/html/Coquelicot.Derive.html
 
 This project has a submodule. When first cloned, you may be required to run a "Submodule Update" such as when using the TortoiseGit context menu.
