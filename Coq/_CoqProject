@@ -9,6 +9,7 @@ CoqUtilLib/OptionFunctions.v
 FreeMonoid/Category.v
 FreeMonoid/ExtraLemmas.v
 FreeMonoid/HomExampleBoolOrToNatMax1.v
+FreeMonoid/MonoidConcat.v
 FreeMonoid/MonoidExampleAddAbsorbing.v
 FreeMonoid/MonoidExampleAddNeutral.v
 FreeMonoid/MonoidExampleBoolOr.v
@@ -34,6 +35,5 @@ TaylorPolynomials/Integration.v
 TaylorPolynomials/IteratedDifferentiation.v
 TaylorPolynomials/Lemmas.v
 TaylorPolynomials/Summation.v
-TaylorPolynomials/MonoidConcat.v
 TaylorPolynomials/Product.v
 TaylorPolynomials/TaylorPolynomials.v

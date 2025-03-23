@@ -4,7 +4,7 @@ Require Import Coq.Reals.Reals.
 Require Import FreeMonoid.MonoidExampleRealsPlus.
 Require Import FreeMonoid.MonoidExampleExtendToFunction.
 
-Require Import TaylorPolynomials.MonoidConcat.
+Require Import FreeMonoid.MonoidConcat.
 
 Definition FunctionToRealsMonoid (A : Type) := @ExtendToFunctionMonoid A R RplusMagma RplusSemigroup RplusMonoid.
 
