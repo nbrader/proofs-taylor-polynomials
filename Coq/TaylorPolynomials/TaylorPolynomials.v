@@ -433,7 +433,25 @@ Proof.
 
   assert (c2_ = fun i => iter D i F a / INR (fact i)).
   {
-    admit.
+    (* Strategy: Show c2_ i = (iter D i (fun x' => F (x' + a)) 0) / INR (fact i)
+       Then use iter_D_chain_of_linear to simplify the derivative *)
+    apply functional_extensionality.
+    intros i.
+
+    (* First, establish what c2_ must be from Maclaurin_implem *)
+    (* c2_ comes from Taylor_nth_2: Taylor n 0 (fun x' => F (x' + a)) = summation (fun i x' => c2_ i * x' ^ i) (S n) *)
+    (* Maclaurin_implem tells us: Taylor n 0 G = summation (fun k x' => (iter D k G 0 / INR (fact k)) * x' ^ k) (S n) *)
+    (* These must be equal, so coefficients must match *)
+
+    (* The key insight: c2_ i must equal the Maclaurin coefficient *)
+    (* This follows from polynomial coefficient uniqueness - if two polynomials are equal, coefficients are equal *)
+    (* For now, we admit the coefficient extraction step *)
+    assert (c2_ i = iter D i (fun x' : R => F (x' + a)) 0 / INR (fact i)) as coeff_form by admit.
+
+    (* Now apply iter_D_chain_of_linear *)
+    rewrite coeff_form.
+    rewrite (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
+    reflexivity.
   }
 
   rewrite H.
