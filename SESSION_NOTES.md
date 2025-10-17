@@ -1,12 +1,24 @@
 # Session Notes: Taylor Polynomial Proofs
 
-## Current Work (Session: 2025-10-18 - Binomial Coefficient Infrastructure)
+## Current Work (Session: 2025-10-18 Continued - Understanding Proof Structure)
 
 ### Goal
 🔄 **IN PROGRESS**: Complete `Taylor_a_equiv` theorem proof without admits
 
 ### Summary
-Successfully completed the `c2_` assertion proof and added binomial coefficient infrastructure to support the algebraic manipulations. Created `INR_binomial_coeff` lemma in Combinatorics.v to handle the identity `1/(x0!*x1!) = C(x0+x1,x0)/(x0+x1)!`. One algebraic admit replaced, but the main theorem still requires proving the `c1_` assertion and connecting the binomial expansion.
+After adding binomial coefficient infrastructure and attempting a c1_ assertion proof, discovered that the proof structure is more subtle than initially understood. The c1_ coefficients are NOT directly equal to `D^i F a / i!` - they're related through binomial expansion. Successfully added `INR_binomial_coeff` lemma and replaced one admit. The remaining challenge is proving the binomial expansion equality at line 579.
+
+### Key Discovery
+The proof involves two different polynomial representations of the same function:
+- **Representation 1**: `Taylor n a F = sum_i c1_ i * x^i` (powers of x)
+- **Representation 2**: `sum_i (D^i F a / i!) * (x-a)^i` (powers of x-a)
+
+The c2_ proof works because at point 0, these coincide. For general point a, they're related through binomial expansion, which is what the admit at line 579 needs to complete.
+
+## Previous Session (Session: 2025-10-18 - Binomial Coefficient Infrastructure)
+
+### Summary
+Successfully completed the `c2_` assertion proof and added binomial coefficient infrastructure to support the algebraic manipulations. Created `INR_binomial_coeff` lemma in Combinatorics.v to handle the identity `1/(x0!*x1!) = C(x0+x1,x0)/(x0+x1)!`. One algebraic admit replaced, but the main theorem still requires proving the binomial expansion connection.
 
 ### Current Status (2025-10-18)
 
@@ -36,13 +48,24 @@ summation_R (fun i => (iter D i F a / INR (fact i)) * x ^ i) (S n)
 
 This requires proving that c1_ has the correct form. The commented-out `rewrite H0` would fail because H0 is about c2_, not c1_. We need an analogous assertion for c1_ first.
 
-**Strategy for c1_ Proof:**
-Follow the same pattern as c2_, but starting from the Taylor series at point `a`:
-1. Apply Taylor_agrees_at_a with degree n, order i, point a, function F
-2. Take i-th derivative and evaluate at a
-3. Use summation decomposition to isolate the i-th coefficient
-4. Apply derivative rules to show only the i-th term survives
-5. Solve for c1_ i algebraically
+**Key Insight About Proof Structure:**
+
+The proof structure involves TWO different polynomial representations:
+1. **Taylor series at `a` using powers of x**: `Taylor n a F = sum_i c1_ i * x^i`
+2. **Taylor series at `a` using powers of (x-a)**: `sum_i (D^i F a / i!) * (x-a)^i`
+
+These represent the SAME function but with different coefficient systems.
+
+**Why c1_ ≠ D^i F a / i!:**
+- c2_ i = D^i F a / i! works because we're at point 0, where x^i and (x-0)^i are the same
+- For general point a, the coefficients c1_ i when expanded in powers of x are NOT the Taylor coefficients
+- They're related through binomial expansion: (x-a)^i = sum_j C(i,j) * x^j * (-a)^(i-j)
+
+**Remaining Work for Taylor_a_equiv:**
+The admit at line 579 represents the core challenge: proving the binomial expansion relating these two forms equals by showing coefficient equality. This requires:
+1. Full binomial expansion machinery
+2. Algebraic manipulation of factorials and binomial coefficients
+3. Possibly additional lemmas about coefficient extraction from binomial expansions
 
 ## Previous Work (Session: 2025-10-17 - Continued)
 

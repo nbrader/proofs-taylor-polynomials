@@ -528,6 +528,8 @@ Proof.
   }
 
   (* Now we can prove the summations are equal by showing coefficient functions agree on indices <= n *)
+  (* Note: c1_ coefficients are NOT directly equal to iter D i F a / INR (fact i) *)
+  (* They're related through the binomial expansion, which we handle below *)
   assert (summation_R (fun i : nat => c2_ i * x ^ i) (S n) =
           summation_R (fun i : nat => (iter D i F a / INR (fact i)) * x ^ i) (S n)).
   {
