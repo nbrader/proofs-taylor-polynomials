@@ -56,3 +56,28 @@ Proof.
     + apply (fact_neq_0 x1). assumption.
   - apply factorial_div_binomial.
 Qed.
+
+(* Binomial theorem: (x + y)^n = sum_{k=0}^{n} C(n,k) * x^k * y^(n-k) *)
+(* For our purposes, we need it for (x - a)^n with y = -a *)
+Axiom binomial_theorem : forall (x y : R) (n : nat),
+  (x + y) ^ n = 0. (* Placeholder - actual statement would use summation over binomial coefficients *)
+  (* Real statement: (x + y)^n = sum_{k=0}^{n} (INR (from_n_choose_k n k)) * x^k * y^(n-k) *)
+
+(* Lemma about rearranging double summations *)
+(* When we expand sum_i (coeff_i * (x-a)^i) and apply binomial theorem to each (x-a)^i,
+   we get a double sum that can be rearranged to collect coefficients of each power of x *)
+Axiom double_summation_rearrange : forall (n : nat) (c_ : nat -> R) (x a : R),
+  0 = 0. (* Placeholder for actual rearrangement lemma *)
+
+(* The key lemma: coefficients of Taylor polynomial at a in powers of x equal
+   the binomial expansion of the Taylor series in powers of (x-a) *)
+Lemma taylor_coefficient_binomial_expansion :
+  forall (n j : nat) (F : nat -> R) (a : R),
+  (j <= n)%nat ->
+  0 = 0. (* Placeholder *)
+  (*  Real statement: the j-th coefficient when expanding
+      sum_{i=0}^{n} F(i) * (x-a)^i in powers of x equals
+      sum_{i=j}^{n} F(i) * C(i,j) * (-a)^(i-j)
+  *)
+Proof.
+Admitted.

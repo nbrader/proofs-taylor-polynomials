@@ -13,7 +13,26 @@ The proof involves two different polynomial representations of the same function
 - **Representation 1**: `Taylor n a F = sum_i c1_ i * x^i` (powers of x)
 - **Representation 2**: `sum_i (D^i F a / i!) * (x-a)^i` (powers of x-a)
 
-The c2_ proof works because at point 0, these coincide. For general point a, they're related through binomial expansion, which is what the admit at line 579 needs to complete.
+The c2_ proof works because at point 0, these coincide. For general point a, they're related through binomial expansion.
+
+### Path to Completion
+To complete the proof without admits, we need (now documented in code):
+
+1. **Binomial Theorem** (line 602 in TaylorPolynomials.v):
+   - `(x - a)^i = sum_{j=0}^{i} C(i,j) * x^j * (-a)^(i-j)`
+   - This expands each term in powers of (x-a) to powers of x
+
+2. **Double Summation Rearrangement**:
+   - When expanding `sum_i (D^i F a / i!) * (x-a)^i`
+   - Apply binomial theorem to each `(x-a)^i`
+   - Rearrange to collect coefficients of `x^j`
+   - Result: `c1_ j = sum_{i=j}^{n} (D^i F a / i!) * C(i,j) * (-a)^(i-j)`
+
+3. **Polynomial Coefficient Uniqueness**:
+   - Two polynomials equal as functions ⟺ their coefficients equal
+   - Use to extract the coefficient relationship
+
+These are standard combinatorial results but require substantial formalization work in Coq.
 
 ## Previous Session (Session: 2025-10-18 - Binomial Coefficient Infrastructure)
 

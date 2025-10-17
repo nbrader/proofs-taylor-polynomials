@@ -578,8 +578,27 @@ Proof.
   + replace (summation_R (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i) 1) with (summation_R (fun i : nat => (iter D (n + i) F a / INR (fact n * fact i)) * (- a) ^ i) 1).
     - replace (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact (i + i0)) * INR (fact (i + i0) / (fact i * fact (i + i0 - i))) * (- a) ^ (i + i0 - i)) (n - i + 1) * x ^ i) with (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact i * fact i0) * (- a) ^ i0) (n - i + 1) * x ^ i).
       * simpl.
-        (* This requires proving that c1_ i = iter D i F a / INR (fact i) *)
-        (* which is part of the binomial expansion that's still being developed *)
+        (* Both sides equal Taylor n a F evaluated at x, so they must be equal *)
+        (* LHS: summation c1_ (S n) x = Taylor n a F x *)
+        (* RHS: summation (D^i F a / i!) * (x-a)^i (S n) = Taylor n 0 (F(·+a)) (x-a) = Taylor n a F x *)
+
+        (* This follows from the fact that:
+           1. Taylor n a F = summation c1_ (S n)   (by Taylor_nth_1)
+           2. Taylor n 0 (F(·+a)) = summation (D^i F a / i!) * ·^i (S n)   (would follow from Maclaurin_implem + chain rule)
+           3. Taylor n a F x = Taylor n 0 (F(·+a)) (x-a)   (the theorem we're proving)
+
+           However, we're in a circular situation - we can't use (3) because that's what we're proving.
+           We need to prove the coefficient relationship directly using binomial theorem.
+        *)
+
+        (* The proof requires establishing that c1_ j equals the sum of binomial-weighted Taylor coefficients.
+           This is a substantial piece of work involving:
+           - Binomial theorem for (x-a)^i expansion
+           - Double summation rearrangement lemmas
+           - Coefficient uniqueness for polynomials
+
+           For a complete proof, we'd need to add these lemmas to the Combinatorics module.
+        *)
         admit.
       * apply functional_extensionality.
         intros.
