@@ -1,12 +1,53 @@
 # Session Notes: Taylor Polynomial Proofs
 
-## Current Work (Session: 2025-10-17 - Continued)
+## Current Work (Session: 2025-10-18 - Binomial Coefficient Infrastructure)
 
 ### Goal
-✅ **COMPLETED**: Proof of the `c2_` assertion in the `Taylor_a_equiv` theorem
+🔄 **IN PROGRESS**: Complete `Taylor_a_equiv` theorem proof without admits
 
 ### Summary
-Successfully completed the `c2_` assertion proof, which demonstrates that the coefficients of the Maclaurin series for `F(x + a)` are `c2_ i = (D^i F a) / i!` for `i <= n`. The proof compiles successfully.
+Successfully completed the `c2_` assertion proof and added binomial coefficient infrastructure to support the algebraic manipulations. Created `INR_binomial_coeff` lemma in Combinatorics.v to handle the identity `1/(x0!*x1!) = C(x0+x1,x0)/(x0+x1)!`. One algebraic admit replaced, but the main theorem still requires proving the `c1_` assertion and connecting the binomial expansion.
+
+### Current Status (2025-10-18)
+
+**Completed Work:**
+- ✅ c2_ assertion proof complete (restructured using `summation_irrelevance_of_large_coeffs`)
+- ✅ Created test_binomial_identity.py to verify binomial coefficient identity
+- ✅ Added `factorial_div_binomial` lemma (admitted - requires combinatorial proof)
+- ✅ Added `INR_div_exact` lemma (proved - handles INR of exact division)
+- ✅ Added `INR_binomial_coeff` lemma (proved - connects binomial identity to real division)
+- ✅ Replaced admit at line 621 with `apply INR_binomial_coeff`
+- ✅ Build compiles successfully
+
+**Remaining Work:**
+- ❌ Line 579: Admits algebraic goal that requires c1_ proof (commented with explanation)
+- ❌ c1_ assertion: Need to prove `forall i, (i <= n)%nat -> c1_ i = iter D i F a / INR (fact i)`
+- ❌ Binomial expansion: Connect c1_ and c2_ forms through binomial theorem
+- ❌ factorial_div_binomial: Either prove combinatorially or accept as axiom
+
+### Analysis of Remaining Admits
+
+**Line 579 (TaylorPolynomials.v):**
+After rewriting with H1, the goal becomes:
+```coq
+summation_R (fun i => c1_ i * x ^ i) (S n) =
+summation_R (fun i => (iter D i F a / INR (fact i)) * x ^ i) (S n)
+```
+
+This requires proving that c1_ has the correct form. The commented-out `rewrite H0` would fail because H0 is about c2_, not c1_. We need an analogous assertion for c1_ first.
+
+**Strategy for c1_ Proof:**
+Follow the same pattern as c2_, but starting from the Taylor series at point `a`:
+1. Apply Taylor_agrees_at_a with degree n, order i, point a, function F
+2. Take i-th derivative and evaluate at a
+3. Use summation decomposition to isolate the i-th coefficient
+4. Apply derivative rules to show only the i-th term survives
+5. Solve for c1_ i algebraically
+
+## Previous Work (Session: 2025-10-17 - Continued)
+
+### Initial Status
+The c2_ assertion proof was ~80% complete but used `admit` for the `i > n` case because functional extensionality required proving `c2_ i = iter D i F a / INR (fact i)` for all i, but c2_ is unconstrained for i > n.
 
 ### Progress Made (Current Session - Continuation)
 

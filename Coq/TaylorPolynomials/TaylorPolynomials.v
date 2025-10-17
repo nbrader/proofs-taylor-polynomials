@@ -576,6 +576,8 @@ Proof.
   + replace (summation_R (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i) 1) with (summation_R (fun i : nat => (iter D (n + i) F a / INR (fact n * fact i)) * (- a) ^ i) 1).
     - replace (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact (i + i0)) * INR (fact (i + i0) / (fact i * fact (i + i0 - i))) * (- a) ^ (i + i0 - i)) (n - i + 1) * x ^ i) with (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact i * fact i0) * (- a) ^ i0) (n - i + 1) * x ^ i).
       * simpl.
+        (* This requires proving that c1_ i = iter D i F a / INR (fact i) *)
+        (* which is part of the binomial expansion that's still being developed *)
         admit.
       * apply functional_extensionality.
         intros.
@@ -615,11 +617,7 @@ Proof.
            rewrite INR_1.
            rewrite Rdiv_1_l.
            reflexivity.
-        -- replace (fact (S x0 + S x1)) with (S (x0 + S x1) * fact (x0 + S x1))%nat by (rewrite Nat.add_succ_l; rewrite fact_simpl; reflexivity).
-           rewrite mult_INR.
-           rewrite mult_INR.
-
-           admit.
+        -- apply INR_binomial_coeff.
     - simpl.
       replace (n + 0)%nat with n by ring.
       rewrite Rplus_0_r.
