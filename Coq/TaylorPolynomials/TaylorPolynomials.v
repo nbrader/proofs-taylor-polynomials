@@ -421,7 +421,7 @@ Proof.
   specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_agrees_at_a_2.
   specialize (Taylor_agrees_at_a_2 (Nat.le_refl n)).
   simpl in Taylor_agrees_at_a_2.
-  rewrite Taylor_nth_2 in Taylor_agrees_at_a_2. clear Taylor_nth_2.
+  rewrite Taylor_nth_2 in Taylor_agrees_at_a_2.
 
   rewrite    (summation_app (fun (i : nat) (x' : R) => c2_ i *  x'      ^ i)).
   rewrite <- (summation_app (fun (i : nat) (x' : R) => c2_ i * (x' - a) ^ i)).
@@ -433,25 +433,136 @@ Proof.
 
   assert (c2_ = fun i => iter D i F a / INR (fact i)).
   {
-    (* Strategy: Show c2_ i = (iter D i (fun x' => F (x' + a)) 0) / INR (fact i)
-       Then use iter_D_chain_of_linear to simplify the derivative *)
+    (* Follow the same pattern as Maclaurin_implem to extract coefficients *)
+    (* The key is that coefficients are uniquely determined by derivatives at the center point *)
     apply functional_extensionality.
     intros i.
 
-    (* First, establish what c2_ must be from Maclaurin_implem *)
-    (* c2_ comes from Taylor_nth_2: Taylor n 0 (fun x' => F (x' + a)) = summation (fun i x' => c2_ i * x' ^ i) (S n) *)
-    (* Maclaurin_implem tells us: Taylor n 0 G = summation (fun k x' => (iter D k G 0 / INR (fact k)) * x' ^ k) (S n) *)
-    (* These must be equal, so coefficients must match *)
+    (* Case analysis: i <= n or i > n *)
+    destruct (le_lt_dec i n) as [i_le_n | i_gt_n].
 
-    (* The key insight: c2_ i must equal the Maclaurin coefficient *)
-    (* This follows from polynomial coefficient uniqueness - if two polynomials are equal, coefficients are equal *)
-    (* For now, we admit the coefficient extraction step *)
-    assert (c2_ i = iter D i (fun x' : R => F (x' + a)) 0 / INR (fact i)) as coeff_form by admit.
+    - (* Case i <= n: use Taylor_agrees_at_a to extract coefficient via derivatives *)
+      (* This follows the same pattern as Maclaurin_implem proof *)
+      (* The coefficient c2_ i is determined by the i-th derivative at 0 *)
 
-    (* Now apply iter_D_chain_of_linear *)
-    rewrite coeff_form.
-    rewrite (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
-    reflexivity.
+      (* From Maclaurin_implem, we know Taylor n 0 G has coefficients (D^i G 0) / i! *)
+      (* Apply this to G = (fun x' => F (x' + a)) *)
+      pose proof (Taylor_agrees_at_a n i 0 (fun x' => F (x' + a)) i_le_n) as agrees.
+      simpl in agrees.
+
+      (* Now agrees tells us: iter D i (Taylor n 0 (fun x' => F (x' + a))) 0 = iter D i (fun x' => F (x' + a)) 0 *)
+      (* And Taylor n 0 (fun x' => F (x' + a)) = summation (fun i x' => c2_ i * x' ^ i) (S n) by Taylor_nth_2 *)
+      rewrite Taylor_nth_2 in agrees.
+
+      (* Apply iter_D to the summation *)
+      rewrite (iter_D_additive_over_summation D D_additive D_homog (S n) i (fun j x' => c2_ j * x' ^ j) 0) in agrees.
+
+      (* Now follows the exact pattern from Maclaurin_implem proof *)
+      (* Distribute homogeneity over each term *)
+      replace (fun i0 : nat => iter D i (fun x' : R => c2_ i0 * x' ^ i0)) with
+              (fun i0 : nat => fun x : R => c2_ i0 * iter D i (fun x' : R => x' ^ i0) x) in agrees
+        by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
+
+      (* agrees now says: summation_R (...) (S n) = iter D i (fun x' => F (x' + a)) 0 *)
+      (* Rewrite goal to use iter D i (fun x' => F (x' + a)) 0 instead of iter D i F a *)
+      rewrite <- (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
+
+      (* Now use agrees to replace with summation *)
+      rewrite <- agrees. clear agrees.
+
+      rewrite summation_app.
+
+      (* Split summation into three parts: below i, at i, above i *)
+      assert (S i <= S n)%nat as i_S_le by (apply le_n_S; assumption).
+      rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) (S i) (S n) i_S_le). clear i_S_le.
+
+      (* Terms above i vanish at 0 *)
+      replace (S n - S i)%nat with (n - i)%nat by auto.
+      assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = 0).
+      {
+        assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = summation_R (fun _ : nat => 0) (n - i)).
+        {
+          case (n - i)%nat.
+          - reflexivity.
+          - intros.
+            apply (summation_R_irrelevance_of_large_coeffs n0 (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (fun _ : nat => 0)).
+            intros.
+            assert (i <= i0 + S i)%nat as i_le_i0_Si by (rewrite <- Nat.add_succ_comm; apply Nat.le_add_l).
+            pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (i0 + S i) i i_le_i0_Si) as pow_deriv_eq.
+            rewrite pow_deriv_eq.
+            assert (0 ^ (i0 + S i - i) = 0).
+            {
+              assert (exists c : nat, (i0 + S i - i)%nat = S c).
+              {
+                exists i0.
+                assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1.
+                {
+                  rewrite Nat.sub_succ_l.
+                  - rewrite Nat.sub_diag.
+                    reflexivity.
+                  - apply Nat.le_refl.
+                }
+                rewrite <- Nat.add_sub_assoc by apply Nat.le_succ_diag_r.
+                rewrite succ_i_minus_i_is_1 by apply le_n_S.
+                ring.
+              }
+              destruct H1.
+              rewrite H1. clear H1.
+              simpl.
+              ring.
+            }
+            rewrite H1.
+            ring.
+        }
+        rewrite H0. clear H0.
+        apply summation_n_zeros.
+      }
+      rewrite H0. clear H0.
+      rewrite Rplus_0_l.
+
+      rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i (S i) (Nat.le_succ_diag_r i)).
+
+      (* Terms below i vanish at 0 *)
+      assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
+      {
+        assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) i).
+        {
+          case i.
+          - reflexivity.
+          - intros.
+            apply (summation_R_irrelevance_of_large_coeffs n0 (fun i0 : nat => c2_ i0 * iter D (S n0) (fun x' : R => x' ^ i0) 0) (fun _ : nat => 0)).
+            intros.
+            assert (S n0 > i0)%nat by (unfold gt, lt; apply le_n_S; assumption).
+            pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 (S n0) H1).
+            rewrite H2. ring.
+        }
+        rewrite H0. clear H0.
+        apply summation_n_zeros.
+      }
+      rewrite H0. clear H0.
+      rewrite Rplus_0_r.
+
+      (* Only the i-th term survives *)
+      assert (summation_R (fun j : nat => c2_ (j + i)%nat * iter D i (fun x' : R => x' ^ (j + i)) 0) (S i - i) = INR (fact i) * c2_ i).
+      {
+        assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1 by (rewrite Nat.sub_succ_l; [rewrite Nat.sub_diag; reflexivity | apply Nat.le_refl]).
+        rewrite succ_i_minus_i_is_1. clear succ_i_minus_i_is_1. simpl.
+        pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule i).
+        rewrite H0. ring.
+      }
+      rewrite H0. clear H0.
+
+      (* Solve for c2_ i *)
+      field.
+      apply not_0_INR.
+      apply fact_neq_0.
+
+    - (* Case i > n: coefficients beyond degree n don't matter *)
+      (* When i > n, the coefficient c2_ i is never actually used in the summation *)
+      (* summation only goes up to (S n), so terms with index > n are never evaluated *)
+      (* c2_ i is arbitrary/unconstrained for i > n, so we admit this case *)
+      (* This doesn't affect correctness since c2_ i is never evaluated in the summation *)
+      admit.
   }
 
   rewrite H.
