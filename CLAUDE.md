@@ -119,6 +119,37 @@ The proofs use a bottom-up approach:
 - Algebra is simplified using `ring` and `field` tactics
 - Real number scope (`R_scope`) is used throughout
 
+## Proof Sketches for Specific Lemmas
+
+### summation_R_triangular (Summation.v)
+
+**Statement** (LaTeX):
+```latex
+\sum_{i=0}^{n} \sum_{j=0}^{n-i} f(i,j) = \sum_{k=0}^{n} \sum_{i=0}^{k} f(i, k-i)
+```
+
+**Proof Strategy via Bijection**:
+
+The LHS can be shown equal to the RHS by way of a bijection between pairs of points enumerated row-by-row and pairs of points enumerated diagonal-by-diagonal.
+
+1. **Define the bijection**:
+   - Row-by-row enumeration: (i, j) where 0 ≤ i ≤ n and 0 ≤ j ≤ n-i
+   - Diagonal enumeration: (k, i) where 0 ≤ k ≤ n and 0 ≤ i ≤ k, with j = k-i
+   - Bijection: (i, j) ↔ (k=i+j, i)
+
+2. **Bijection lemma for finite sums**:
+   There should exist a lemma stating that such a bijection can be used to convert a finite sum into one in a different order, and that this reordering can be undone by way of associativity and commutativity. This shows that the sum itself is preserved.
+
+3. **Proof structure**:
+   - Prove the index sets are in bijection via k = i + j
+   - Use the finite sum reordering lemma with this bijection
+   - Apply commutativity and associativity of addition to show both orderings yield the same sum
+
+**Implementation notes**:
+- May need to first prove or find a general lemma about reordering finite sums via bijection
+- The monoid structure (commutativity + associativity) of (R, +, 0) is key
+- Alternatively, could prove directly by induction, expanding both sides and showing they match
+
 ## Proof Development Strategy
 
 **CRITICAL**: When working on complex proofs, use computational verification at each step:
