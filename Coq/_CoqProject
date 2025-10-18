@@ -27,6 +27,9 @@ FreeMonoid/MonoidHom.v
 FreeMonoid/StructMagma.v
 FreeMonoid/StructMonoid.v
 FreeMonoid/StructSemigroup.v
+FreeMonoid/StructGroup.v
+FreeMonoid/GroupHom.v
+FreeMonoid/GroupExampleQ1a.v
 FreeMonoid/TypeCategory.v
 TaylorPolynomials/Combinatorics.v
 TaylorPolynomials/Differentiation.v
