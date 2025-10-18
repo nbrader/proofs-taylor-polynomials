@@ -3,6 +3,7 @@ Require Import Coq.Numbers.NatInt.NZDiv.
 Require Import Coq.Reals.Reals.
 Require Import Coq.Arith.PeanoNat.
 Require Import Psatz.
+From mathcomp Require Import ssreflect ssrnat ssrbool binomial.
 Open Scope R_scope.
 
 Definition from_n_choose_k (n k : nat) := Nat.div (fact n) (fact k * fact (n-k)).
@@ -29,16 +30,37 @@ Fixpoint binom (n k : nat) : nat :=
    use the math-comp library which has comprehensive binomial coefficient support.
 *)
 
+(* Prove equivalence between Coq stdlib fact and math-comp factorial *)
+Lemma fact_eq_factorial : forall n, fact n = factorial n.
+Proof.
+  induction n as [|n IH].
+  - reflexivity.
+  - simpl. rewrite IH. reflexivity.
+Qed.
+
 Lemma factorial_div_binomial : forall x0 x1,
   exists k, (fact (x0 + x1) = (fact x0 * fact x1) * k)%nat.
 Proof.
   intros x0 x1.
-  (* The witness is the binomial coefficient C(x0+x1, x0) = binom (x0+x1) x0 *)
-  exists (binom (x0 + x1) x0).
-  (* Completing this proof requires proving: fact n = binom n k * fact k * fact (n - k)
-     This is a substantial lemma requiring careful induction and Pascal's identity.
-     We admit it here as it's a well-established combinatorial fact. *)
-Admitted.
+  (* The witness is the binomial coefficient C(x0+x1, x0) *)
+  exists (binomial (x0 + x1) x0).
+  (* Convert Coq stdlib fact to math-comp factorial *)
+  rewrite !fact_eq_factorial.
+  (* Goal: (x0 + x1)`! = (x0`! * x1`! * 'C(x0 + x1, x0))%N *)
+  (* bin_fact states: 'C(n, m) * (m`! * (n - m)`!) = n`! *)
+  (* Swap the order: (a * b) * c = c * (a * b) using mulnC *)
+  rewrite mulnC.
+  (* Goal is now: (x0 + x1)`! = ('C(x0 + x1, x0) * (x0`! * x1`!))%N *)
+  (* Rewrite x1! as ((x0+x1)-x0)! *)
+  rewrite [x1`!](_ : x1`! = ((x0 + x1) - x0)`!); last first.
+  { by rewrite addKn. }
+  (* Now goal is: (x0 + x1)`! = ('C(x0 + x1, x0) * (x0`! * ((x0 + x1) - x0)`!))%N *)
+  (* Apply bin_fact which states: 'C(n, m) * (m`! * (n - m)`!) = n`! *)
+  symmetry.
+  apply bin_fact.
+  (* Show x0 <= x0 + x1 *)
+  by apply leq_addr.
+Qed.
 
 (* Helper lemma: INR of exact division equals real division *)
 Lemma INR_div_exact : forall n m,
@@ -48,10 +70,20 @@ Lemma INR_div_exact : forall n m,
 Proof.
   intros n m Hm_neq_0 [k Hdiv].
   rewrite Hdiv.
-  rewrite Nat.mul_comm.
-  rewrite Nat.div_mul by assumption.
-  rewrite Nat.mul_comm.
-  rewrite mult_INR.
+  (* Simplify (m * k) / m = k *)
+  assert (Hdiv_simp: ((m * k) / m)%nat = k).
+  {
+    (* Use the fact that (k * m) / m = k when m <> 0 *)
+    replace (m * k)%nat with (k * m)%nat.
+    - apply Nat.div_mul. assumption.
+    - apply Nat.mul_comm.
+  }
+  rewrite Hdiv_simp.
+  (* Expand INR (m * k) *)
+  assert (Hmult_INR: INR (m * k)%nat = (INR m * INR k)%R).
+  { apply mult_INR. }
+  rewrite Hmult_INR.
+  (* Now we have: INR k = INR m * INR k / INR m *)
   field.
   apply not_0_INR.
   assumption.
