@@ -49,7 +49,7 @@ Theorem Taylor_0_implem :
   forall (Taylor_agrees_at_a : forall (degree order : nat) (a : R) (F : R -> R), (order <= degree)%nat -> iter D order (Taylor degree a F) a = iter D order F a),
 
   (*
-    Given the above then Taylor 1%nat a F must have this implementation: fun x => (D F a)*(x-a) + F a
+    Given the above then Taylor 0%nat a F must have this implementation: fun x => F a
   *)
   forall (F : R -> R), forall (a : R), Taylor 0%nat a F = fun (x : R) => F a.
 Proof.
