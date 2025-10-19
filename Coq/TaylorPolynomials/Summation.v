@@ -283,11 +283,109 @@ Proof.
 Qed.
 
 (* If two lists have the same count for all elements, they are permutations.
-   This is a general result about multisets - we axiomatize it for now but it
-   can be proved constructively using induction on the structure of lists. *)
-Axiom count_occ_eq_impl_Permutation : forall (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) (l1 l2 : list A),
+   Proof strategy: Induction on l1.
+   - Base case: l1 = [] implies l2 = [] (since count 0 for all elements)
+   - Inductive case: l1 = a :: l1'
+     * a appears in l2 (since count > 0)
+     * Remove one occurrence of a from both lists
+     * Apply inductive hypothesis to remainder
+     * Use Permutation_cons to conclude *)
+
+(* Helper: if count_occ is 0 for all elements, the list is empty *)
+Lemma count_occ_zero_impl_nil : forall (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) (l : list A),
+  (forall x, count_occ eq_dec l x = 0%nat) ->
+  l = [].
+Proof.
+  intros A eq_dec l H.
+  destruct l as [|a l'].
+  - reflexivity.
+  - (* l = a :: l', but count_occ for a should be > 0 *)
+    specialize (H a).
+    simpl in H.
+    destruct (eq_dec a a) as [_ | Hneq].
+    + (* a = a, so count_occ is S _, contradicts H *)
+      discriminate H.
+    + (* a <> a is absurd *)
+      contradiction.
+Qed.
+
+(* Helper: if count_occ l1 a > 0, then a is in l1 *)
+Lemma count_occ_pos_impl_In : forall (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) (l : list A) (a : A),
+  (count_occ eq_dec l a > 0)%nat ->
+  In a l.
+Proof.
+  intros A eq_dec l a H.
+  induction l as [|b l' IH].
+  - simpl in H. lia.
+  - simpl in H.
+    destruct (eq_dec b a) as [Heq | Hneq].
+    + (* b = a, so a = b by symmetry *)
+      left. exact Heq.
+    + (* b <> a, so a must be in l' *)
+      right. apply IH. exact H.
+Qed.
+
+(* Main theorem: equal count_occ implies Permutation *)
+Theorem count_occ_eq_impl_Permutation : forall (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) (l1 l2 : list A),
   (forall x, count_occ eq_dec l1 x = count_occ eq_dec l2 x) ->
   Permutation l1 l2.
+Proof.
+  intros A eq_dec l1.
+  induction l1 as [|a l1' IH]; intros l2 H_count.
+
+  - (* Base case: l1 = [] *)
+    (* All counts in l2 must be 0, so l2 = [] *)
+    assert (H_l2_nil: l2 = []).
+    { apply (count_occ_zero_impl_nil A eq_dec).
+      intros x. specialize (H_count x). simpl in H_count. symmetry. exact H_count. }
+    rewrite H_l2_nil.
+    apply perm_nil.
+
+  - (* Inductive case: l1 = a :: l1' *)
+    (* a must appear in l2 since count_occ (a :: l1') a > 0 *)
+    assert (H_a_in_l2: In a l2).
+    { apply (count_occ_pos_impl_In A eq_dec).
+      rewrite <- (H_count a).
+      simpl. destruct (eq_dec a a) as [_ | Hneq].
+      - lia.
+      - contradiction. }
+
+    (* Split l2 into before and after a *)
+    apply in_split in H_a_in_l2.
+    destruct H_a_in_l2 as [l2_before [l2_after H_l2_split]].
+    rewrite H_l2_split.
+
+    (* Show that a :: l1' is a permutation of a :: (l2_before ++ l2_after) *)
+    (* First, show l1' is a permutation of (l2_before ++ l2_after) *)
+    assert (H_perm_rest: Permutation l1' (l2_before ++ l2_after)).
+    { apply IH.
+      intros x.
+      specialize (H_count x).
+      simpl in H_count.
+      rewrite H_l2_split in H_count.
+      rewrite count_occ_app in H_count.
+      simpl in H_count.
+      destruct (eq_dec a x) as [Heq | Hneq].
+      - (* x = a: subtract 1 from both sides *)
+        rewrite count_occ_app.
+        rewrite <- Heq.
+        rewrite <- Heq in H_count.
+        simpl in H_count.
+        destruct (eq_dec a a) as [_ | Hneq'].
+        + lia.
+        + contradiction.
+      - (* x <> a: equation holds directly *)
+        rewrite count_occ_app.
+        exact H_count. }
+
+    (* Use Permutation_middle to permute a to its position *)
+    (* We have: Permutation l1' (l2_before ++ l2_after) *)
+    (* We want: Permutation (a :: l1') (l2_before ++ a :: l2_after) *)
+    (* Strategy: a :: l1' ~ a :: (l2_before ++ l2_after) ~ l2_before ++ a :: l2_after *)
+    apply perm_trans with (a :: (l2_before ++ l2_after)).
+    + apply perm_skip. exact H_perm_rest.
+    + apply Permutation_middle.
+Qed.
 
 (* Theorem: If two lists contain the same multiset of elements (same count_occ),
    then their sums are equal.
