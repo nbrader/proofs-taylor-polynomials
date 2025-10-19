@@ -451,34 +451,66 @@ Proof.
     ring.
   - (* Inductive step: Going from n to S n, both sides add the diagonal i+j = S n *)
 
-    (* Expand LHS: summation_R ... (S (S n)) *)
-    simpl summation_R at 1.
-    (* LHS = (term for i = S n) + (sum for i = 0 to n with updated bounds) *)
+    (* Key: Extract diagonal from the LHS inner sums using extend_inner_sum *)
+    assert (H_split_inner: forall i, (i <= n)%nat ->
+      summation_R (fun j => f i j) (S n - i + 1) =
+      summation_R (fun j => f i j) (n - i + 1) + f i (S n - i)%nat).
+    { intros. apply extend_inner_sum. assumption. }
 
-    replace (S n - S n + 1)%nat with 1%nat by lia.
-    simpl summation_R at 1.
-    replace (S n - S n)%nat with 0%nat by lia.
-    (* Now LHS = f (S n) 0 + summation_R (fun i => summation_R (fun j => f i j) (S n - i + 1)) (S n) *)
+    (* Rewrite the LHS middle term using summation_R_plus to separate old and new parts *)
+    assert (H_lhs_split:
+      summation_R (fun i => summation_R (fun j => f i j) (S n - i + 1)) (S n) =
+      summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) +
+      summation_R (fun i => f i (S n - i)%nat) (S n)).
+    {
+      (* Apply summation_R_plus by showing the inner functions are equal *)
+      rewrite <- summation_R_plus.
+      apply summation_R_irrelevance_of_large_coeffs.
+      intros i Hi.
+      rewrite H_split_inner by lia.
+      reflexivity.
+    }
 
-    (* Expand RHS: summation_R ... (S (S n)) *)
-    simpl summation_R at 2.
-    (* RHS = (term for k = S n) + (sum for k = 0 to n) *)
-    (* Term for k = S n is: summation_R (fun i => f i (S n - i)) (S n + 1) *)
+    (* Step 1: Expand LHS by one summation_R level *)
+    assert (H_lhs_expand:
+      summation_R (fun i => summation_R (fun j => f i j) (S (S n) - i + 1)) (S (S n)) =
+      summation_R (fun j => f (S n) j) (S (S n) - S n + 1) +
+      summation_R (fun i => summation_R (fun j => f i j) (S (S n) - i + 1)) (S n)).
+    { unfold summation_R at 1. fold summation_R. reflexivity. }
 
-    (* Key observation: The term summation_R (fun i => f i (S n - i)) (S n + 1)
-       sums the entire diagonal i+j = S n.
+    (* Step 2: For i <= n, apply extend_inner_sum to split S(Sn) sums *)
+    assert (H_split_SSn: forall i, (i <= n)%nat ->
+      summation_R (fun j => f i j) (S (S n) - i + 1) =
+      summation_R (fun j => f i j) (S n - i + 1) + f i (S (S n) - i)%nat).
+    { intros i Hi. apply extend_inner_sum. lia. }
 
-       But on the LHS, this diagonal is split across:
-       - f (S n) 0 (the new row)
-       - Plus one new element in each existing row i=0...n
+    assert (H_indices_split:
+      summation_R (fun i => summation_R (fun j => f i j) (S (S n) - i + 1)) (S n) =
+      summation_R (fun i => summation_R (fun j => f i j) (S n - i + 1)) (S n) +
+      summation_R (fun i => f i (S (S n) - i)%nat) (S n)).
+    {
+      rewrite <- summation_R_plus.
+      apply summation_R_irrelevance_of_large_coeffs.
+      intros i Hi.
+      rewrite H_split_SSn by lia.
+      reflexivity.
+    }
 
-       We need to show these are the same. *)
+    (* Step 3: Expand RHS by one summation_R level *)
+    assert (H_rhs_expand:
+      summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S (S n)) =
+      summation_R (fun i => f i (S n - i)%nat) (S n + 1) +
+      summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n)).
+    { unfold summation_R at 1. fold summation_R. reflexivity. }
 
-    (* This requires showing:
-       f (S n) 0 + [sum of new elements from extending each row] = summation_R (fun i => f i (S n - i)) (S n + 1) *)
+    (* The proof requires careful manipulation of indices and summation bounds.
+       Key insights:
+       - extend_inner_sum helps split each row's summation
+       - Diagonal terms need careful index alignment
+       - The bijection (i,j) ↔ (k=i+j, i) underlies the equality
 
-    (* The "new elements from extending each row" need to be extracted from the updated LHS sum.
-       This is getting complex - we need auxiliary lemmas about splitting sums. *)
+       This proof is complex due to index arithmetic and pattern matching issues
+       when using simpl/unfold tactics. Further work needed to complete. *)
 Admitted.
 
 (* Rectangular to triangular summation conversion *)
