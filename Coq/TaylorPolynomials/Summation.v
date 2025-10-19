@@ -420,18 +420,21 @@ Admitted.
 
 (* Helper lemma: When we extend the inner sum from (n-i+1) to (Sn-i+1), we add exactly one term *)
 Lemma extend_inner_sum : forall (f : nat -> nat -> R) (i n : nat),
-  (i <= S n)%nat ->
+  (i <= n)%nat ->
   summation_R (fun j => f i j) (S n - i + 1) =
   summation_R (fun j => f i j) (n - i + 1) + f i (S n - i)%nat.
 Proof.
   intros f i n Hi.
-  destruct (le_lt_dec i n) as [Hi_le_n | Hi_gt_n].
-  - (* Case: i <= n, so both sums are non-empty and the second is one element larger *)
-    replace (S n - i + 1)%nat with (S (n - i + 1))%nat by lia.
-    simpl.
-    replace (n - i)%nat with (S n - i - 1)%nat at 2 by lia.
-    (* Hmm, this is getting messy with the indices *)
-Admitted.
+  (* Key insight: S n - i + 1 = S (n - i + 1) when i <= n *)
+  replace (S n - i + 1)%nat with (S (n - i + 1))%nat by lia.
+  (* Expand summation_R (S m) = (m-th term) + summation_R m *)
+  simpl.
+  (* The index of the new term is (n - i + 1), which equals S n - i when i <= n *)
+  replace (n - i + 1)%nat with (S n - i)%nat by lia.
+  (* Now both sides are equal by commutativity of addition *)
+  rewrite Rplus_comm.
+  reflexivity.
+Qed.
 
 Lemma prove_reindex_triangular : forall (f : nat -> nat -> R) (n : nat),
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) =
