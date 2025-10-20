@@ -536,31 +536,49 @@ Proof.
     ring.
 Qed.
 
+(* Helper: Unfolding lemma for double_sum_to_list_rows *)
+Lemma double_sum_to_list_rows_unfold : forall (f : nat -> nat -> R) (n : nat) (j_func : nat -> nat),
+  double_sum_to_list_rows f (S n) j_func =
+  double_sum_to_list_rows f n j_func ++ map (fun j => f n j) (seq 0 (j_func n)).
+Proof.
+  intros f n j_func.
+  unfold double_sum_to_list_rows at 1.
+  reflexivity.
+Qed.
+
+(* General version: Row-by-row enumeration for arbitrary j_func *)
+Lemma row_list_sum_general : forall (f : nat -> nat -> R) (n : nat) (j_func : nat -> nat),
+  fold_right Rplus 0 (double_sum_to_list_rows f n j_func) =
+  summation_R (fun i => summation_R (fun j => f i j) (j_func i)) n.
+Proof.
+  intros f n j_func.
+  induction n as [|n IHn].
+
+  - (* Base case: n = 0 *)
+    unfold double_sum_to_list_rows.
+    simpl.
+    reflexivity.
+
+  - (* Inductive case: n -> S n *)
+    rewrite (double_sum_to_list_rows_unfold f n j_func).
+    rewrite fold_right_Rplus_app.
+    rewrite IHn.
+    rewrite sum_map_seq.
+    simpl summation_R.
+    ring.
+Qed.
+
 (* Key lemma: Row-by-row enumeration equals nested summation_R
 
-   This lemma would connect the list representation (double_sum_to_list_rows)
-   with the nested summation_R. The proof requires careful induction on the
-   structure of both the list append operation and the summation expansion.
-
-   Strategy:
-   - Base case (n=0): Both sides equal f(0,0), provable by computation
-   - Inductive case: Show that appending a new row to the list corresponds
-     to adding a new outer summation term
-   - Key insight: Use sum_map_seq to connect map over seq to summation_R
+   This is now a simple corollary of the general version.
 *)
 Lemma row_list_sum_correct : forall (f : nat -> nat -> R) (n : nat),
   fold_right Rplus 0 (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat)) =
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n).
 Proof.
-  (* This proof requires handling the interaction between:
-     1. List append (++) in double_sum_to_list_rows recursion
-     2. Addition (+) from fold_right
-     3. Nested summation structure
-
-     The sum_map_seq lemma handles the inner summation,
-     but the outer recursion needs careful management of the
-     changing row sizes (n - i + 1) as i varies. *)
-Admitted.
+  intros f n.
+  apply row_list_sum_general.
+Qed.
 
 (* Helper: Unfolding lemma for double_sum_to_list_diags *)
 Lemma double_sum_to_list_diags_unfold : forall (f : nat -> nat -> R) (n : nat),
