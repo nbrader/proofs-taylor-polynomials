@@ -508,6 +508,16 @@ Proof.
   - simpl. rewrite IH. ring.
 Qed.
 
+(* Helper: fold_right over append splits into sum *)
+Lemma fold_right_Rplus_app : forall (l1 l2 : list R),
+  fold_right Rplus 0 (l1 ++ l2) = fold_right Rplus 0 l1 + fold_right Rplus 0 l2.
+Proof.
+  intros l1 l2.
+  induction l1 as [|x xs IH].
+  - simpl. ring.
+  - simpl. rewrite IH. ring.
+Qed.
+
 (* Helper: sum of map equals summation_R *)
 Lemma sum_map_seq : forall (g : nat -> R) (n : nat),
   fold_right Rplus 0 (map g (seq 0 n)) = summation_R g n.
@@ -552,6 +562,16 @@ Proof.
      changing row sizes (n - i + 1) as i varies. *)
 Admitted.
 
+(* Helper: Unfolding lemma for double_sum_to_list_diags *)
+Lemma double_sum_to_list_diags_unfold : forall (f : nat -> nat -> R) (n : nat),
+  double_sum_to_list_diags f (S n) =
+  double_sum_to_list_diags f n ++ map (fun i => f i (n - i)%nat) (seq 0 (n + 1)).
+Proof.
+  intros f n.
+  unfold double_sum_to_list_diags at 1.
+  reflexivity.
+Qed.
+
 (* Key lemma: Diagonal-by-diagonal enumeration equals nested summation_R
 
    Similar to row_list_sum_correct, but for diagonal enumeration.
@@ -581,20 +601,30 @@ Proof.
     ring.
 
   - (* Inductive case: n -> S n *)
-    (* The proof requires careful handling of nested appends in the list structure.
-       Strategy:
-       1. Unfold double_sum_to_list_diags (S (S n)) to expose the recursive structure
-       2. Apply fold_right_app multiple times to separate nested appends
-       3. Use sum_map_seq to convert each map over seq to summation_R
-       4. Apply IH and reorganize using fold_right_Rplus_init
-       5. Match with expanded summation_R (S (S n))
+    (* Manual construction using transitivity *)
+    transitivity (fold_right Rplus 0 (double_sum_to_list_diags f (S n)) +
+                  fold_right Rplus 0 (map (fun i => f i (S n - i)%nat) (seq 0 (S n + 1)))).
 
-       The complexity arises because double_sum_to_list_diags builds lists recursively
-       with appends, creating nested structure:
-       [[... f(i,n-i) for i=0..n] ... f(i,Sn-i) for i=0..Sn]
+    { (* Prove LHS = intermediate form *)
+      rewrite (double_sum_to_list_diags_unfold f (S n)).
+      rewrite fold_right_Rplus_app.
+      reflexivity.
+    }
 
-       This technical proof is admitted for now, but the approach is sound. *)
-Admitted.
+    transitivity (summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n) +
+                  summation_R (fun i => f i (S n - i)%nat) (S n + 1)).
+
+    { (* Prove intermediate = another intermediate using IH and sum_map_seq *)
+      rewrite IHn.
+      rewrite sum_map_seq.
+      reflexivity.
+    }
+
+    { (* Prove final intermediate = RHS *)
+      simpl.
+      ring.
+    }
+Qed.
 
 (* Alternative direct approach: Prove by showing both equal a rectangular sum minus upper triangle *)
 
