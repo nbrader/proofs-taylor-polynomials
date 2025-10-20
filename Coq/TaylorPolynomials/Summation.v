@@ -704,25 +704,9 @@ Qed.
    Both enumerations produce lists that, when we apply f to the pairs,
    give the same multiset of values. *)
 
-(* Helper: Show both enumerations produce the same elements (permutation) *)
-Lemma row_diag_lists_permutation : forall (f : nat -> nat -> R) (n : nat),
-  Permutation
-    (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat))
-    (double_sum_to_list_diags f (S n)).
-Proof.
-  intros f n.
-  (* This requires proving that the bijection (i,j) ↔ (k=i+j, i) means
-     the lists are permutations of each other.
+(* Alternative approach: Prove count_occ equality directly, then derive permutation *)
 
-     Strategy:
-     - Both lists contain exactly the elements {f(i,j) : i+j ≤ n}
-     - Each element appears exactly once in each list
-     - Therefore they are permutations
-
-     This is the core technical lemma that remains to be proved. *)
-Admitted.
-
-(* Now row_diag_same_multiset follows immediately from the permutation *)
+(* Now row_diag_same_multiset - prove directly via induction *)
 Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
   forall x, count_occ Req_EM_T
     (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat)) x =
@@ -730,18 +714,38 @@ Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
     (double_sum_to_list_diags f (S n)) x.
 Proof.
   intros f n x.
-  (* If two lists are permutations, they have the same count_occ *)
-  assert (H_perm: Permutation
-    (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat))
-    (double_sum_to_list_diags f (S n))).
-  { apply row_diag_lists_permutation. }
+  induction n as [|n IH].
 
-  (* Permutations have equal count_occ *)
-  induction H_perm as [|x' l1 l2 H_perm IH | x1 x2 l | l1 l2 l3 H_perm12 IH12 H_perm23 IH23].
-  - (* perm_nil *) reflexivity.
-  - (* perm_skip *) simpl. destruct (Req_EM_T x' x); auto.
-  - (* perm_swap *) simpl. destruct (Req_EM_T x1 x), (Req_EM_T x2 x); auto; lia.
-  - (* perm_trans *) rewrite IH12. apply IH23.
+  - (* Base case: n = 0 *)
+    unfold double_sum_to_list_rows.
+    unfold double_sum_to_list_diags.
+    simpl.
+    reflexivity.
+
+  - (* Inductive case: n -> S n *)
+    (* Unfold both sides *)
+    rewrite double_sum_to_list_rows_unfold.
+    rewrite double_sum_to_list_diags_unfold.
+
+    (* Apply count_occ_app *)
+    rewrite count_occ_app.
+    rewrite count_occ_app.
+
+    (* The core challenge: proving the new portions have equal count_occ *)
+    (* This requires substantial technical work to show the distributed
+       row extensions equal the new diagonal *)
+Admitted.
+
+(* Derive the permutation from count_occ equality *)
+Lemma row_diag_lists_permutation : forall (f : nat -> nat -> R) (n : nat),
+  Permutation
+    (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat))
+    (double_sum_to_list_diags f (S n)).
+Proof.
+  intros f n.
+  apply (count_occ_eq_impl_Permutation R Req_EM_T).
+  intros x.
+  apply row_diag_same_multiset.
 Qed.
 
 (* Main theorem: Triangular summation reindexing
