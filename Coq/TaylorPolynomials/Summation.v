@@ -676,10 +676,11 @@ Lemma fold_right_double_append : forall (l1 l2 l3 : list R),
   fold_right Rplus 0 l1 + fold_right Rplus 0 l2 + fold_right Rplus 0 l3.
 Proof.
   intros l1 l2 l3.
-  (* This is actually easier to prove directly with induction on l1 or using fold_right properties *)
-  (* For now, documenting the strategy and admitting *)
-  (* Strategy: Use app_assoc to get l1 ++ (l2 ++ l3), then apply fold_right_app twice *)
-Admitted.
+  (* Apply fold_right_Rplus_app twice: first to split (l1++l2)++l3, then to split l1++l2 *)
+  rewrite fold_right_Rplus_app.
+  rewrite fold_right_Rplus_app.
+  ring.
+Qed.
 
 (* Critical missing lemma: Both list enumerations produce the same multiset of values
 
@@ -697,17 +698,23 @@ Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
     (double_sum_to_list_diags f (S n)) x.
 Proof.
   (* This lemma states that both enumeration methods produce the same multiset.
-     The proof would show that both lists contain exactly the values
-     {f(i,j) : i+j ≤ n}, each appearing exactly once.
 
-     Strategy:
-     1. Define what it means for a pair (i,j) to be "in the triangular region"
-     2. Show each enumeration method includes each such pair exactly once
-     3. Use the fact that f is applied to the same set of pairs
-     4. Conclude count_occ is equal for all values
+     Full proof strategy:
+     1. Show both lists enumerate exactly {f(i,j) : 0 ≤ i ≤ n, 0 ≤ j ≤ n-i}
+     2. For the row enumeration: i ranges over 0..n, j ranges over 0..(n-i)
+     3. For the diagonal enumeration: k ranges over 0..n, i ranges over 0..k, j = k-i
+     4. Show the bijection: (i,j) in rows ↔ (k=i+j, i) in diagonals
+     5. Prove each (i,j) appears exactly once in each enumeration
+     6. Since f is applied to the same pairs, count_occ must be equal
 
-     This is easier than the summation lemmas because we're just counting
-     elements, not summing them! *)
+     This requires:
+     - Lemmas about list membership and count_occ properties
+     - Proof that seq produces distinct elements
+     - Proof that different rows/diagonals are disjoint
+     - Induction on n to build up the equality
+
+     This is a substantial proof that would require 50-100 lines of Coq.
+     For now, we admit it as the key remaining technical lemma. *)
 Admitted.
 
 (* Main theorem: Proof using sum_enumeration_invariant
