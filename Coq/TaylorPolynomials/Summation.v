@@ -411,8 +411,7 @@ Lemma summation_R_triangular : forall (f : nat -> nat -> R) (n : nat),
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) =
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
 Proof.
-  intros f n.
-  (* This will be proved below using permutation invariance *)
+  (* This is proved as prove_reindex_triangular below. For now, admitted. *)
 Admitted.
 
 (* Step 3: Now REMOVE the axiom by actually proving it.
@@ -436,81 +435,122 @@ Proof.
   reflexivity.
 Qed.
 
+(* ==== Bijection-based approach to triangular summation ====
+
+   Strategy: Use Cantor's pairing function to establish bijections between ℕ and
+   pairs in the triangular region. The diagonal enumeration uses Cantor pairing
+   directly, while the row enumeration uses a composed bijection.
+*)
+
+(* Cantor pairing function: maps pairs (i,j) to a unique natural number *)
+Definition cantor_pair (i j : nat) : nat :=
+  (i + j) * (i + j + 1) / 2 + i.
+
+(* Inverse of Cantor pairing - returns the diagonal k = i + j *)
+Definition cantor_diag (n : nat) : nat :=
+  let k := Nat.sqrt (2 * n) in
+  if (k * (k + 1) / 2 <=? n) then k else k - 1.
+
+(* Cantor pairing inverse - returns i from the encoding *)
+Definition cantor_i (n : nat) : nat :=
+  let k := cantor_diag n in
+  n - (k * (k + 1) / 2).
+
+(* Cantor pairing inverse - returns j from the encoding *)
+Definition cantor_j (n : nat) : nat :=
+  let k := cantor_diag n in
+  k - (n - (k * (k + 1) / 2)).
+
+(* Transform from diagonal to row enumeration for triangular region *)
+(* For a pair (i,j) with i+j ≤ n, we map it based on which row it's in *)
+Definition diag_to_row_index (n : nat) (i j : nat) : nat :=
+  (* Row i contains (n - i + 1) elements, so the index is:
+     sum of previous row sizes + position in current row *)
+  let prev_rows := summation_R (fun k => INR (n - k + 1)) i in
+  Z.to_nat (Int_part prev_rows) + j.
+
+(* Transform from row to diagonal enumeration *)
+(* This is the inverse: given a linear index, find (i,j) such that it's
+   the j-th element in row i *)
+Fixpoint row_index_to_pair (n remaining_idx current_i : nat) {struct current_i} : (nat * nat) :=
+  match current_i with
+  | O => (0%nat, 0%nat) (* Shouldn't reach here if properly bounded *)
+  | S i' =>
+      let row_size := (n - i' + 1)%nat in
+      if (remaining_idx <? row_size) then
+        (i', remaining_idx)
+      else
+        row_index_to_pair n (remaining_idx - row_size) i'
+  end.
+
+(* Helper: Convert double summation to flat list via concatenation *)
+Fixpoint double_sum_to_list_rows (f : nat -> nat -> R) (i_max : nat) (j_func : nat -> nat) : list R :=
+  match i_max with
+  | O => []
+  | S i' => double_sum_to_list_rows f i' j_func ++
+            map (fun j => f i' j) (seq 0 (j_func i'))
+  end.
+
+Fixpoint double_sum_to_list_diags (f : nat -> nat -> R) (k_max : nat) : list R :=
+  match k_max with
+  | O => []
+  | S k' => double_sum_to_list_diags f k' ++
+            map (fun i => f i (k' - i)%nat) (seq 0 (k' + 1))
+  end.
+
+(* Key lemma: Row-by-row enumeration equals nested summation_R *)
+Lemma row_list_sum_correct : forall (f : nat -> nat -> R) (n : nat),
+  fold_right Rplus 0 (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat)) =
+  summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n).
+Proof.
+  intros f n.
+  induction n as [|n IHn].
+  - simpl. unfold double_sum_to_list_rows. simpl.
+    replace (1 - 0)%nat with 1%nat by lia.
+    simpl. ring.
+  - (* For S n, we add a new row *)
+    (* This proof requires careful handling of list append and summation *)
+Admitted.
+
+(* Key lemma: Diagonal-by-diagonal enumeration equals nested summation_R *)
+Lemma diag_list_sum_correct : forall (f : nat -> nat -> R) (n : nat),
+  fold_right Rplus 0 (double_sum_to_list_diags f (S n)) =
+  summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
+Proof.
+  intros f n.
+  induction n as [|n IHn].
+  - simpl. unfold double_sum_to_list_diags. simpl.
+    replace (0 - 0)%nat with 0%nat by lia.
+    simpl. ring.
+  - (* For S n, we add a new diagonal *)
+    simpl double_sum_to_list_diags.
+    rewrite fold_right_app.
+    simpl summation_R.
+    (* The new diagonal contains (S n + 1) elements *)
+Admitted.
+
+(* Main theorem: Prove using bijection that both enumerations are equal *)
 Lemma prove_reindex_triangular : forall (f : nat -> nat -> R) (n : nat),
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) =
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
 Proof.
   intros f n.
-  (* Proof by induction on n *)
-  induction n as [|n IHn].
-  - (* Base case: n = 0, both sides sum only f(0,0) *)
-    simpl.
-    replace (1 - 0)%nat with 1%nat by lia.
-    replace (0 - 0)%nat with 0%nat by lia.
-    simpl.
-    ring.
-  - (* Inductive step: Going from n to S n, both sides add the diagonal i+j = S n *)
 
-    (* Key: Extract diagonal from the LHS inner sums using extend_inner_sum *)
-    assert (H_split_inner: forall i, (i <= n)%nat ->
-      summation_R (fun j => f i j) (S n - i + 1) =
-      summation_R (fun j => f i j) (n - i + 1) + f i (S n - i)%nat).
-    { intros. apply extend_inner_sum. assumption. }
+  (* Strategy: Use the list enumeration lemmas and sum_permutation_invariant.
+     1. Convert both nested summations to list sums (row_list_sum_correct, diag_list_sum_correct)
+     2. Show the lists are permutations (they enumerate the same triangular region)
+     3. Apply sum_permutation_invariant
+  *)
 
-    (* Rewrite the LHS middle term using summation_R_plus to separate old and new parts *)
-    assert (H_lhs_split:
-      summation_R (fun i => summation_R (fun j => f i j) (S n - i + 1)) (S n) =
-      summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) +
-      summation_R (fun i => f i (S n - i)%nat) (S n)).
-    {
-      (* Apply summation_R_plus by showing the inner functions are equal *)
-      rewrite <- summation_R_plus.
-      apply summation_R_irrelevance_of_large_coeffs.
-      intros i Hi.
-      rewrite H_split_inner by lia.
-      reflexivity.
-    }
+  (* For now, this proof requires completing the helper lemmas above.
+     The conceptual approach is sound:
+     - Both sides enumerate {(i,j) : 0 ≤ i ≤ n, 0 ≤ j ≤ n-i}
+     - Row enumeration: (0,0), (0,1), ..., (0,n), (1,0), (1,1), ..., (1,n-1), ..., (n,0)
+     - Diagonal enumeration: (0,0), (0,1), (1,0), (0,2), (1,1), (2,0), ..., (0,n), (1,n-1), ..., (n,0)
+     - These are the same multiset, hence permutations
+     - By sum_permutation_invariant, equal sums
+  *)
 
-    (* Step 1: Expand LHS by one summation_R level *)
-    assert (H_lhs_expand:
-      summation_R (fun i => summation_R (fun j => f i j) (S (S n) - i + 1)) (S (S n)) =
-      summation_R (fun j => f (S n) j) (S (S n) - S n + 1) +
-      summation_R (fun i => summation_R (fun j => f i j) (S (S n) - i + 1)) (S n)).
-    { unfold summation_R at 1. fold summation_R. reflexivity. }
-
-    (* Step 2: For i <= n, apply extend_inner_sum to split S(Sn) sums *)
-    assert (H_split_SSn: forall i, (i <= n)%nat ->
-      summation_R (fun j => f i j) (S (S n) - i + 1) =
-      summation_R (fun j => f i j) (S n - i + 1) + f i (S (S n) - i)%nat).
-    { intros i Hi. apply extend_inner_sum. lia. }
-
-    assert (H_indices_split:
-      summation_R (fun i => summation_R (fun j => f i j) (S (S n) - i + 1)) (S n) =
-      summation_R (fun i => summation_R (fun j => f i j) (S n - i + 1)) (S n) +
-      summation_R (fun i => f i (S (S n) - i)%nat) (S n)).
-    {
-      rewrite <- summation_R_plus.
-      apply summation_R_irrelevance_of_large_coeffs.
-      intros i Hi.
-      rewrite H_split_SSn by lia.
-      reflexivity.
-    }
-
-    (* Step 3: Expand RHS by one summation_R level *)
-    assert (H_rhs_expand:
-      summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S (S n)) =
-      summation_R (fun i => f i (S n - i)%nat) (S n + 1) +
-      summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n)).
-    { unfold summation_R at 1. fold summation_R. reflexivity. }
-
-    (* The proof requires careful manipulation of indices and summation bounds.
-       Key insights:
-       - extend_inner_sum helps split each row's summation
-       - Diagonal terms need careful index alignment
-       - The bijection (i,j) ↔ (k=i+j, i) underlies the equality
-
-       This proof is complex due to index arithmetic and pattern matching issues
-       when using simpl/unfold tactics. Further work needed to complete. *)
 Admitted.
 
 (* Rectangular to triangular summation conversion *)
