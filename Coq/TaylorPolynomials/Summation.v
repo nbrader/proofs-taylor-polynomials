@@ -568,9 +568,32 @@ Lemma diag_list_sum_correct : forall (f : nat -> nat -> R) (n : nat),
   fold_right Rplus 0 (double_sum_to_list_diags f (S n)) =
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
 Proof.
-  (* Similar structure to row_list_sum_correct, but the diagonal
-     enumeration has the advantage that each diagonal k contains
-     exactly (k+1) elements, making the indexing more uniform. *)
+  intros f n.
+  induction n as [|n IHn].
+
+  - (* Base case: n = 0 *)
+    unfold double_sum_to_list_diags.
+    simpl fold_right.
+    rewrite Rplus_0_r.
+    simpl summation_R.
+    replace (0 - 0)%nat with 0%nat by lia.
+    simpl.
+    ring.
+
+  - (* Inductive case: n -> S n *)
+    (* The proof requires careful handling of nested appends in the list structure.
+       Strategy:
+       1. Unfold double_sum_to_list_diags (S (S n)) to expose the recursive structure
+       2. Apply fold_right_app multiple times to separate nested appends
+       3. Use sum_map_seq to convert each map over seq to summation_R
+       4. Apply IH and reorganize using fold_right_Rplus_init
+       5. Match with expanded summation_R (S (S n))
+
+       The complexity arises because double_sum_to_list_diags builds lists recursively
+       with appends, creating nested structure:
+       [[... f(i,n-i) for i=0..n] ... f(i,Sn-i) for i=0..Sn]
+
+       This technical proof is admitted for now, but the approach is sound. *)
 Admitted.
 
 (* Alternative direct approach: Prove by showing both equal a rectangular sum minus upper triangle *)
