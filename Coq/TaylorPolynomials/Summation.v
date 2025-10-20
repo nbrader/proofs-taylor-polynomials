@@ -681,30 +681,82 @@ Qed.
    {(i,j) : 0 ≤ i ≤ n, 0 ≤ j ≤ n-i}, which means for any value v = f(i,j),
    it appears the same number of times in both lists.
 *)
+(* Helper: count_occ distributes over append *)
+Lemma count_occ_app : forall (A : Type) (eq_dec : forall x y : A, {x = y} + {x <> y}) (l1 l2 : list A) (x : A),
+  count_occ eq_dec (l1 ++ l2) x = (count_occ eq_dec l1 x + count_occ eq_dec l2 x)%nat.
+Proof.
+  intros A eq_dec l1 l2 x.
+  induction l1 as [|a l1' IH].
+  - simpl. reflexivity.
+  - simpl. destruct (eq_dec a x); simpl.
+    + rewrite IH. reflexivity.
+    + apply IH.
+Qed.
+
+(* Helper: count_occ of map when function is injective on the range *)
+Lemma count_occ_map_seq : forall (g : nat -> R) (n : nat) (x : R),
+  count_occ Req_EM_T (map g (seq 0 n)) x =
+  length (filter (fun i => if Req_EM_T (g i) x then true else false) (seq 0 n)).
+Proof.
+  intros g n x.
+  induction n as [|n IH].
+  - simpl. reflexivity.
+  - rewrite seq_S. rewrite map_app. rewrite count_occ_app.
+    simpl map. simpl count_occ.
+    rewrite IH.
+    rewrite filter_app.
+    rewrite app_length.
+    simpl filter.
+    destruct (Req_EM_T (g n) x).
+    + simpl. lia.
+    + simpl. lia.
+Qed.
+
 Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
   forall x, count_occ Req_EM_T
     (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat)) x =
     count_occ Req_EM_T
     (double_sum_to_list_diags f (S n)) x.
 Proof.
-  (* This lemma states that both enumeration methods produce the same multiset.
+  intros f n x.
+  induction n as [|n IH].
 
-     Full proof strategy:
-     1. Show both lists enumerate exactly {f(i,j) : 0 ≤ i ≤ n, 0 ≤ j ≤ n-i}
-     2. For the row enumeration: i ranges over 0..n, j ranges over 0..(n-i)
-     3. For the diagonal enumeration: k ranges over 0..n, i ranges over 0..k, j = k-i
-     4. Show the bijection: (i,j) in rows ↔ (k=i+j, i) in diagonals
-     5. Prove each (i,j) appears exactly once in each enumeration
-     6. Since f is applied to the same pairs, count_occ must be equal
+  - (* Base case: n = 0 *)
+    unfold double_sum_to_list_rows.
+    unfold double_sum_to_list_diags.
+    simpl.
+    reflexivity.
 
-     This requires:
-     - Lemmas about list membership and count_occ properties
-     - Proof that seq produces distinct elements
-     - Proof that different rows/diagonals are disjoint
-     - Induction on n to build up the equality
+  - (* Inductive case: n -> S n *)
+    (* Key insight: When extending from n to S n, BOTH enumerations add
+       the elements {f(i,j) : i+j = S n}, just in different orders.
 
-     This is a substantial proof that would require 50-100 lines of Coq.
-     For now, we admit it as the key remaining technical lemma. *)
+       - Row enumeration: These elements are distributed across all rows,
+         with f(i, S n - i) appearing in row i
+       - Diag enumeration: All these elements appear together in the new diagonal
+
+       The challenge is showing the multisets match despite different distributions. *)
+
+    (* Unfold the recursive definitions *)
+    rewrite double_sum_to_list_rows_unfold.
+    rewrite double_sum_to_list_diags_unfold.
+
+    (* Use count_occ_app *)
+    rewrite count_occ_app.
+    rewrite count_occ_app.
+
+    (* At this point we need to show:
+       count_occ (rows for n) x + count_occ (new row for S n) x =
+       count_occ (diags for n) x + count_occ (new diag for S n) x
+
+       By IH, count_occ (rows for n) = count_occ (diags for n)
+       So we need: count_occ (new row) x = count_occ (new diag) x
+
+       But the "new row" is actually distributed elements, not a single row.
+       This is where the proof gets complex. *)
+
+    (* The remaining proof requires showing that the new elements added
+       have the same multiset, which needs careful analysis of indices *)
 Admitted.
 
 (* Main theorem: Triangular summation reindexing
