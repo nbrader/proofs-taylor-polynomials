@@ -405,17 +405,7 @@ Proof.
   exact H_perm.
 Qed.
 
-(* Step 2: USE the assumed lemma to prove summation_R_triangular *)
-
-Lemma summation_R_triangular : forall (f : nat -> nat -> R) (n : nat),
-  summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) =
-  summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
-Proof.
-  (* This is proved as prove_reindex_triangular below. For now, admitted. *)
-Admitted.
-
-(* Step 3: Now REMOVE the axiom by actually proving it.
-   The proof will show both sides sum the same terms by enumerating the bijection. *)
+(* Step 2: Triangular summation reindexing will be proved below after helper lemmas *)
 
 (* Helper lemma: When we extend the inner sum from (n-i+1) to (Sn-i+1), we add exactly one term *)
 Lemma extend_inner_sum : forall (f : nat -> nat -> R) (i n : nat),
@@ -717,9 +707,9 @@ Proof.
      For now, we admit it as the key remaining technical lemma. *)
 Admitted.
 
-(* Main theorem: Proof using sum_enumeration_invariant
+(* Main theorem: Triangular summation reindexing
 
-   The proof path is now CRYSTAL CLEAR:
+   Proof strategy using sum_enumeration_invariant:
 
    1. row_list_sum_correct: LHS = fold_right (row list)
    2. diag_list_sum_correct: RHS = fold_right (diagonal list)
@@ -727,9 +717,9 @@ Admitted.
    4. sum_enumeration_invariant: Same multiset → equal sums
    5. QED
 
-   All pieces are in place, just need to complete the admitted lemmas.
+   All pieces are in place, just need to complete row_diag_same_multiset.
 *)
-Lemma prove_reindex_triangular : forall (f : nat -> nat -> R) (n : nat),
+Lemma summation_R_triangular : forall (f : nat -> nat -> R) (n : nat),
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) =
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
 Proof.
