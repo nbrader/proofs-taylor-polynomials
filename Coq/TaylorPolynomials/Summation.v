@@ -693,25 +693,36 @@ Proof.
     + apply IH.
 Qed.
 
-(* Helper: count_occ of map when function is injective on the range *)
-Lemma count_occ_map_seq : forall (g : nat -> R) (n : nat) (x : R),
-  count_occ Req_EM_T (map g (seq 0 n)) x =
-  length (filter (fun i => if Req_EM_T (g i) x then true else false) (seq 0 n)).
-Proof.
-  intros g n x.
-  induction n as [|n IH].
-  - simpl. reflexivity.
-  - rewrite seq_S. rewrite map_app. rewrite count_occ_app.
-    simpl map. simpl count_occ.
-    rewrite IH.
-    rewrite filter_app.
-    rewrite app_length.
-    simpl filter.
-    destruct (Req_EM_T (g n) x).
-    + simpl. lia.
-    + simpl. lia.
-Qed.
+(* Key lemma: The bijection between row and diagonal enumeration
 
+   For the triangular region {(i,j) : 0 ≤ i ≤ n, 0 ≤ j ≤ n-i}, we have:
+   - Row enumeration: for each i in 0..n, enumerate j in 0..(n-i)
+   - Diagonal enumeration: for each k in 0..n, enumerate i in 0..k, with j = k-i
+
+   These are related by the bijection: (i,j) ↔ (k=i+j, i)
+
+   Both enumerations produce lists that, when we apply f to the pairs,
+   give the same multiset of values. *)
+
+(* Helper: Show both enumerations produce the same elements (permutation) *)
+Lemma row_diag_lists_permutation : forall (f : nat -> nat -> R) (n : nat),
+  Permutation
+    (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat))
+    (double_sum_to_list_diags f (S n)).
+Proof.
+  intros f n.
+  (* This requires proving that the bijection (i,j) ↔ (k=i+j, i) means
+     the lists are permutations of each other.
+
+     Strategy:
+     - Both lists contain exactly the elements {f(i,j) : i+j ≤ n}
+     - Each element appears exactly once in each list
+     - Therefore they are permutations
+
+     This is the core technical lemma that remains to be proved. *)
+Admitted.
+
+(* Now row_diag_same_multiset follows immediately from the permutation *)
 Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
   forall x, count_occ Req_EM_T
     (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat)) x =
@@ -719,45 +730,19 @@ Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
     (double_sum_to_list_diags f (S n)) x.
 Proof.
   intros f n x.
-  induction n as [|n IH].
+  (* If two lists are permutations, they have the same count_occ *)
+  assert (H_perm: Permutation
+    (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat))
+    (double_sum_to_list_diags f (S n))).
+  { apply row_diag_lists_permutation. }
 
-  - (* Base case: n = 0 *)
-    unfold double_sum_to_list_rows.
-    unfold double_sum_to_list_diags.
-    simpl.
-    reflexivity.
-
-  - (* Inductive case: n -> S n *)
-    (* Key insight: When extending from n to S n, BOTH enumerations add
-       the elements {f(i,j) : i+j = S n}, just in different orders.
-
-       - Row enumeration: These elements are distributed across all rows,
-         with f(i, S n - i) appearing in row i
-       - Diag enumeration: All these elements appear together in the new diagonal
-
-       The challenge is showing the multisets match despite different distributions. *)
-
-    (* Unfold the recursive definitions *)
-    rewrite double_sum_to_list_rows_unfold.
-    rewrite double_sum_to_list_diags_unfold.
-
-    (* Use count_occ_app *)
-    rewrite count_occ_app.
-    rewrite count_occ_app.
-
-    (* At this point we need to show:
-       count_occ (rows for n) x + count_occ (new row for S n) x =
-       count_occ (diags for n) x + count_occ (new diag for S n) x
-
-       By IH, count_occ (rows for n) = count_occ (diags for n)
-       So we need: count_occ (new row) x = count_occ (new diag) x
-
-       But the "new row" is actually distributed elements, not a single row.
-       This is where the proof gets complex. *)
-
-    (* The remaining proof requires showing that the new elements added
-       have the same multiset, which needs careful analysis of indices *)
-Admitted.
+  (* Permutations have equal count_occ *)
+  induction H_perm as [|x' l1 l2 H_perm IH | x1 x2 l | l1 l2 l3 H_perm12 IH12 H_perm23 IH23].
+  - (* perm_nil *) reflexivity.
+  - (* perm_skip *) simpl. destruct (Req_EM_T x' x); auto.
+  - (* perm_swap *) simpl. destruct (Req_EM_T x1 x), (Req_EM_T x2 x); auto; lia.
+  - (* perm_trans *) rewrite IH12. apply IH23.
+Qed.
 
 (* Main theorem: Triangular summation reindexing
 
