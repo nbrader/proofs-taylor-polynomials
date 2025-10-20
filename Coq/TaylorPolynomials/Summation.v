@@ -498,59 +498,114 @@ Fixpoint double_sum_to_list_diags (f : nat -> nat -> R) (k_max : nat) : list R :
             map (fun i => f i (k' - i)%nat) (seq 0 (k' + 1))
   end.
 
-(* Key lemma: Row-by-row enumeration equals nested summation_R *)
+(* Helper: fold_right with different initial values *)
+Lemma fold_right_Rplus_init : forall (l : list R) (a : R),
+  fold_right Rplus a l = fold_right Rplus 0 l + a.
+Proof.
+  intros l a.
+  induction l as [|x xs IH].
+  - simpl. ring.
+  - simpl. rewrite IH. ring.
+Qed.
+
+(* Helper: sum of map equals summation_R *)
+Lemma sum_map_seq : forall (g : nat -> R) (n : nat),
+  fold_right Rplus 0 (map g (seq 0 n)) = summation_R g n.
+Proof.
+  intros g n.
+  induction n as [|n IHn].
+  - simpl. reflexivity.
+  - rewrite seq_S.
+    rewrite map_app.
+    rewrite fold_right_app.
+    simpl fold_right.
+    rewrite Rplus_0_r.
+    rewrite fold_right_Rplus_init.
+    rewrite IHn.
+    simpl summation_R.
+    ring.
+Qed.
+
+(* Key lemma: Row-by-row enumeration equals nested summation_R
+
+   This lemma would connect the list representation (double_sum_to_list_rows)
+   with the nested summation_R. The proof requires careful induction on the
+   structure of both the list append operation and the summation expansion.
+
+   Strategy:
+   - Base case (n=0): Both sides equal f(0,0), provable by computation
+   - Inductive case: Show that appending a new row to the list corresponds
+     to adding a new outer summation term
+   - Key insight: Use sum_map_seq to connect map over seq to summation_R
+*)
 Lemma row_list_sum_correct : forall (f : nat -> nat -> R) (n : nat),
   fold_right Rplus 0 (double_sum_to_list_rows f (S n) (fun i => (n - i + 1)%nat)) =
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n).
 Proof.
-  intros f n.
-  induction n as [|n IHn].
-  - simpl. unfold double_sum_to_list_rows. simpl.
-    replace (1 - 0)%nat with 1%nat by lia.
-    simpl. ring.
-  - (* For S n, we add a new row *)
-    (* This proof requires careful handling of list append and summation *)
+  (* This proof requires handling the interaction between:
+     1. List append (++) in double_sum_to_list_rows recursion
+     2. Addition (+) from fold_right
+     3. Nested summation structure
+
+     The sum_map_seq lemma handles the inner summation,
+     but the outer recursion needs careful management of the
+     changing row sizes (n - i + 1) as i varies. *)
 Admitted.
 
-(* Key lemma: Diagonal-by-diagonal enumeration equals nested summation_R *)
+(* Key lemma: Diagonal-by-diagonal enumeration equals nested summation_R
+
+   Similar to row_list_sum_correct, but for diagonal enumeration.
+   The structure is actually simpler because diagonals have a uniform
+   indexing pattern using Cantor pairing.
+
+   Strategy:
+   - Base case (n=0): Both sides equal f(0,0)
+   - Inductive case: Show that appending a new diagonal corresponds
+     to adding a new summation term for k = n
+   - Use sum_map_seq for the inner summation over i
+*)
 Lemma diag_list_sum_correct : forall (f : nat -> nat -> R) (n : nat),
   fold_right Rplus 0 (double_sum_to_list_diags f (S n)) =
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
 Proof.
-  intros f n.
-  induction n as [|n IHn].
-  - simpl. unfold double_sum_to_list_diags. simpl.
-    replace (0 - 0)%nat with 0%nat by lia.
-    simpl. ring.
-  - (* For S n, we add a new diagonal *)
-    simpl double_sum_to_list_diags.
-    rewrite fold_right_app.
-    simpl summation_R.
-    (* The new diagonal contains (S n + 1) elements *)
+  (* Similar structure to row_list_sum_correct, but the diagonal
+     enumeration has the advantage that each diagonal k contains
+     exactly (k+1) elements, making the indexing more uniform. *)
 Admitted.
 
-(* Main theorem: Prove using bijection that both enumerations are equal *)
+(* Alternative direct approach: Prove by showing both equal a rectangular sum minus upper triangle *)
+
+(* Helper: Rectangular sum can be expressed in both row and column order *)
+Lemma summation_R_rectangular_symmetric : forall (f : nat -> nat -> R) (m n : nat),
+  summation_R (fun i => summation_R (fun j => f i j) n) m =
+  summation_R (fun j => summation_R (fun i => f i j) m) n.
+Proof.
+  intros f m n.
+  (* This is just summation_R_exchange with swapped indices *)
+  apply summation_R_exchange.
+Qed.
+
+(* Main theorem: Use a more algebraic approach *)
 Lemma prove_reindex_triangular : forall (f : nat -> nat -> R) (n : nat),
   summation_R (fun i => summation_R (fun j => f i j) (n - i + 1)) (S n) =
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n).
 Proof.
   intros f n.
 
-  (* Strategy: Use the list enumeration lemmas and sum_permutation_invariant.
-     1. Convert both nested summations to list sums (row_list_sum_correct, diag_list_sum_correct)
-     2. Show the lists are permutations (they enumerate the same triangular region)
-     3. Apply sum_permutation_invariant
+  (* Alternative strategy: Instead of list conversion, use algebraic manipulation.
+     The key observation is that both sides sum over the same triangular region.
+     We can prove this by induction with careful diagonal accounting.
+
+     For the bijection-based proof via sum_permutation_invariant, we would need:
+     1. row_list_sum_correct and diag_list_sum_correct (converting summations to lists)
+     2. A proof that the lists are permutations
+     3. Application of sum_permutation_invariant
+
+     However, these lemmas are complex to prove. The direct inductive approach,
+     while also complex, may be more tractable within Coq's proof framework.
   *)
 
-  (* For now, this proof requires completing the helper lemmas above.
-     The conceptual approach is sound:
-     - Both sides enumerate {(i,j) : 0 ≤ i ≤ n, 0 ≤ j ≤ n-i}
-     - Row enumeration: (0,0), (0,1), ..., (0,n), (1,0), (1,1), ..., (1,n-1), ..., (n,0)
-     - Diagonal enumeration: (0,0), (0,1), (1,0), (0,2), (1,1), (2,0), ..., (0,n), (1,n-1), ..., (n,0)
-     - These are the same multiset, hence permutations
-     - By sum_permutation_invariant, equal sums
-  *)
-
+  (* For now, keeping this admitted as the proof requires substantial work either way. *)
 Admitted.
 
 (* Rectangular to triangular summation conversion *)
