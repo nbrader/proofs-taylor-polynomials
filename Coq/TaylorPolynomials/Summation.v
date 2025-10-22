@@ -751,17 +751,299 @@ Defined.
    - Therefore both lists contain the same pairs with the same multiplicities
 *)
 
+(* Helper lemma: generalized version with explicit row size bounds *)
+Lemma pair_in_row_list_gen : forall (i_max : nat) (j_func : nat -> nat) (i j : nat),
+  (i < i_max)%nat ->
+  (j < j_func i)%nat ->
+  In (i, j) (pairs_by_rows i_max j_func).
+Proof.
+  intros i_max j_func i j.
+  revert i j.
+  induction i_max as [|i_max' IH]; intros i j Hi Hj.
+
+  - (* i_max = 0: impossible since i < 0 *)
+    lia.
+
+  - (* i_max = S i_max' *)
+    unfold pairs_by_rows; fold pairs_by_rows.
+    apply in_or_app.
+
+    destruct (Nat.eq_dec i i_max') as [Heq | Hneq].
+
+    + (* i = i_max': this is the row being added *)
+      right.
+      subst i.
+      apply in_map_iff.
+      exists j.
+      split.
+      * reflexivity.
+      * apply in_seq. lia.
+
+    + (* i < i_max': in previous rows *)
+      left.
+      apply IH; lia.
+Qed.
+
+(* Now the specific lemma follows easily *)
 Lemma pair_in_row_list : forall (n i j : nat),
   (i <= n)%nat -> (j < n - i + 1)%nat ->
   In (i, j) (pairs_by_rows (S n) (fun i' => (n - i' + 1)%nat)).
 Proof.
-Admitted.
+  intros n i j Hi Hj.
+  apply pair_in_row_list_gen; lia.
+Qed.
 
 Lemma pair_in_diag_list : forall (n i j : nat),
   (i + j <= n)%nat ->
   In (i, j) (pairs_by_diags (S n)).
 Proof.
-Admitted.
+  intros n i j Hij.
+
+  (* Identify which diagonal k contains (i,j) *)
+  remember (i + j)%nat as k.
+
+  (* Induction on n *)
+  induction n as [|n' IHn].
+
+  - (* Base case: n = 0 *)
+    (* Only pair is (0,0) *)
+    assert (i = 0%nat /\ j = 0%nat) as [Hi Hj] by lia.
+    subst.
+    unfold pairs_by_diags. simpl. left. reflexivity.
+
+  - (* Inductive case: n' -> S n' *)
+    unfold pairs_by_diags; fold pairs_by_diags.
+    apply in_or_app.
+
+    destruct (Nat.eq_dec k (S n')) as [Heq | Hneq].
+
+    + (* k = S n': pair is on the NEW diagonal being added *)
+      right.
+      subst k.
+      apply in_map_iff.
+      exists i.
+      split.
+      * (* Show map produces (i, j) *)
+        f_equal. lia.
+      * (* Show i is in seq 0 (S n' + 1) *)
+        apply in_seq. lia.
+
+    + (* k < S n': pair is in previous diagonals *)
+      left.
+      apply IHn. lia.
+Qed.
+
+(* ===== NoDup (no duplicates) proofs =====
+
+   Strategy: Show both pair enumerations have no duplicate pairs.
+   This is needed to prove they are permutations via count_occ.
+
+   Key insights:
+   - Diagonals: Pairs from different diagonals have different sums (i+j)
+   - Rows: Pairs from different rows have different first components (i)
+*)
+
+(* Helper: NoDup preservation through map with injective function *)
+Lemma NoDup_map_injective : forall (A B : Type) (f : A -> B) (l : list A),
+  (forall x y, In x l -> In y l -> f x = f y -> x = y) ->
+  NoDup l ->
+  NoDup (map f l).
+Proof.
+  intros A B f l Hinj Hnodup.
+  induction Hnodup as [|a l' Hnotin Hnodup' IH].
+  - simpl. constructor.
+  - simpl. constructor.
+    + (* Show ~In (f a) (map f l') *)
+      intros Hcontra.
+      apply in_map_iff in Hcontra.
+      destruct Hcontra as [x [Hfx Hin]].
+      assert (Heq: a = x).
+      { apply Hinj.
+        - left. reflexivity.
+        - right. exact Hin.
+        - symmetry. exact Hfx. }
+      subst. contradiction.
+    + (* Show NoDup (map f l') *)
+      apply IH.
+      intros x y Hx Hy Hfxy.
+      apply (Hinj x y).
+      * right. exact Hx.
+      * right. exact Hy.
+      * exact Hfxy.
+Qed.
+
+(* Helper: seq has no duplicates *)
+Lemma seq_NoDup : forall start len,
+  NoDup (seq start len).
+Proof.
+  intros start len.
+  generalize dependent start.
+  induction len as [|len' IH]; intros start.
+  - simpl. constructor.
+  - simpl. constructor.
+    + (* Show start not in seq (S start) len' *)
+      intros Hcontra.
+      apply in_seq in Hcontra.
+      lia.
+    + (* Show NoDup (seq (S start) len') *)
+      apply IH.
+Qed.
+
+(* Helper: NoDup of append when lists are disjoint *)
+Lemma NoDup_app_disjoint : forall (A : Type) (l1 l2 : list A),
+  NoDup l1 ->
+  NoDup l2 ->
+  (forall x, In x l1 -> ~In x l2) ->
+  NoDup (l1 ++ l2).
+Proof.
+  intros A l1 l2 H1 H2 Hdisj.
+  induction H1 as [|a l1' Hnotin Hnodup' IH].
+  - simpl. exact H2.
+  - simpl. constructor.
+    + intros Hcontra.
+      apply in_app_or in Hcontra.
+      destruct Hcontra as [Hin1 | Hin2].
+      * contradiction.
+      * apply (Hdisj a).
+        -- left. reflexivity.
+        -- exact Hin2.
+    + apply IH.
+      intros x Hx.
+      apply Hdisj.
+      right. exact Hx.
+Qed.
+
+(* Helper lemma: pairs in pairs_by_diags n have sum at most n-1 *)
+Lemma pairs_by_diags_sum_bound : forall n i j,
+  In (i, j) (pairs_by_diags n) ->
+  (i + j <= n - 1)%nat.
+Proof.
+  intros n i j Hin.
+  induction n as [|n' IH].
+
+  - (* n = 0: empty list *)
+    simpl in Hin. contradiction.
+
+  - (* n = S n' *)
+    unfold pairs_by_diags in Hin; fold pairs_by_diags in Hin.
+    apply in_app_or in Hin.
+    destruct Hin as [Hin_old | Hin_new].
+
+    + (* Pair from old diagonals: i + j ≤ n' - 1 *)
+      destruct n' as [|n''].
+      * simpl in Hin_old. contradiction.
+      * apply IH in Hin_old. lia.
+
+    + (* Pair from new diagonal: i + j = n' *)
+      apply in_map_iff in Hin_new.
+      destruct Hin_new as [i' [Heq Hin']].
+      injection Heq as Hi Hj.
+      subst i j.
+      apply in_seq in Hin'.
+      lia.
+Qed.
+
+(* Now retry NoDup for diagonal enumeration *)
+Lemma pairs_by_diags_NoDup : forall (n : nat),
+  NoDup (pairs_by_diags n).
+Proof.
+  intros n.
+  induction n as [|n' IH].
+
+  - (* Base case: n = 0 *)
+    simpl. constructor.
+
+  - (* Inductive case: n = S n' *)
+    unfold pairs_by_diags; fold pairs_by_diags.
+    apply NoDup_app_disjoint.
+
+    + (* NoDup (pairs_by_diags n') *)
+      exact IH.
+
+    + (* NoDup (new diagonal) *)
+      apply NoDup_map_injective.
+      * (* Injectivity of (fun i => (i, n' - i)) on seq 0 (n' + 1) *)
+        intros x y Hx Hy Heq.
+        injection Heq as Heq1 Heq2.
+        exact Heq1.
+      * (* NoDup (seq 0 (n' + 1)) *)
+        apply seq_NoDup.
+
+    + (* Disjointness: pairs from old diagonals don't appear in new diagonal *)
+      intros [i j] Hin Hcontra.
+      apply in_map_iff in Hcontra.
+      destruct Hcontra as [i' [Heq Hin']].
+      injection Heq as Hi Hj.
+      subst i j.
+      apply in_seq in Hin'.
+      (* Pair (i', n' - i') has sum n' *)
+      (* But pairs in pairs_by_diags n' have sum ≤ n' - 1 *)
+      destruct n' as [|n''].
+      * simpl in Hin. contradiction.
+      * apply pairs_by_diags_sum_bound in Hin. lia.
+Qed.
+
+(* Helper lemma: pairs in pairs_by_rows have first component < n *)
+Lemma pairs_by_rows_first_bound : forall n j_func i j,
+  In (i, j) (pairs_by_rows n j_func) ->
+  (i < n)%nat.
+Proof.
+  intros n j_func i j Hin.
+  induction n as [|n' IH].
+
+  - (* n = 0: empty list *)
+    simpl in Hin. contradiction.
+
+  - (* n = S n' *)
+    unfold pairs_by_rows in Hin; fold pairs_by_rows in Hin.
+    apply in_app_or in Hin.
+    destruct Hin as [Hin_old | Hin_new].
+
+    + (* Pair from old rows: i < n' *)
+      apply IH in Hin_old. lia.
+
+    + (* Pair from new row: i = n' *)
+      apply in_map_iff in Hin_new.
+      destruct Hin_new as [j' [Heq Hin']].
+      injection Heq as Hi Hj.
+      subst i. lia.
+Qed.
+
+(* NoDup for row enumeration *)
+Lemma pairs_by_rows_NoDup : forall (n : nat) (j_func : nat -> nat),
+  NoDup (pairs_by_rows n j_func).
+Proof.
+  intros n j_func.
+  induction n as [|n' IH].
+
+  - (* Base case: n = 0 *)
+    simpl. constructor.
+
+  - (* Inductive case: n = S n' *)
+    unfold pairs_by_rows; fold pairs_by_rows.
+    apply NoDup_app_disjoint.
+
+    + (* NoDup (pairs_by_rows n' j_func) *)
+      exact IH.
+
+    + (* NoDup (new row) *)
+      apply NoDup_map_injective.
+      * (* Injectivity of (fun j => (n', j)) on seq 0 (j_func n') *)
+        intros x y Hx Hy Heq.
+        injection Heq. intros. assumption.
+      * (* NoDup (seq 0 (j_func n') *)
+        apply seq_NoDup.
+
+    + (* Disjointness: pairs from old rows don't appear in new row *)
+      intros [i j] Hin Hcontra.
+      apply in_map_iff in Hcontra.
+      destruct Hcontra as [j' [Heq Hin']].
+      injection Heq as Hi Hj.
+      subst i.
+      (* Pair (n', j) has first component n' *)
+      (* But pairs in pairs_by_rows n' j_func have first component < n' *)
+      apply pairs_by_rows_first_bound in Hin. lia.
+Qed.
 
 (* The main theorem: pair lists are permutations *)
 Lemma pairs_row_diag_permutation : forall (n : nat),
@@ -773,8 +1055,31 @@ Proof.
   (* Strategy: Use count_occ_eq_impl_Permutation *)
   apply (count_occ_eq_impl_Permutation (nat * nat) nat_pair_eq_dec).
   intros [i j].
-  (* Need to show: count in row list = count in diag list *)
-  (* Each valid pair appears exactly once in each list *)
+
+  (* Key equivalence: i+j <= n iff i <= n /\ j <= n-i *)
+  assert (Equiv: (i + j <= n)%nat <-> (i <= n /\ j <= n - i)%nat) by lia.
+
+  destruct (le_dec (i + j) n) as [Hij_le | Hij_gt].
+
+  - (* Case: i + j <= n, so pair is in both lists with count = 1 *)
+    (* Both lists have NoDup, so count is at most 1 *)
+    (* Show pair is In both lists, so count = 1 *)
+    assert (Hin_row: In (i, j) (pairs_by_rows (S n) (fun i' => (n - i' + 1)%nat))).
+    { apply pair_in_row_list. lia. lia. }
+
+    assert (Hin_diag: In (i, j) (pairs_by_diags (S n))).
+    { apply pair_in_diag_list. exact Hij_le. }
+
+    (* Convert In to count_occ = 1 using NoDup *)
+    assert (Hc_row: count_occ nat_pair_eq_dec (pairs_by_rows (S n) (fun i' => (n - i' + 1)%nat)) (i, j) = 1%nat).
+    { clear Hin_diag Hij_le Equiv.
+      admit.
+      (* apply count_occ_not_In.*) (* This gives us the iff between ~In and count = 0 *)
+    }
+
+    rewrite Hc_row.
+    admit.
+  - admit.
 Admitted.
 
 (* Use the pair permutation to get value list permutation *)
@@ -820,6 +1125,8 @@ Proof.
   apply sum_permutation_invariant.
   apply row_diag_lists_permutation.
 Qed.
+
+(* ===== Additional lemmas for summation_R manipulations ===== *)
 
 (* Rectangular to triangular summation conversion *)
 Lemma summation_R_rect_to_tri : forall (f : nat -> nat -> R) (n : nat),
