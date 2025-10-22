@@ -706,6 +706,8 @@ Qed.
 
 (* Alternative approach: Prove count_occ equality directly, then derive permutation *)
 
+(* Simpler direct approach: prove the main lemma directly by a more careful induction *)
+
 (* Now row_diag_same_multiset - prove directly via induction *)
 Lemma row_diag_same_multiset : forall (f : nat -> nat -> R) (n : nat),
   forall x, count_occ Req_EM_T
@@ -723,17 +725,9 @@ Proof.
     reflexivity.
 
   - (* Inductive case: n -> S n *)
-    (* Unfold both sides *)
-    rewrite double_sum_to_list_rows_unfold.
-    rewrite double_sum_to_list_diags_unfold.
-
-    (* Apply count_occ_app *)
-    rewrite count_occ_app.
-    rewrite count_occ_app.
-
-    (* The core challenge: proving the new portions have equal count_occ *)
-    (* This requires substantial technical work to show the distributed
-       row extensions equal the new diagonal *)
+    (* The proof requires showing equality of multisets after extension.
+       This is complex and requires careful manipulation of list operations.
+       For now, we admit this step pending a complete bijection-based proof. *)
 Admitted.
 
 (* Derive the permutation from count_occ equality *)
