@@ -1270,6 +1270,20 @@ Proof.
   apply binomial_summation_R.
 Qed.
 
+(* Lemma: Binomial coefficient C n k is 0 when k > n *)
+Lemma C_zero_above_n : forall n k,
+  (k > n)%nat -> C n k = 0.
+Proof.
+  intros n k Hk.
+  unfold C.
+  (* C n k = n! / (k! * (n-k)!)
+     When k > n, we have n - k underflows in nat, giving a large number.
+     But actually, the formula n! / (k! * (n-k)!) should be 0 when k > n.
+     This might not be directly provable from the definition without
+     additional lemmas about factorial and division.
+  *)
+Admitted.
+
 (* Lemma: Distributing a function over summation with binomial expansion *)
 Lemma summation_binomial_expansion : forall (f : nat -> R) (x a : R) (n : nat),
   summation_R (fun i => f i * (x - a) ^ i) (S n) =
@@ -1323,13 +1337,34 @@ Proof.
 
   rewrite H_apply_dist. clear H_apply_dist H_dist.
 
-  (* Step 3: Now we have a double sum that needs rearranging
-     Current: ∑_{i=0}^{n} ∑_{j=0}^{i} f(i) * C(i,j) * x^j * (-a)^(i-j)
-     Goal: ∑_{j=0}^{n} [∑_{i=j}^{n} f(i) * C(i,j) * (-a)^(i-j)] * x^j
+  (* Step 3: Pad inner sums to uniform bound (S n) using C i j = 0 for j > i *)
+  assert (H_pad: forall i, (i <= n)%nat ->
+    summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i) =
+    summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S n)).
+  {
+    intros i Hi.
+    (* When j > i, C i j = 0, so extending the sum doesn't change it.
+       Proof requires: split_summation_R, show tail terms are 0 using C_zero_above_n *)
+    admit.
+  }
 
-     The issue is that the inner sum goes from 0 to i (which changes with i),
-     but summation_R_triangular expects the inner sum to go from 0 to (n-i).
-     We need to adjust the indexing.
-  *)
+  (* Apply padding *)
+  assert (H_padded:
+    summation_R (fun i => summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i)) (S n) =
+    summation_R (fun i => summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S n)) (S n)).
+  {
+    apply summation_R_irrelevance_of_large_coeffs.
+    intros i Hi.
+    apply H_pad.
+    assumption.
+  }
+
+  rewrite H_padded. clear H_padded H_pad.
+
+  (* Step 4: Now apply summation_R_exchange to swap the order *)
+  rewrite summation_R_exchange.
+
+  (* Step 5: Factor out x^j from inner sum *)
+  admit.  (* Need to show this matches the goal form *)
 
 Admitted.
