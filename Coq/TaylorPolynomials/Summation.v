@@ -1210,4 +1210,33 @@ Proof.
   (* This is the key lemma for binomial expansion *)
   (* We need to show that summing over pairs (i, k-i) where 0 <= i <= k <= n *)
   (* is the same as summing over pairs (i, j) where 0 <= i <= n and 0 <= j <= n-i *)
-Admitted.
+
+  (* Key insight: For k <= n, we have min k n = k, so min k n + 1 = k + 1
+     This means the inner sum behaves exactly as in summation_R_triangular *)
+
+  (* First, show that we can replace (min k n + 1) with (k + 1) in the sum *)
+  assert (H_min_eq: forall k, (k <= n)%nat -> (min k n + 1)%nat = (k + 1)%nat).
+  {
+    intros k Hk.
+    rewrite Nat.min_l by assumption.
+    reflexivity.
+  }
+
+  (* Rewrite LHS to use (k + 1) instead of (min k n + 1) *)
+  assert (H_rewrite:
+    summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (min k n + 1)) (S n) =
+    summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (k + 1)) (S n)).
+  {
+    apply summation_R_irrelevance_of_large_coeffs.
+    intros k Hk.
+    (* For k <= n, min k n = k *)
+    rewrite H_min_eq by assumption.
+    reflexivity.
+  }
+
+  rewrite H_rewrite.
+
+  (* Now apply summation_R_triangular directly *)
+  symmetry.
+  apply summation_R_triangular.
+Qed.
