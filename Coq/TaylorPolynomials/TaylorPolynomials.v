@@ -593,11 +593,20 @@ Proof.
 
         (* The proof requires establishing that c1_ j equals the sum of binomial-weighted Taylor coefficients.
            This is a substantial piece of work involving:
-           - Binomial theorem for (x-a)^i expansion
-           - Double summation rearrangement lemmas
-           - Coefficient uniqueness for polynomials
+           - Binomial theorem for (x-a)^i expansion (✓ DONE: binomial_diff_expansion in Summation.v)
+           - Double summation rearrangement lemmas (✓ DONE: summation_R_triangular, summation_R_change_of_var)
+           - Coefficient uniqueness for polynomials (✗ TODO: not yet proven)
 
-           For a complete proof, we'd need to add these lemmas to the Combinatorics module.
+           Current goal structure:
+           c1_ n * x^n + Σ(c1_ i * x^i) = (D^n F a / n!) * (x-a)^n + Σ((D^i F a / i!) * (x-a)^i)
+
+           Challenge: LHS uses powers of x, RHS uses powers of (x-a).
+           Strategy needed:
+           1. Expand each (x-a)^i using binomial_diff_expansion
+           2. Rearrange double sums using summation_R_change_of_var
+           3. Apply polynomial coefficient uniqueness to conclude equality
+
+           Infrastructure is now in place, but requires combining the pieces.
         *)
         admit.
       * apply functional_extensionality.
