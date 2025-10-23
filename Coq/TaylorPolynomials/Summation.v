@@ -1045,6 +1045,44 @@ Proof.
       apply pairs_by_rows_first_bound in Hin. lia.
 Qed.
 
+(* Bound lemmas for checking membership *)
+Lemma pairs_by_diags_bound : forall n i j,
+  In (i, j) (pairs_by_diags n) ->
+  (i + j <= n - 1)%nat.
+Proof.
+  intros n i j.
+  apply pairs_by_diags_sum_bound.
+Qed.
+
+Lemma pairs_by_rows_bound : forall n j_func i j,
+  In (i, j) (pairs_by_rows n j_func) ->
+  (i <= n - 1 /\ j <= j_func i - 1)%nat.
+Proof.
+  intros n j_func i j Hin.
+  induction n as [|n' IH].
+
+  - (* n = 0: empty list *)
+    simpl in Hin. contradiction.
+
+  - (* n = S n' *)
+    unfold pairs_by_rows in Hin; fold pairs_by_rows in Hin.
+    apply in_app_or in Hin.
+    destruct Hin as [Hin_old | Hin_new].
+
+    + (* Pair from old rows *)
+      apply IH in Hin_old.
+      destruct Hin_old as [Hi Hj].
+      split; lia.
+
+    + (* Pair from new row: i = n' *)
+      apply in_map_iff in Hin_new.
+      destruct Hin_new as [j' [Heq Hin']].
+      injection Heq as Hi Hj.
+      subst i j.
+      apply in_seq in Hin'.
+      split; lia.
+Qed.
+
 (* The main theorem: pair lists are permutations *)
 Lemma pairs_row_diag_permutation : forall (n : nat),
   Permutation
@@ -1072,15 +1110,40 @@ Proof.
 
     (* Convert In to count_occ = 1 using NoDup *)
     assert (Hc_row: count_occ nat_pair_eq_dec (pairs_by_rows (S n) (fun i' => (n - i' + 1)%nat)) (i, j) = 1%nat).
-    { clear Hin_diag Hij_le Equiv.
-      admit.
-      (* apply count_occ_not_In.*) (* This gives us the iff between ~In and count = 0 *)
+    { apply NoDup_count_occ'.
+      - apply pairs_by_rows_NoDup.
+      - exact Hin_row.
     }
 
-    rewrite Hc_row.
-    admit.
-  - admit.
-Admitted.
+    assert (Hc_diag: count_occ nat_pair_eq_dec (pairs_by_diags (S n)) (i, j) = 1%nat).
+    { apply NoDup_count_occ'.
+      - apply pairs_by_diags_NoDup.
+      - exact Hin_diag.
+    }
+
+    rewrite Hc_row. rewrite Hc_diag. reflexivity.
+
+  - (* Case: i + j > n, so pair is not in either list, count = 0 *)
+    assert (Hout_row: ~ In (i, j) (pairs_by_rows (S n) (fun i' => (n - i' + 1)%nat))).
+    { intros Hcontra.
+      apply pairs_by_rows_bound in Hcontra.
+      lia.
+    }
+
+    assert (Hout_diag: ~ In (i, j) (pairs_by_diags (S n))).
+    { intros Hcontra.
+      apply pairs_by_diags_bound in Hcontra.
+      lia.
+    }
+
+    assert (Hc_row: count_occ nat_pair_eq_dec (pairs_by_rows (S n) (fun i' => (n - i' + 1)%nat)) (i, j) = 0%nat).
+    { apply count_occ_not_In. exact Hout_row. }
+
+    assert (Hc_diag: count_occ nat_pair_eq_dec (pairs_by_diags (S n)) (i, j) = 0%nat).
+    { apply count_occ_not_In. exact Hout_diag. }
+
+    rewrite Hc_row. rewrite Hc_diag. reflexivity.
+Qed.
 
 (* Use the pair permutation to get value list permutation *)
 Lemma row_diag_lists_permutation : forall (f : nat -> nat -> R) (n : nat),
