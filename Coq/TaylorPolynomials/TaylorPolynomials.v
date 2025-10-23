@@ -608,22 +608,25 @@ Proof.
         (* Step 2: Distribute the coefficient through the summation *)
         rewrite <- summation_R_mult_const.
 
-        (* Progress: RHS n-th degree term is now:
-           summation_R (fun i => (D^n F a / n!) * C n i * x^i * (-a)^(n-i)) (S n)
+        (* Step 3: Need to expand (x'-a)^i' terms in the lower summation
+           The lower summation has the form:
+           summation (fun i' x' => (D^i' F a / i'!) * (x' - a)^i') n x
 
-           Next steps would be:
-           3. Expand (x-a)^i' in the lower summation similarly
-           4. Combine into double sum and rearrange
-           5. Extract that c1_ j matches the binomial-weighted sum
+           We need to apply binomial_diff_expansion to each (x' - a)^i' term.
+           This requires working inside the summation, which means we need to
+           rewrite under the binder.
+        *)
 
-           This requires additional lemmas for:
-           - Expanding summation of (x-a)^i terms
-           - Manipulating the resulting nested sums
-           - Extracting polynomial coefficients from binomial form
+        (* Let's try a different approach: use functional extensionality and
+           work with the polynomial evaluation directly *)
 
-           The infrastructure (binomial_diff_expansion, summation_R_triangular,
-           summation_R_mult_const) is being used as planned, but completing
-           the proof requires more intermediate lemmas about these interactions.
+        (* Actually, looking at the hypothesis H, it asserts that when we expand
+           everything with binomial coefficients, we get the right answer.
+           The issue is that H is existential and computational - it shows equality
+           holds for some specific manipulation.
+
+           What we really need is to prove the coefficient relationship holds
+           in general, not just that the polynomials evaluate to the same thing.
         *)
 
         admit.

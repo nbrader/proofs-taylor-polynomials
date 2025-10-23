@@ -1269,3 +1269,67 @@ Proof.
   replace (x - a) with (x + (- a)) by ring.
   apply binomial_summation_R.
 Qed.
+
+(* Lemma: Distributing a function over summation with binomial expansion *)
+Lemma summation_binomial_expansion : forall (f : nat -> R) (x a : R) (n : nat),
+  summation_R (fun i => f i * (x - a) ^ i) (S n) =
+  summation_R (fun j =>
+    summation_R (fun i => f i * C i j * (- a) ^ (i - j)) (n - j + 1) * x ^ j) (S n).
+Proof.
+  intros f x a n.
+
+  (* Step 1: Expand each (x-a)^i using binomial_diff_expansion *)
+  assert (H_expand: forall i,
+    f i * (x - a) ^ i = f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i)).
+  {
+    intros i.
+    rewrite binomial_diff_expansion.
+    reflexivity.
+  }
+
+  (* Apply the expansion to each term *)
+  assert (H_sum_expand:
+    summation_R (fun i => f i * (x - a) ^ i) (S n) =
+    summation_R (fun i => f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i)) (S n)).
+  {
+    apply summation_R_irrelevance_of_large_coeffs.
+    intros i Hi.
+    rewrite H_expand.
+    reflexivity.
+  }
+
+  rewrite H_sum_expand. clear H_sum_expand H_expand.
+
+  (* Step 2: Distribute f i through the inner summation *)
+  assert (H_dist: forall i,
+    f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i) =
+    summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i)).
+  {
+    intros i.
+    rewrite <- summation_R_mult_const.
+    reflexivity.
+  }
+
+  (* Apply distribution to each term in outer sum *)
+  assert (H_apply_dist:
+    summation_R (fun i => f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i)) (S n) =
+    summation_R (fun i => summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i)) (S n)).
+  {
+    apply summation_R_irrelevance_of_large_coeffs.
+    intros i Hi.
+    rewrite H_dist.
+    reflexivity.
+  }
+
+  rewrite H_apply_dist. clear H_apply_dist H_dist.
+
+  (* Step 3: Now we have a double sum that needs rearranging
+     Current: ∑_{i=0}^{n} ∑_{j=0}^{i} f(i) * C(i,j) * x^j * (-a)^(i-j)
+     Goal: ∑_{j=0}^{n} [∑_{i=j}^{n} f(i) * C(i,j) * (-a)^(i-j)] * x^j
+
+     The issue is that the inner sum goes from 0 to i (which changes with i),
+     but summation_R_triangular expects the inner sum to go from 0 to (n-i).
+     We need to adjust the indexing.
+  *)
+
+Admitted.
