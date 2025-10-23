@@ -136,17 +136,53 @@ Proof.
       * (* k > 0, but k <= 0, contradiction *)
         lia.
     + (* n = S n' *)
-      (* This case requires proving:
-         INR (fact (S n')) / (INR (fact k) * INR (fact ((S n') - k))) = INR (binomial (S n') k)
+      (* Goal: C (S n') k = INR (binomial (S n') k) *)
+      (* C (S n') k is defined as: INR (fact (S n')) / (INR (fact k) * INR (fact ((S n') - k))) *)
 
-         Proof strategy:
-         1. Use bin_factd: 'C(S n', k) = div.divn (S n')`! (k`! * ((S n') - k)`!)
-         2. Show that INR preserves this equation when the division is exact
-         3. The division is exact because binomial coefficients are natural numbers
+      (* We need to show this equals INR (binomial (S n') k) *)
+      (* Use the fact that binomial (S n') k * (fact k * fact ((S n') - k)) = fact (S n') *)
+      (* This comes from bin_fact in mathcomp *)
 
-         This requires lemmas about INR and exact division that interact correctly
-         with mathcomp's div.divn and Coq's factorial definitions.
-      *)
+      (* First, convert Coq's fact to mathcomp's factorial *)
+      rewrite !fact_eq_factorial.
+
+      (* Now use the relationship between binomial and factorials *)
+      (* bin_fact: 'C(n, m) * (m`! * (n - m)`!) = n`! when m <= n *)
+      have Hk_le: (k <= S n')%N by apply/leP; lia.
+      rewrite -(bin_fact Hk_le).
+
+      (* Now we have: INR ((S n')`!) / (INR (k`!) * INR (((S n') - k)`!)) =
+                       INR ('C(S n', k) * (k`! * ((S n') - k)`!)) / (INR (k`!) * INR (((S n') - k)`!)) *)
+
+      rewrite mult_INR.
+      rewrite mult_INR.
+
+      (* Now simplify: INR('C) * INR(k`! * ((S n') - k)`!) / (INR(k`!) * INR(((S n') - k)`!)) = INR('C) *)
+      (* This is: (INR('C) * (INR(k`!) * INR(((S n') - k)`!))) / (INR(k`!) * INR(((S n') - k)`!)) = INR('C) *)
+
+      (* Factorials are always non-zero, use conversion to Coq's fact *)
+      assert (H_fact_k_neq_0: k`! <> 0%N).
+      { rewrite -fact_eq_factorial. apply fact_neq_0. }
+
+      assert (H_fact_nk_neq_0: (S n' - k)`! <> 0%N).
+      { rewrite -fact_eq_factorial. apply fact_neq_0. }
+
+      assert (H_denom_neq_0: INR (k`!) * INR ((S n' - k)`!) <> 0).
+      {
+        apply Rmult_integral_contrapositive.
+        split; apply not_0_INR; assumption.
+      }
+
+      (* Both sides have the same denominator, and numerators are equal by bin_fact *)
+      (* LHS: INR ((S n')`!) / (INR (k`!) * INR ((S n' - k)`!)) *)
+      (* RHS after rewrite: INR ('C * (k`! * ...)) / (INR (k`!) * INR (...)) *)
+      (*                  = INR ('C) * INR (k`! * ...) / (INR (k`!) * INR (...)) *)
+      (*                  = INR ('C) when we cancel the common factor *)
+
+      (* Use the fact that (a * b) / b = a when b <> 0 *)
+      unfold Rdiv.
+      rewrite Rmult_assoc.
+      rewrite (Rmult_comm (INR (binomial (S n') k))).
       admit.
   - (* k > n case *)
     apply Nat.leb_gt in Hle.
