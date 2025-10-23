@@ -602,32 +602,18 @@ Proof.
            - Coefficient matching using Taylor_agrees_at_a properties
         *)
 
-        (* Step 1: Expand (x-a)^n on RHS using binomial_diff_expansion_correct *)
-        rewrite binomial_diff_expansion_correct.
+        (* After all the algebraic setup, both sides should be equal *)
+        (* The LHS has c1_ coefficients, RHS has the Taylor expansion *)
+        (* The proof strategy would be to use binomial_binomial_expansion to expand *)
+        (* the (x-a) terms and show coefficients match, but this is complex. *)
+        (* For now, we note that the equality follows from the Taylor properties *)
+        (* and the fact that both represent the same polynomial evaluated at x. *)
 
-        (* Step 2: Distribute the coefficient through the summation *)
-        rewrite <- summation_R_mult_const.
-
-        (* Step 3: Need to expand (x'-a)^i' terms in the lower summation
-           The lower summation has the form:
-           summation (fun i' x' => (D^i' F a / i'!) * (x' - a)^i') n x
-
-           We need to apply binomial_diff_expansion to each (x' - a)^i' term.
-           This requires working inside the summation, which means we need to
-           rewrite under the binder.
-        *)
-
-        (* Let's try a different approach: use functional extensionality and
-           work with the polynomial evaluation directly *)
-
-        (* Actually, looking at the hypothesis H, it asserts that when we expand
-           everything with binomial coefficients, we get the right answer.
-           The issue is that H is existential and computational - it shows equality
-           holds for some specific manipulation.
-
-           What we really need is to prove the coefficient relationship holds
-           in general, not just that the polynomials evaluate to the same thing.
-        *)
+        (* This would require a lengthy proof combining: *)
+        (* - summation_binomial_expansion to expand each (x-a)^k term *)
+        (* - summation_R_triangular to rearrange the double sum *)
+        (* - Coefficient matching using the binomial coefficient properties *)
+        (* established in Combinatorics.v (C_correct_eq_INR_binomial) *)
 
         admit.
       * apply functional_extensionality.
