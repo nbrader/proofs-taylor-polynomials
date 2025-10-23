@@ -1191,16 +1191,6 @@ Qed.
 
 (* ===== Additional lemmas for summation_R manipulations ===== *)
 
-(* Rectangular to triangular summation conversion *)
-Lemma summation_R_rect_to_tri : forall (f : nat -> nat -> R) (n : nat),
-  summation_R (fun i => summation_R (fun j => f i j) (S n)) (S n) =
-  summation_R (fun i => summation_R (fun j => f i j) (i + 1)) (S n) +
-  summation_R (fun i => summation_R (fun j => f j i) (n - i + 1)) n.
-Proof.
-  intros f n.
-  (* Split the rectangular region into lower and upper triangular parts *)
-Admitted.
-
 (* Change of variable in double sum *)
 Lemma summation_R_change_of_var : forall (f : nat -> nat -> R) (n : nat),
   summation_R (fun k => summation_R (fun i => f i (k - i)%nat) (min k n + 1)) (S n) =
