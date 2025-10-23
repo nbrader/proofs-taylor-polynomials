@@ -136,10 +136,17 @@ Proof.
       * (* k > 0, but k <= 0, contradiction *)
         lia.
     + (* n = S n' *)
-      rewrite !fact_eq_factorial.
-      (* This requires careful handling of mathcomp/stdlib conversions and factorial equality.
-         The key insight: both sides compute the binomial coefficient via the factorial formula.
-         A complete proof would use bin_fact from mathcomp and careful INR manipulations. *)
+      (* This case requires proving:
+         INR (fact (S n')) / (INR (fact k) * INR (fact ((S n') - k))) = INR (binomial (S n') k)
+
+         Proof strategy:
+         1. Use bin_factd: 'C(S n', k) = div.divn (S n')`! (k`! * ((S n') - k)`!)
+         2. Show that INR preserves this equation when the division is exact
+         3. The division is exact because binomial coefficients are natural numbers
+
+         This requires lemmas about INR and exact division that interact correctly
+         with mathcomp's div.divn and Coq's factorial definitions.
+      *)
       admit.
   - (* k > n case *)
     apply Nat.leb_gt in Hle.

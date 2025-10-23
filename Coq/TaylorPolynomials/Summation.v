@@ -1303,11 +1303,32 @@ Lemma summation_R_extension_zero : forall (f : nat -> R) (m n : nat),
   (forall k, (S m <= k <= n)%nat -> f k = 0) ->
   summation_R f (S m) = summation_R f (S n).
 Proof.
-  (*  This should be provable by induction on n.
-      Key insight: Adding zero terms doesn't change the sum.
-      The proof requires careful handling of arithmetic inequalities. *)
-  admit.
-Admitted.
+  intros f m n Hmn Hzero.
+  (* Induction on the difference (n - m) *)
+  remember (n - m)%nat as d eqn:Hd.
+  generalize dependent n.
+  generalize dependent m.
+  induction d as [|d' IH].
+  - (* d = 0, so n = m *)
+    intros m n Hmn Hzero Hd.
+    assert (n = m) by lia. subst. reflexivity.
+  - (* d = S d' *)
+    intros m n Hmn Hzero Hd.
+    destruct n as [|n'].
+    + (* n = 0, but d = S d' > 0 and n - m = 0, contradiction *)
+      exfalso. lia.
+    + (* n = S n' *)
+      unfold summation_R at 2. fold summation_R.
+      rewrite Hzero; [| lia].
+      (* Goal: summation_R f (S m) = 0 + (f n' + summation_R f n') *)
+      rewrite Rplus_0_l.
+      (* Goal: summation_R f (S m) = f n' + summation_R f n' *)
+      (* This equals summation_R f (S n') by definition *)
+      symmetry. unfold summation_R. fold summation_R. symmetry.
+      (* Now we need: summation_R f (S m) = summation_R f (S n') *)
+      apply IH with (n := n'); try lia.
+      intros k Hk. apply Hzero. lia.
+Qed.
 
 (* Lemma: Distributing a function over summation with binomial expansion *)
 Lemma summation_binomial_expansion : forall (f : nat -> R) (x a : R) (n : nat),
