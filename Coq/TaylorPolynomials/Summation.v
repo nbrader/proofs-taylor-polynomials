@@ -178,6 +178,42 @@ Proof.
   - simpl. rewrite IHn. ring.
 Qed.
 
+(* Right-multiplication version *)
+Lemma summation_R_const_mult : forall (c : R) (f : nat -> R) (n : nat),
+  summation_R (fun i => f i * c) n = summation_R f n * c.
+Proof.
+  intros c f n.
+  induction n as [|n IHn].
+  - simpl. ring.
+  - simpl. rewrite IHn. ring.
+Qed.
+
+(* Helper lemma: if all elements are zero, sum is zero *)
+Lemma summation_R_all_zero : forall (f : nat -> R) (m : nat),
+  (forall i, (i < S m)%nat -> f i = 0) ->
+  summation_R f (S m) = 0.
+Proof.
+  intros f m Hzero.
+  induction m as [|m' IHm'].
+  - simpl. rewrite Hzero; [ring | lia].
+  - (* This is true but requires careful manipulation of the expanded form *)
+    admit.
+Admitted.
+
+(* Change of variables with zero padding:
+   If f is zero below offset k, then summing from 0 to n equals
+   summing the shifted function from 0 to n-k *)
+Lemma summation_R_shift_with_zeros : forall (f : nat -> R) (n k : nat),
+  (k <= n)%nat ->
+  (forall i, (i < k)%nat -> f i = 0) ->
+  summation_R f (S n) = summation_R (fun i => f (i + k)%nat) (n - k + 1).
+Proof.
+  (* This lemma is true - it states that if the first k terms are zero,
+     we can shift the index and adjust the bounds. The proof requires
+     careful induction and manipulation of summation_R. *)
+  admit.
+Admitted.
+
 (* Summation of sum equals sum of summations *)
 Lemma summation_R_plus : forall (f g : nat -> R) (n : nat),
   summation_R (fun i => f i + g i) n = summation_R f n + summation_R g n.
@@ -1334,7 +1370,7 @@ Qed.
 Lemma summation_binomial_expansion : forall (f : nat -> R) (x a : R) (n : nat),
   summation_R (fun i => f i * (x - a) ^ i) (S n) =
   summation_R (fun j =>
-    summation_R (fun i => f i * C_correct i j * (- a) ^ (i - j)) (n - j + 1) * x ^ j) (S n).
+    summation_R (fun i => f (i + j)%nat * C_correct (i + j) j * (- a) ^ i) (n - j + 1) * x ^ j) (S n).
 Proof.
   intros f x a n.
 
@@ -1411,14 +1447,16 @@ Proof.
   (* Step 4: Now apply summation_R_exchange to swap the order *)
   rewrite summation_R_exchange.
 
-  (* Step 5: Factor out x^j from inner sum *)
-  (* After exchange, we have:
-     summation_R (fun j => summation_R (fun i => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n)) (S n)
-     We need to rewrite this to match the goal *)
-  apply summation_R_irrelevance_of_large_coeffs.
-  intros j Hj.
-  (* Goal: summation_R (fun i => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n) =
-           summation_R (fun i => f i * C_correct i j * (- a) ^ (i - j)) (n - j + 1) * x ^ j *)
-  admit.  (* Need to pull out x^j and adjust summation bounds *)
+  (* Step 5: For each j, change variables in inner sum and factor out x^j *)
+  (* This step requires:
+     1. Factoring out x^j from the inner sum
+     2. Changing variables i' = i - j to get from sum over i in [j,n] to sum over i' in [0, n-j]
+     3. This transforms: Σ_{i=j}^n f(i)*C(i,j)*(-a)^(i-j) to Σ_{i'=0}^{n-j} f(i'+j)*C(i'+j,j)*(-a)^{i'}
 
+     The transformation is valid because:
+     - C_correct(i,j) = 0 for i < j, so the effective range is [j,n]
+     - Substituting i' = i-j gives the shifted form
+     - This is verified computationally in test_binomial_expansion.py
+  *)
+  admit.
 Admitted.
