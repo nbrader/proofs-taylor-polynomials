@@ -1,5 +1,6 @@
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Reals.Reals.
+Require Import Coq.Reals.Rfunctions.
 Require Import Coq.Lists.List.
 Require Import Coq.Sorting.Permutation.
 Require Import Psatz.
@@ -1229,4 +1230,33 @@ Proof.
   (* Now apply summation_R_triangular directly *)
   symmetry.
   apply summation_R_triangular.
+Qed.
+
+(* ===== Bridging between Coq.Reals notation and project notation ===== *)
+
+(* Lemma: summation_R and sum_f_R0 are equivalent (after accounting for indexing) *)
+Lemma summation_R_sum_f_R0_equiv : forall (f : nat -> R) (n : nat),
+  summation_R f (S n) = sum_f_R0 f n.
+Proof.
+  intros f n.
+  induction n as [|n' IH].
+  - (* Base case: n = 0 *)
+    simpl. ring.
+  - (* Inductive case *)
+    unfold summation_R at 1; fold summation_R.
+    unfold sum_f_R0 at 1; fold sum_f_R0.
+    rewrite <- IH.
+    (* Goal: f (S n') + (f n' + summation_R f n') = summation_R f (S n') + f (S n') *)
+    (* Unfold summation_R f (S n') on RHS to get f n' + summation_R f n' *)
+    unfold summation_R at 2; fold summation_R.
+    ring.
+Qed.
+
+(* Binomial theorem in summation_R notation *)
+Theorem binomial_summation_R : forall (x y : R) (n : nat),
+  (x + y) ^ n = summation_R (fun i => C n i * x ^ i * y ^ (n - i)) (S n).
+Proof.
+  intros x y n.
+  rewrite summation_R_sum_f_R0_equiv.
+  apply binomial.
 Qed.
