@@ -180,12 +180,18 @@ Proof.
       (*                  = INR ('C) when we cancel the common factor *)
 
       (* Use the fact that (a * b) / b = a when b <> 0 *)
-      unfold Rdiv.
-      rewrite Rmult_assoc.
-      rewrite (Rmult_comm (INR (binomial (S n') k))).
-      admit.
+      field_simplify.
+      - (* After field_simplify, show the factorials match *)
+        assert (Hfact_eq: INR (S n' - k)%coq_nat`! = INR (S n' - k)`!).
+        { reflexivity. }
+        rewrite Hfact_eq.
+        field.
+        apply not_0_INR. exact H_fact_nk_neq_0.
+      - split.
+        + apply not_0_INR. exact H_fact_nk_neq_0.
+        + apply not_0_INR. exact H_fact_k_neq_0.
   - (* k > n case *)
     apply Nat.leb_gt in Hle.
     have Hlt: (n < k)%N by apply/ltP; lia.
     rewrite bin_small; [reflexivity | exact Hlt].
-Admitted.
+Qed.
