@@ -602,6 +602,30 @@ Proof.
            - Coefficient matching using Taylor_agrees_at_a properties
         *)
 
+        (* Step 1: Expand (x-a)^n on RHS using binomial_diff_expansion *)
+        rewrite binomial_diff_expansion.
+
+        (* Step 2: Distribute the coefficient through the summation *)
+        rewrite <- summation_R_mult_const.
+
+        (* Progress: RHS n-th degree term is now:
+           summation_R (fun i => (D^n F a / n!) * C n i * x^i * (-a)^(n-i)) (S n)
+
+           Next steps would be:
+           3. Expand (x-a)^i' in the lower summation similarly
+           4. Combine into double sum and rearrange
+           5. Extract that c1_ j matches the binomial-weighted sum
+
+           This requires additional lemmas for:
+           - Expanding summation of (x-a)^i terms
+           - Manipulating the resulting nested sums
+           - Extracting polynomial coefficients from binomial form
+
+           The infrastructure (binomial_diff_expansion, summation_R_triangular,
+           summation_R_mult_const) is being used as planned, but completing
+           the proof requires more intermediate lemmas about these interactions.
+        *)
+
         admit.
       * apply functional_extensionality.
         intros.
