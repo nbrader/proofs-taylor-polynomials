@@ -1260,3 +1260,12 @@ Proof.
   rewrite summation_R_sum_f_R0_equiv.
   apply binomial.
 Qed.
+
+(* Corollary: Expansion of (x - a)^n *)
+Corollary binomial_diff_expansion : forall (x a : R) (n : nat),
+  (x - a) ^ n = summation_R (fun i => C n i * x ^ i * (- a) ^ (n - i)) (S n).
+Proof.
+  intros x a n.
+  replace (x - a) with (x + (- a)) by ring.
+  apply binomial_summation_R.
+Qed.
