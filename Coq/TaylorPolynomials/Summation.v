@@ -195,10 +195,18 @@ Lemma summation_R_all_zero : forall (f : nat -> R) (m : nat),
 Proof.
   intros f m Hzero.
   induction m as [|m' IHm'].
-  - simpl. rewrite Hzero; [ring | lia].
-  - (* This is true but requires careful manipulation of the expanded form *)
-    admit.
-Admitted.
+  - (* m = 0 *)
+    simpl. rewrite Hzero; [ring | lia].
+  - (* m = S m' *)
+    (* summation_R f (S (S m')) = f (S m') + summation_R f (S m') *)
+    replace (summation_R f (S (S m'))) with (f (S m') + summation_R f (S m')).
+    + (* f (S m') = 0 by Hzero, and summation_R f (S m') = 0 by IH *)
+      rewrite Hzero; [| lia].
+      rewrite IHm'; [ring |].
+      intros i Hi. apply Hzero. lia.
+    + (* Show the replacement is valid *)
+      unfold summation_R at 1. reflexivity.
+Qed.
 
 (* Change of variables with zero padding:
    If f is zero below offset k, then summing from 0 to n equals
@@ -208,11 +216,41 @@ Lemma summation_R_shift_with_zeros : forall (f : nat -> R) (n k : nat),
   (forall i, (i < k)%nat -> f i = 0) ->
   summation_R f (S n) = summation_R (fun i => f (i + k)%nat) (n - k + 1).
 Proof.
-  (* This lemma is true - it states that if the first k terms are zero,
-     we can shift the index and adjust the bounds. The proof requires
-     careful induction and manipulation of summation_R. *)
-  admit.
-Admitted.
+  intros f n k Hkn Hzero.
+  generalize dependent k.
+  induction n as [|n' IH].
+  - (* n = 0 *)
+    intros k Hkn Hzero.
+    assert (k = 0)%nat by lia. subst k.
+    replace (0 - 0 + 1)%nat with 1%nat by lia.
+    simpl. replace (0 + 0)%nat with 0%nat by lia.
+    reflexivity.
+  - (* n = S n' *)
+    intros k Hkn Hzero.
+    destruct (Nat.eq_dec k (S n')) as [Heq | Hneq].
+    + (* k = S n', so all terms except f(S n') are zero *)
+      subst k.
+      replace (S n' - S n' + 1)%nat with 1%nat by lia.
+      replace (summation_R (fun i : nat => f (i + S n')%nat) 1) with (f (S n')).
+      * (* LHS: sum of all zeros except the last term *)
+        replace (summation_R f (S (S n'))) with (f (S n') + summation_R f (S n')).
+        -- rewrite summation_R_all_zero; [ring |].
+           intros i Hi. apply Hzero. lia.
+        -- unfold summation_R at 1. reflexivity.
+      * (* RHS: summation_R (fun i => f (i + S n')) 1 = f (S n') *)
+        simpl. replace (0 + S n')%nat with (S n') by lia. ring.
+    + (* k < S n', so k <= n' *)
+      assert (Hkn': (k <= n')%nat) by lia.
+      (* Use IH to rewrite summation_R f (S n') *)
+      replace (summation_R f (S (S n'))) with (f (S n') + summation_R f (S n')).
+      * rewrite (IH k); [| assumption | assumption].
+        replace (S n' - k + 1)%nat with (S (n' - k + 1))%nat by lia.
+        replace (summation_R (fun i : nat => f (i + k)%nat) (S (n' - k + 1)))
+          with (f (n' - k + 1 + k)%nat + summation_R (fun i : nat => f (i + k)%nat) (n' - k + 1)).
+        -- replace (n' - k + 1 + k)%nat with (S n') by lia. ring.
+        -- unfold summation_R at 1. reflexivity.
+      * unfold summation_R at 1. reflexivity.
+Qed.
 
 (* Summation of sum equals sum of summations *)
 Lemma summation_R_plus : forall (f g : nat -> R) (n : nat),
@@ -1447,16 +1485,32 @@ Proof.
   (* Step 4: Now apply summation_R_exchange to swap the order *)
   rewrite summation_R_exchange.
 
-  (* Step 5: For each j, change variables in inner sum and factor out x^j *)
-  (* This step requires:
-     1. Factoring out x^j from the inner sum
-     2. Changing variables i' = i - j to get from sum over i in [j,n] to sum over i' in [0, n-j]
-     3. This transforms: Σ_{i=j}^n f(i)*C(i,j)*(-a)^(i-j) to Σ_{i'=0}^{n-j} f(i'+j)*C(i'+j,j)*(-a)^{i'}
+  (* Step 5: For each j, factor out x^j and apply change of variables *)
+  apply summation_R_irrelevance_of_large_coeffs.
+  intros j Hj.
 
-     The transformation is valid because:
-     - C_correct(i,j) = 0 for i < j, so the effective range is [j,n]
-     - Substituting i' = i-j gives the shifted form
-     - This is verified computationally in test_binomial_expansion.py
-  *)
-  admit.
-Admitted.
+  (* First factor out x^j *)
+  assert (H_factor: summation_R (fun i => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n) =
+                    summation_R (fun i => (f i * C_correct i j * (- a) ^ (i - j)) * x ^ j) (S n)).
+  {
+    apply summation_R_irrelevance_of_large_coeffs.
+    intros i Hi. ring.
+  }
+  rewrite H_factor. clear H_factor.
+  rewrite summation_R_const_mult.
+
+  (* Now apply change of variables: i' = i - j *)
+  f_equal.
+  (* The shift lemma transforms the sum *)
+  erewrite (summation_R_shift_with_zeros _ n j).
+  - (* Simplify (i + j - j) to i in the exponent *)
+    (* The two sums differ only in (i+j-j) vs i in the exponent, which are equal *)
+    f_equal.
+    extensionality i.
+    f_equal. f_equal. f_equal.
+    lia.
+  - lia.
+  - (* Show f i * C_correct i j * (-a)^(i-j) = 0 for i < j *)
+    intros i Hi.
+    rewrite C_correct_zero_above_n; [ring | lia].
+Qed.
