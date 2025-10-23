@@ -113,3 +113,36 @@ Proof.
     + apply (fact_neq_0 x1). assumption.
   - apply factorial_div_binomial.
 Qed.
+
+(* Define a corrected binomial coefficient that properly handles k > n *)
+Definition C_correct (n k : nat) : R :=
+  if Nat.leb k n then C n k else 0.
+
+(* Prove that C_correct equals INR of mathcomp's binomial *)
+Lemma C_correct_eq_INR_binomial : forall n k,
+  C_correct n k = INR (binomial n k).
+Proof.
+  intros n k.
+  unfold C_correct.
+  destruct (Nat.leb k n) eqn:Hle.
+  - (* k <= n case *)
+    apply Nat.leb_le in Hle.
+    unfold C.
+    destruct n as [|n'].
+    + (* n = 0 *)
+      destruct k as [|k'].
+      * (* k = 0 *)
+        rewrite (binE 0 0). simpl. field.
+      * (* k > 0, but k <= 0, contradiction *)
+        lia.
+    + (* n = S n' *)
+      rewrite !fact_eq_factorial.
+      (* This requires careful handling of mathcomp/stdlib conversions and factorial equality.
+         The key insight: both sides compute the binomial coefficient via the factorial formula.
+         A complete proof would use bin_fact from mathcomp and careful INR manipulations. *)
+      admit.
+  - (* k > n case *)
+    apply Nat.leb_gt in Hle.
+    have Hlt: (n < k)%N by apply/ltP; lia.
+    rewrite bin_small; [reflexivity | exact Hlt].
+Admitted.

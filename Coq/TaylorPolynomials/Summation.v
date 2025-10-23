@@ -12,6 +12,8 @@ Require Import FreeMonoid.MonoidExampleExtendToFunction.
 
 Require Import FreeMonoid.MonoidConcat.
 
+Require Import TaylorPolynomials.Combinatorics.
+
 Definition FunctionToRealsMonoid (A : Type) := @ExtendToFunctionMonoid A R RplusMagma RplusSemigroup RplusMonoid.
 
 (*
@@ -1262,49 +1264,72 @@ Proof.
 Qed.
 
 (* Corollary: Expansion of (x - a)^n *)
-Corollary binomial_diff_expansion : forall (x a : R) (n : nat),
-  (x - a) ^ n = summation_R (fun i => C n i * x ^ i * (- a) ^ (n - i)) (S n).
+Corollary binomial_diff_expansion_correct : forall (x a : R) (n : nat),
+  (x - a) ^ n = summation_R (fun i => C_correct n i * x ^ i * (- a) ^ (n - i)) (S n).
 Proof.
   intros x a n.
+  (* Start with binomial theorem from stdlib *)
   replace (x - a) with (x + (- a)) by ring.
-  apply binomial_summation_R.
+  rewrite binomial_summation_R.
+  (* Now rewrite RHS to use C_correct *)
+  apply summation_R_irrelevance_of_large_coeffs.
+  intros i Hi.
+  (* Goal: C n i * ... = C_correct n i * ... *)
+  (* Since i <= n, C_correct n i = C n i by definition *)
+  assert (HC: C_correct n i = C n i).
+  {
+    unfold C_correct.
+    destruct (Nat.leb i n) eqn:Hleb.
+    - reflexivity.
+    - apply Nat.leb_gt in Hleb. lia.
+  }
+  rewrite HC. reflexivity.
 Qed.
 
-(* Lemma: Binomial coefficient C n k is 0 when k > n *)
-Lemma C_zero_above_n : forall n k,
-  (k > n)%nat -> C n k = 0.
+(* Lemma: C_correct n k is 0 when k > n *)
+Lemma C_correct_zero_above_n : forall n k,
+  (k > n)%nat -> C_correct n k = 0.
 Proof.
   intros n k Hk.
-  unfold C.
-  (* C n k = n! / (k! * (n-k)!)
-     When k > n, we have n - k underflows in nat, giving a large number.
-     But actually, the formula n! / (k! * (n-k)!) should be 0 when k > n.
-     This might not be directly provable from the definition without
-     additional lemmas about factorial and division.
-  *)
+  unfold C_correct.
+  destruct (Nat.leb k n) eqn:Hleb.
+  - apply Nat.leb_le in Hleb. lia.
+  - reflexivity.
+Qed.
+
+(* Lemma: Extending a summation with zero terms doesn't change the sum *)
+Lemma summation_R_extension_zero : forall (f : nat -> R) (m n : nat),
+  (m <= n)%nat ->
+  (forall k, (S m <= k <= n)%nat -> f k = 0) ->
+  summation_R f (S m) = summation_R f (S n).
+Proof.
+  (*  This should be provable by induction on n.
+      Key insight: Adding zero terms doesn't change the sum.
+      The proof requires careful handling of arithmetic inequalities. *)
+  admit.
 Admitted.
 
 (* Lemma: Distributing a function over summation with binomial expansion *)
 Lemma summation_binomial_expansion : forall (f : nat -> R) (x a : R) (n : nat),
   summation_R (fun i => f i * (x - a) ^ i) (S n) =
   summation_R (fun j =>
-    summation_R (fun i => f i * C i j * (- a) ^ (i - j)) (n - j + 1) * x ^ j) (S n).
+    summation_R (fun i => f i * C_correct i j * (- a) ^ (i - j)) (n - j + 1) * x ^ j) (S n).
 Proof.
   intros f x a n.
 
-  (* Step 1: Expand each (x-a)^i using binomial_diff_expansion *)
+  (* Step 1: Expand each (x-a)^i using binomial_diff_expansion_correct *)
   assert (H_expand: forall i,
-    f i * (x - a) ^ i = f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i)).
+    f i * (x - a) ^ i = f i * summation_R (fun j => C_correct i j * x ^ j * (- a) ^ (i - j)) (S i)).
   {
     intros i.
-    rewrite binomial_diff_expansion.
+    rewrite binomial_diff_expansion_correct.
     reflexivity.
   }
 
   (* Apply the expansion to each term *)
   assert (H_sum_expand:
     summation_R (fun i => f i * (x - a) ^ i) (S n) =
-    summation_R (fun i => f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i)) (S n)).
+    summation_R (fun i => f i * summation_R (fun j => C_correct i j * x ^ j * (- a) ^ (i - j)) (S i)) (S n)).
   {
     apply summation_R_irrelevance_of_large_coeffs.
     intros i Hi.
@@ -1316,8 +1341,8 @@ Proof.
 
   (* Step 2: Distribute f i through the inner summation *)
   assert (H_dist: forall i,
-    f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i) =
-    summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i)).
+    f i * summation_R (fun j => C_correct i j * x ^ j * (- a) ^ (i - j)) (S i) =
+    summation_R (fun j => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S i)).
   {
     intros i.
     rewrite <- summation_R_mult_const.
@@ -1326,8 +1351,8 @@ Proof.
 
   (* Apply distribution to each term in outer sum *)
   assert (H_apply_dist:
-    summation_R (fun i => f i * summation_R (fun j => C i j * x ^ j * (- a) ^ (i - j)) (S i)) (S n) =
-    summation_R (fun i => summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i)) (S n)).
+    summation_R (fun i => f i * summation_R (fun j => C_correct i j * x ^ j * (- a) ^ (i - j)) (S i)) (S n) =
+    summation_R (fun i => summation_R (fun j => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S i)) (S n)).
   {
     apply summation_R_irrelevance_of_large_coeffs.
     intros i Hi.
@@ -1337,21 +1362,22 @@ Proof.
 
   rewrite H_apply_dist. clear H_apply_dist H_dist.
 
-  (* Step 3: Pad inner sums to uniform bound (S n) using C i j = 0 for j > i *)
+  (* Step 3: Pad inner sums to uniform bound (S n) using C_correct i j = 0 for j > i *)
   assert (H_pad: forall i, (i <= n)%nat ->
-    summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i) =
-    summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S n)).
+    summation_R (fun j => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S i) =
+    summation_R (fun j => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n)).
   {
     intros i Hi.
-    (* When j > i, C i j = 0, so extending the sum doesn't change it.
-       Proof requires: split_summation_R, show tail terms are 0 using C_zero_above_n *)
-    admit.
+    (* When j > i, C_correct i j = 0, so extending the sum doesn't change it *)
+    apply summation_R_extension_zero; [lia |].
+    intros j Hj.
+    rewrite C_correct_zero_above_n; [ring | lia].
   }
 
   (* Apply padding *)
   assert (H_padded:
-    summation_R (fun i => summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S i)) (S n) =
-    summation_R (fun i => summation_R (fun j => f i * (C i j * x ^ j * (- a) ^ (i - j))) (S n)) (S n)).
+    summation_R (fun i => summation_R (fun j => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S i)) (S n) =
+    summation_R (fun i => summation_R (fun j => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n)) (S n)).
   {
     apply summation_R_irrelevance_of_large_coeffs.
     intros i Hi.
@@ -1365,6 +1391,13 @@ Proof.
   rewrite summation_R_exchange.
 
   (* Step 5: Factor out x^j from inner sum *)
-  admit.  (* Need to show this matches the goal form *)
+  (* After exchange, we have:
+     summation_R (fun j => summation_R (fun i => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n)) (S n)
+     We need to rewrite this to match the goal *)
+  apply summation_R_irrelevance_of_large_coeffs.
+  intros j Hj.
+  (* Goal: summation_R (fun i => f i * (C_correct i j * x ^ j * (- a) ^ (i - j))) (S n) =
+           summation_R (fun i => f i * C_correct i j * (- a) ^ (i - j)) (n - j + 1) * x ^ j *)
+  admit.  (* Need to pull out x^j and adjust summation bounds *)
 
 Admitted.

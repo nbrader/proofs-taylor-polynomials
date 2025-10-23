@@ -602,8 +602,8 @@ Proof.
            - Coefficient matching using Taylor_agrees_at_a properties
         *)
 
-        (* Step 1: Expand (x-a)^n on RHS using binomial_diff_expansion *)
-        rewrite binomial_diff_expansion.
+        (* Step 1: Expand (x-a)^n on RHS using binomial_diff_expansion_correct *)
+        rewrite binomial_diff_expansion_correct.
 
         (* Step 2: Distribute the coefficient through the summation *)
         rewrite <- summation_R_mult_const.
