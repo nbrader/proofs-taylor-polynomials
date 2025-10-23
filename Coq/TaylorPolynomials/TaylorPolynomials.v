@@ -578,36 +578,30 @@ Proof.
   + replace (summation_R (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i) 1) with (summation_R (fun i : nat => (iter D (n + i) F a / INR (fact n * fact i)) * (- a) ^ i) 1).
     - replace (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact (i + i0)) * INR (fact (i + i0) / (fact i * fact (i + i0 - i))) * (- a) ^ (i + i0 - i)) (n - i + 1) * x ^ i) with (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact i * fact i0) * (- a) ^ i0) (n - i + 1) * x ^ i).
       * simpl.
-        (* Both sides equal Taylor n a F evaluated at x, so they must be equal *)
-        (* LHS: summation c1_ (S n) x = Taylor n a F x *)
-        (* RHS: summation (D^i F a / i!) * (x-a)^i (S n) = Taylor n 0 (F(·+a)) (x-a) = Taylor n a F x *)
+        (* Goal: c1_ n * x^n + summation(...) n x = (D^n F a / n!) * (x-a)^n + summation(...) n x
 
-        (* This follows from the fact that:
-           1. Taylor n a F = summation c1_ (S n)   (by Taylor_nth_1)
-           2. Taylor n 0 (F(·+a)) = summation (D^i F a / i!) * ·^i (S n)   (would follow from Maclaurin_implem + chain rule)
-           3. Taylor n a F x = Taylor n 0 (F(·+a)) (x-a)   (the theorem we're proving)
+           Strategy using binomial theorem infrastructure from Summation.v:
 
-           However, we're in a circular situation - we can't use (3) because that's what we're proving.
-           We need to prove the coefficient relationship directly using binomial theorem.
+           1. Expand (x-a)^n using binomial_diff_expansion:
+              (x-a)^n = summation_R (fun i => C n i * x^i * (-a)^(n-i)) (S n)
+
+           2. Distribute (D^n F a / n!) through the binomial expansion:
+              (D^n F a / n!) * (x-a)^n = summation_R (fun i => (D^n F a / n!) * C n i * x^i * (-a)^(n-i)) (S n)
+
+           3. Similarly expand all (x-a)^k terms in the lower summation using binomial_diff_expansion
+              This creates a double sum over (k, i) pairs
+
+           4. Rearrange the double sum using summation_R_triangular or summation_R_change_of_var
+              to collect terms by powers of x (not powers of (x-a))
+
+           5. After rearrangement, the coefficient of x^j should match c1_ j for all j
+
+           This proof requires combining:
+           - binomial_diff_expansion (to expand each (x-a)^k)
+           - summation_R_triangular (to rearrange double sums)
+           - Coefficient matching using Taylor_agrees_at_a properties
         *)
 
-        (* The proof requires establishing that c1_ j equals the sum of binomial-weighted Taylor coefficients.
-           This is a substantial piece of work involving:
-           - Binomial theorem for (x-a)^i expansion (✓ DONE: binomial_diff_expansion in Summation.v)
-           - Double summation rearrangement lemmas (✓ DONE: summation_R_triangular, summation_R_change_of_var)
-           - Coefficient uniqueness for polynomials (✗ TODO: not yet proven)
-
-           Current goal structure:
-           c1_ n * x^n + Σ(c1_ i * x^i) = (D^n F a / n!) * (x-a)^n + Σ((D^i F a / i!) * (x-a)^i)
-
-           Challenge: LHS uses powers of x, RHS uses powers of (x-a).
-           Strategy needed:
-           1. Expand each (x-a)^i using binomial_diff_expansion
-           2. Rearrange double sums using summation_R_change_of_var
-           3. Apply polynomial coefficient uniqueness to conclude equality
-
-           Infrastructure is now in place, but requires combining the pieces.
-        *)
         admit.
       * apply functional_extensionality.
         intros.
