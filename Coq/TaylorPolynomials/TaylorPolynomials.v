@@ -416,7 +416,8 @@ Proof.
   specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := a) (F := F) as Taylor_agrees_at_a_1.
   specialize (Taylor_agrees_at_a_1 (Nat.le_refl n)).
   simpl in Taylor_agrees_at_a_1.
-  rewrite Taylor_nth_1 in Taylor_agrees_at_a_1. clear Taylor_nth_1.
+  rewrite Taylor_nth_1 in Taylor_agrees_at_a_1.
+  (* Note: Taylor_nth_1 kept in scope for potential use in completing admitted sections *)
 
   specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_agrees_at_a_2.
   specialize (Taylor_agrees_at_a_2 (Nat.le_refl n)).
@@ -602,18 +603,26 @@ Proof.
            - Coefficient matching using Taylor_agrees_at_a properties
         *)
 
-        (* After all the algebraic setup, both sides should be equal *)
-        (* The LHS has c1_ coefficients, RHS has the Taylor expansion *)
-        (* The proof strategy would be to use binomial_binomial_expansion to expand *)
-        (* the (x-a) terms and show coefficients match, but this is complex. *)
-        (* For now, we note that the equality follows from the Taylor properties *)
-        (* and the fact that both represent the same polynomial evaluated at x. *)
+        (* PROOF STRATEGY for completing this admitted section:
 
-        (* This would require a lengthy proof combining: *)
-        (* - summation_binomial_expansion to expand each (x-a)^k term *)
-        (* - summation_R_triangular to rearrange the double sum *)
-        (* - Coefficient matching using the binomial coefficient properties *)
-        (* established in Combinatorics.v (C_correct_eq_INR_binomial) *)
+           Goal: c1_ n * x^n + sum_{i=0}^{n-1} c1_ i * x^i =
+                 (D^n F a / n!) * (x-a)^n + sum_{i=0}^{n-1} (D^i F a / i!) * (x-a)^i
+
+           Key steps:
+           1. Use summation_binomial_expansion (Summation.v:1408-1516) to expand all (x-a)^i terms
+              on the RHS into polynomials in x with binomial coefficients
+
+           2. Extract that c1_ i = (D^i F a / i!) for all i <= n using Taylor_agrees_at_a
+              (now possible since Taylor_nth_1 is kept in scope at line 420)
+
+           3. Apply summation_R_triangular to rearrange the resulting double summation
+
+           4. Show coefficient-wise equality using the binomial coefficient lemmas:
+              - C_correct_eq_INR_binomial (Combinatorics.v:122-141)
+              - INR_binomial_coeff (Combinatorics.v:93-116)
+
+           The challenge is coordinating these lemmas while managing the complex index arithmetic.
+        *)
 
         admit.
       * apply functional_extensionality.
