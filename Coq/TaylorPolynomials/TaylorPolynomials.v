@@ -438,247 +438,50 @@ Proof.
   (* The key insight: we need to show the i-th coefficient function matches for all i <= n *)
   (* For c2_, we extract coefficients via derivatives, just like in Maclaurin_implem *)
 
-  assert (forall i, (i <= n)%nat -> c2_ i = iter D i F a / INR (fact i)).
-  {
-    intros i i_le_n.
-    (* This is the same proof as before, but now only for i <= n *)
-    pose proof (Taylor_agrees_at_a n i 0 (fun x' => F (x' + a)) i_le_n) as agrees.
-    simpl in agrees.
-    rewrite Taylor_nth_2 in agrees.
-    rewrite (iter_D_additive_over_summation D D_additive D_homog (S n) i (fun j x' => c2_ j * x' ^ j) 0) in agrees.
-    replace (fun i0 : nat => iter D i (fun x' : R => c2_ i0 * x' ^ i0)) with
-            (fun i0 : nat => fun x : R => c2_ i0 * iter D i (fun x' : R => x' ^ i0) x) in agrees
-      by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
-    rewrite <- (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
-    rewrite <- agrees. clear agrees.
-    rewrite summation_app.
-    assert (S i <= S n)%nat as i_S_le by (apply le_n_S; assumption).
-    rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) (S i) (S n) i_S_le). clear i_S_le.
-    replace (S n - S i)%nat with (n - i)%nat by auto.
-    assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = 0).
-    {
-      assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = summation_R (fun _ : nat => 0) (n - i)).
-      {
-        case (n - i)%nat.
-        - reflexivity.
-        - intros.
-          apply (summation_R_irrelevance_of_large_coeffs n0 (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (fun _ : nat => 0)).
-          intros.
-          assert (i <= i0 + S i)%nat as i_le_i0_Si by (rewrite <- Nat.add_succ_comm; apply Nat.le_add_l).
-          pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (i0 + S i) i i_le_i0_Si) as pow_deriv_eq.
-          rewrite pow_deriv_eq.
-          assert (0 ^ (i0 + S i - i) = 0) as pow_zero_eq.
-          {
-            assert (exists c : nat, (i0 + S i - i)%nat = S c) as exists_succ.
-            {
-              exists i0.
-              assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1.
-              {
-                rewrite Nat.sub_succ_l.
-                - rewrite Nat.sub_diag.
-                  reflexivity.
-                - apply Nat.le_refl.
-              }
-              rewrite <- Nat.add_sub_assoc by apply Nat.le_succ_diag_r.
-              rewrite succ_i_minus_i_is_1 by apply le_n_S.
-              ring.
-            }
-            destruct exists_succ as [c_val c_eq].
-            rewrite c_eq. clear c_eq.
-            simpl.
-            ring.
-          }
-          rewrite pow_zero_eq.
-          ring.
-      }
-      rewrite H. clear H.
-      apply summation_n_zeros.
-    }
-    rewrite H. clear H.
-    rewrite Rplus_0_l.
-    rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i (S i) (Nat.le_succ_diag_r i)).
-    assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
-    {
-      assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) i).
-      {
-        case i.
-        - reflexivity.
-        - intros.
-          apply (summation_R_irrelevance_of_large_coeffs n0 (fun i0 : nat => c2_ i0 * iter D (S n0) (fun x' : R => x' ^ i0) 0) (fun _ : nat => 0)).
-          intros.
-          assert (S n0 > i0)%nat by (unfold gt, lt; apply le_n_S; assumption).
-          pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 (S n0) H0).
-          rewrite H1. ring.
-      }
-      rewrite H. clear H.
-      apply summation_n_zeros.
-    }
-    rewrite H. clear H.
-    rewrite Rplus_0_r.
-    assert (summation_R (fun j : nat => c2_ (j + i)%nat * iter D i (fun x' : R => x' ^ (j + i)) 0) (S i - i) = INR (fact i) * c2_ i).
-    {
-      assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1 by (rewrite Nat.sub_succ_l; [rewrite Nat.sub_diag; reflexivity | apply Nat.le_refl]).
-      rewrite succ_i_minus_i_is_1. clear succ_i_minus_i_is_1. simpl.
-      pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule i).
-      rewrite H. ring.
-    }
-    rewrite H. clear H.
-    field.
-    apply not_0_INR.
-    apply fact_neq_0.
-  }
+  (* Goal: c1_ n * x^n + summation(...) n x = (D^n F a / n!) * (x-a)^n + summation(...) n x
 
-  (* Now we can prove the summations are equal by showing coefficient functions agree on indices <= n *)
-  (* Note: c1_ coefficients are NOT directly equal to iter D i F a / INR (fact i) *)
-  (* They're related through the binomial expansion, which we handle below *)
-  assert (summation_R (fun i : nat => c2_ i * x ^ i) (S n) =
-          summation_R (fun i : nat => (iter D i F a / INR (fact i)) * x ^ i) (S n)).
-  {
-    apply summation_R_irrelevance_of_large_coeffs.
-    intros i i_le_n.
-    rewrite H by assumption.
-    reflexivity.
-  }
+      Strategy using binomial theorem infrastructure from Summation.v:
 
-  assert (summation_R (fun i : nat => c2_ i * (x - a) ^ i) (S n) =
-          summation_R (fun i : nat => (iter D i F a / INR (fact i)) * (x - a) ^ i) (S n)).
-  {
-    apply summation_R_irrelevance_of_large_coeffs.
-    intros i i_le_n.
-    rewrite H by assumption.
-    reflexivity.
-  }
+      1. Expand (x-a)^n using binomial_diff_expansion:
+        (x-a)^n = summation_R (fun i => C n i * x^i * (-a)^(n-i)) (S n)
 
-  rewrite H1.
-  (* rewrite H0. *)
-  clear H H0 H1.
+      2. Distribute (D^n F a / n!) through the binomial expansion:
+        (D^n F a / n!) * (x-a)^n = summation_R (fun i => (D^n F a / n!) * C n i * x^i * (-a)^(n-i)) (S n)
 
-  assert (exists (n : nat), summation (fun (i : nat) (x' : R) => summation_R_from_and_to (fun i0 : nat => iter D i0 F a / INR (fact i0) * INR (from_n_choose_k i0 i) * (- a) ^ (i0 - i)) i n * x' ^ i) (S n) x = summation (fun (i : nat) (x' : R) => iter D i F a / INR (fact i) * (x' - a) ^ i) (S n) x).
-  {
-      exists 4%nat.
-      unfold summation_R_from_and_to.
-      simpl.
-      ring.
-  }
+      3. Similarly expand all (x-a)^k terms in the lower summation using binomial_diff_expansion
+        This creates a double sum over (k, i) pairs
 
-  unfold summation_R_from_and_to.
-  set (f := (fun i' x' => c1_ i' * x' ^ i')).
-  replace (fun i : nat => c1_ i * x ^ i) with (fun i : nat => f i x) by reflexivity.
-  rewrite <- summation_app.
+      4. Rearrange the double sum using summation_R_triangular or summation_R_change_of_var
+        to collect terms by powers of x (not powers of (x-a))
 
-  set (g := (fun i' x' => iter D i' F a / INR (fact i') * (x' - a) ^ i')).
-  replace (fun i : nat => iter D i F a / INR (fact i) * (x - a) ^ i) with (fun i : nat => g i x) by reflexivity.
-  rewrite <- summation_app.
+      5. After rearrangement, the coefficient of x^j should match c1_ j for all j
 
-  unfold f, g. clear f g.
+      This proof requires combining:
+      - binomial_diff_expansion (to expand each (x-a)^k)
+      - summation_R_triangular (to rearrange double sums)
+      - Coefficient matching using Taylor_agrees_at_a properties
+  *)
 
-  unfold from_n_choose_k.
-  simpl.
-  replace (n - n + 1)%nat with 1%nat by (rewrite Nat.sub_diag; ring).
-  replace (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact (n + i - n))) * (- a) ^ (n + i - n)) with (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i).
-  + replace (summation_R (fun i : nat => iter D (n + i) F a / INR (fact (n + i)) * INR (fact (n + i) / (fact n * fact i)) * (- a) ^ i) 1) with (summation_R (fun i : nat => (iter D (n + i) F a / INR (fact n * fact i)) * (- a) ^ i) 1).
-    - replace (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact (i + i0)) * INR (fact (i + i0) / (fact i * fact (i + i0 - i))) * (- a) ^ (i + i0 - i)) (n - i + 1) * x ^ i) with (fun i : nat => summation_R (fun i0 : nat => iter D (i + i0) F a / INR (fact i * fact i0) * (- a) ^ i0) (n - i + 1) * x ^ i).
-      * simpl.
-        (* Goal: c1_ n * x^n + summation(...) n x = (D^n F a / n!) * (x-a)^n + summation(...) n x
+  (* PROOF STRATEGY for completing this admitted section:
 
-           Strategy using binomial theorem infrastructure from Summation.v:
+      Goal: c1_ n * x^n + sum_{i=0}^{n-1} c1_ i * x^i =
+            (D^n F a / n!) * (x-a)^n + sum_{i=0}^{n-1} (D^i F a / i!) * (x-a)^i
 
-           1. Expand (x-a)^n using binomial_diff_expansion:
-              (x-a)^n = summation_R (fun i => C n i * x^i * (-a)^(n-i)) (S n)
+      Key steps:
+      1. Use summation_binomial_expansion (Summation.v:1408-1516) to expand all (x-a)^i terms
+        on the RHS into polynomials in x with binomial coefficients
 
-           2. Distribute (D^n F a / n!) through the binomial expansion:
-              (D^n F a / n!) * (x-a)^n = summation_R (fun i => (D^n F a / n!) * C n i * x^i * (-a)^(n-i)) (S n)
+      2. Extract that c1_ i = (D^i F a / i!) for all i <= n using Taylor_agrees_at_a
+        (now possible since Taylor_nth_1 is kept in scope at line 420)
 
-           3. Similarly expand all (x-a)^k terms in the lower summation using binomial_diff_expansion
-              This creates a double sum over (k, i) pairs
+      3. Apply summation_R_triangular to rearrange the resulting double summation
 
-           4. Rearrange the double sum using summation_R_triangular or summation_R_change_of_var
-              to collect terms by powers of x (not powers of (x-a))
+      4. Show coefficient-wise equality using the binomial coefficient lemmas:
+        - C_correct_eq_INR_binomial (Combinatorics.v:122-141)
+        - INR_binomial_coeff (Combinatorics.v:93-116)
 
-           5. After rearrangement, the coefficient of x^j should match c1_ j for all j
-
-           This proof requires combining:
-           - binomial_diff_expansion (to expand each (x-a)^k)
-           - summation_R_triangular (to rearrange double sums)
-           - Coefficient matching using Taylor_agrees_at_a properties
-        *)
-
-        (* PROOF STRATEGY for completing this admitted section:
-
-           Goal: c1_ n * x^n + sum_{i=0}^{n-1} c1_ i * x^i =
-                 (D^n F a / n!) * (x-a)^n + sum_{i=0}^{n-1} (D^i F a / i!) * (x-a)^i
-
-           Key steps:
-           1. Use summation_binomial_expansion (Summation.v:1408-1516) to expand all (x-a)^i terms
-              on the RHS into polynomials in x with binomial coefficients
-
-           2. Extract that c1_ i = (D^i F a / i!) for all i <= n using Taylor_agrees_at_a
-              (now possible since Taylor_nth_1 is kept in scope at line 420)
-
-           3. Apply summation_R_triangular to rearrange the resulting double summation
-
-           4. Show coefficient-wise equality using the binomial coefficient lemmas:
-              - C_correct_eq_INR_binomial (Combinatorics.v:122-141)
-              - INR_binomial_coeff (Combinatorics.v:93-116)
-
-           The challenge is coordinating these lemmas while managing the complex index arithmetic.
-        *)
-
-        admit.
-      * apply functional_extensionality.
-        intros.
-        f_equal.
-        f_equal.
-        apply functional_extensionality.
-        intros.
-        replace (x0 + x1 - x0)%nat with x1%nat by (rewrite Nat.add_comm; rewrite <- (Nat.add_sub_assoc x1 x0 x0 (Nat.le_refl x0)); rewrite Nat.sub_diag; ring).
-        f_equal.
-        rewrite Rdiv_def.
-        rewrite Rdiv_def.
-        rewrite Rmult_assoc.
-        f_equal.
-        rewrite Rmult_comm.
-        rewrite <- Rdiv_def.
-
-        (*
-        Goal: / INR (fact x0 * fact x1) = INR (fact (x0 + x1) / (fact x0 * fact x1)) / INR (fact (x0 + x1))
-
-        This would be easily proven if we weren't dealing with division of natural numbers.
-        *)
-
-        induction x0, x1.
-        -- simpl.
-           field.
-        -- simpl (fact 0).
-           rewrite Nat.mul_1_l.
-           rewrite Nat.add_0_l.
-           rewrite (Nat.div_same (fact (S x1)) (fact_neq_0 (S x1))).
-           rewrite INR_1.
-           rewrite Rdiv_1_l.
-           reflexivity.
-        -- simpl (fact 0).
-           rewrite Nat.mul_1_r.
-           rewrite Nat.add_0_r.
-           rewrite (Nat.div_same (fact (S x0)) (fact_neq_0 (S x0))).
-           rewrite INR_1.
-           rewrite Rdiv_1_l.
-           reflexivity.
-        -- apply INR_binomial_coeff.
-    - simpl.
-      replace (n + 0)%nat with n by ring.
-      rewrite Rplus_0_r.
-      rewrite Rplus_0_r.
-      rewrite Rmult_1_r.
-      rewrite Rmult_1_r.
-      rewrite Nat.mul_1_r.
-      rewrite (Nat.div_same (fact n) (fact_neq_0 n)).
-      rewrite INR_1.
-      rewrite Rmult_1_r.
-      reflexivity.
-  + apply functional_extensionality.
-    intros.
-    replace (n + x0 - n)%nat with x0%nat by (rewrite Nat.add_comm; rewrite <- (Nat.add_sub_assoc x0 n n (Nat.le_refl n)); rewrite Nat.sub_diag; ring).
-    ring.
+      The challenge is coordinating these lemmas while managing the complex index arithmetic.
+  *)
 Admitted.
 
 Theorem Taylor_implem :
