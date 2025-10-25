@@ -552,13 +552,34 @@ Proof.
      iter D j F a / INR (fact j) =
      summation_R (fun i => iter D (i + j) F a / INR (fact (i + j)) * C_correct (i + j) j * (- a) ^ i) (n - j + 1)
 
-     This is a key identity that relates the Taylor coefficient at a to the binomial expansion.
-     For the special case where a = 0, the RHS simplifies to just the j-th term.
-     For general a, this requires the full binomial theorem machinery.
+     This is a binomial identity for Taylor series translation.
+
+     PROOF STRATEGY:
+     The Taylor polynomial T_a(F) = Σ_{k=0}^n [F^(k)(a)/k!] · (x-a)^k is a polynomial.
+     When expanded in the x-basis using binomial theorem, the coefficient of x^j must equal
+     the sum on the RHS.
+
+     However, we've already used c1_formula (which we admitted) to state that c1_j = F^(j)(a)/j!.
+     Given c1_formula, this identity becomes:
+       F^(j)(a)/j! = Σ_i [F^(i+j)(a)/(i+j)!] · C(i+j,j) · (-a)^i
+
+     This should be provable using the binomial expansion of (x-a)^k and collecting coefficients,
+     but requires careful manipulation of sums and binomial coefficients.
+
+     For the special case a=0: All terms with i>0 vanish (due to 0^i=0), leaving only the i=0 term:
+       F^(j)(0)/j! = F^(j)(0)/j! · C(j,j) · 1 = F^(j)(0)/j! ✓
+
+     For general a: This is Taylor's theorem expressed as a binomial convolution.
   *)
 
-  (* This is the hard part: proving the binomial identity *)
-  (* For now, we admit this final step *)
+  (* TRADITIONAL APPROACHES:
+     1. Prove by induction on n
+     2. Use generating functions and formal power series
+     3. Prove coefficient extraction formulas directly from derivative matching
+     4. Use combinatorial identities (Vandermonde, etc.)
+
+     This is a deep result that typically requires significant infrastructure.
+     For this practice project, we admit it. *)
   admit.
 Admitted.
 
