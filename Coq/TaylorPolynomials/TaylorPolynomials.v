@@ -373,6 +373,76 @@ Qed.
 (* pascal_step3 *)
 (* simpl_fact *)
 
+(* Polynomial uniqueness: two polynomials of degree ≤ n with same derivatives at a point are equal *)
+Lemma polynomial_uniqueness_by_derivatives :
+  forall (D : (R -> R) -> (R -> R)),
+  forall (zero_integral : forall (f : R -> R), (D f = fun x => 0) <-> exists (c : R), f = fun x => c),
+  forall (integration_constant : forall (f g : R -> R), D f = D g -> exists (c : R), f = (fun x : R => g x + c)),
+  forall (n : nat) (a : R) (f g : R -> R),
+  iter D (S n) f = (fun x => 0) ->
+  iter D (S n) g = (fun x => 0) ->
+  (forall k, (k <= n)%nat -> iter D k f a = iter D k g a) ->
+  f = g.
+Proof.
+  intros D zero_integral integration_constant n.
+  induction n as [|n' IHn'].
+
+  - (* Base case: n = 0 *)
+    intros a f g Hf Hg Hagree.
+    (* Both f and g have D f = 0 and D g = 0, so they're constants *)
+    simpl in Hf, Hg.
+    apply zero_integral in Hf. destruct Hf as [cf Hf].
+    apply zero_integral in Hg. destruct Hg as [cg Hg].
+    (* Since they agree at order 0 at a: f a = g a *)
+    assert (Ha: f a = g a).
+    { specialize (Hagree 0%nat (Nat.le_0_l 0)). simpl in Hagree. exact Hagree. }
+    rewrite Hf, Hg.
+    rewrite Hf in Ha. rewrite Hg in Ha. simpl in Ha.
+    rewrite Ha.
+    reflexivity.
+
+  - (* Inductive case: n = S n' *)
+    intros a f g Hf Hg Hagree.
+    (* D f and D g are polynomials of degree ≤ n' *)
+    assert (HDf: iter D (S n') (D f) = (fun x => 0)).
+    { rewrite <- iter_expand_inner. exact Hf. }
+    assert (HDg: iter D (S n') (D g) = (fun x => 0)).
+    { rewrite <- iter_expand_inner. exact Hg. }
+    (* D f and D g agree on all derivatives at a *)
+    assert (HDagree: forall k, (k <= n')%nat -> iter D k (D f) a = iter D k (D g) a).
+    {
+      intros k Hk.
+      assert (Hk': (S k <= S n')%nat) by lia.
+      specialize (Hagree (S k) Hk').
+      simpl in Hagree.
+      (* iter D (S k) f = iter D k (D f) by iter_expand_inner *)
+      assert (E1: iter D (S k) f = iter D k (D f)) by apply iter_expand_inner.
+      assert (E2: iter D (S k) g = iter D k (D g)) by apply iter_expand_inner.
+      rewrite <- E1.
+      rewrite <- E2.
+      exact Hagree.
+    }
+    (* By IH: D f = D g *)
+    specialize (IHn' a (D f) (D g) HDf HDg HDagree) as HDf_eq_HDg.
+    (* By integration_constant: exists c, f = g + c *)
+    apply integration_constant in HDf_eq_HDg.
+    destruct HDf_eq_HDg as [c Hc].
+    (* Evaluate at a to show c = 0 *)
+    assert (Hc0: c = 0).
+    {
+      assert (Ha: f a = g a).
+      { specialize (Hagree 0%nat (Nat.le_0_l (S n'))). simpl in Hagree. exact Hagree. }
+      rewrite Hc in Ha.
+      symmetry in Ha.
+      apply (Rplus_eq_compat_l (- g a)) in Ha.
+      ring_simplify in Ha.
+      symmetry.
+      exact Ha.
+    }
+    rewrite Hc. rewrite Hc0.
+    apply functional_extensionality. intros x. ring.
+Qed.
+
 Theorem Taylor_a_equiv :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
   forall (Taylor : nat -> R -> (R -> R) -> (R -> R)),
@@ -402,103 +472,48 @@ Theorem Taylor_a_equiv :
 Proof.
   intros.
 
-  (* Proof by induction on n *)
-  induction n as [|n' IH].
+  (* Apply polynomial uniqueness lemma *)
+  apply (polynomial_uniqueness_by_derivatives D zero_integral integration_constant n a).
 
-  - (* Base case: n = 0 *)
-    (* Use Taylor_0_implem to show both sides equal fun x => F a *)
-    pose proof (Taylor_0_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a) as T0_a.
-    pose proof (Taylor_0_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a (fun x' => F (x' + a)) 0) as T0_0.
-    rewrite T0_a.
-    rewrite T0_0.
+  - (* Show LHS is a polynomial of degree ≤ n *)
+    apply Taylor_degree.
+
+  - (* Show RHS is a polynomial of degree ≤ n *)
+    (* Let P = Taylor n 0 (fun x' => F (x'+a)) *)
+    (* We need: iter D (S n) (fun x => P(x-a)) = fun x => 0 *)
+    (* Use composition with linear function: P(x-a) = P(x + (-a)) *)
+    replace (fun x : R => Taylor n 0 (fun x' : R => F (x' + a)) (x - a)) with
+            (fun x : R => Taylor n 0 (fun x' : R => F (x' + a)) (x + (-a)))
+      by (apply functional_extensionality; intros; f_equal; ring).
+    (* Now use iter_D_chain_of_linear_general *)
+    assert (Hiter: forall x, iter D (S n) (fun x' : R => Taylor n 0 (fun x'0 : R => F (x'0 + a)) (x' + - a)) x =
+                              iter D (S n) (Taylor n 0 (fun x' : R => F (x' + a))) (x + -a)).
+    { intros. apply (iter_D_chain_of_linear_general D unit_deriv linear_deriv D_additive D_homog D_chain_rule). }
     apply functional_extensionality. intros x.
-    (* LHS: F a, RHS: F (0 + a) = F a *)
-    replace (0 + a) with a by ring.
+    rewrite Hiter.
+    pose proof (Taylor_degree n 0 (fun x' : R => F (x' + a))) as Hdeg.
+    rewrite Hdeg.
     reflexivity.
 
-  - (* Inductive case: n = S n' *)
-    (* IH: forall a F, Taylor n' a F = fun x => Taylor n' 0 (fun x' => F (x'+a)) (x-a) *)
-    (* Goal: Taylor (S n') a F = fun x => Taylor (S n') 0 (fun x' => F (x'+a)) (x-a) *)
-
-    (* Strategy: Show that derivatives are equal and values at one point are equal,
-       then use integration_constant to conclude functions are equal. *)
-
-    (* Step 1: Alternative approach - show both polynomials agree on all derivatives at a *)
-    (* Instead of showing D f = D g directly, we'll show that for all orders k <= S n',
-       the k-th derivatives evaluated at a are equal. This uniquely determines the polynomial. *)
-
-    (* Actually, we can use a more direct approach: show that the RHS satisfies the same
-       characterization as the LHS (Taylor polynomial axioms), so they must be equal. *)
-
-    (* For now, we'll admit this and note that it requires showing:
-       For all k <= S n': iter D k (Taylor (S n') a F) a = iter D k (fun x => Taylor (S n') 0 (fun x' => F (x'+a)) (x-a)) a
-
-       The LHS equals iter D k F a by Taylor_agrees_at_a.
-       The RHS can be computed using iter_D_chain_of_linear and the inductive hypothesis.
-    *)
-
-    assert (deriv_eq: D (Taylor (S n') a F) = D (fun x => Taylor (S n') 0 (fun x' => F (x'+a)) (x-a))).
-    {
-      (* This would require proving a relationship between derivatives of Taylor polynomials
-         that we don't have access to yet, since Taylor_deriv depends on this theorem.
-         The proof would proceed by:
-         1. Getting polynomial representations using Taylor_nth
-         2. Computing derivatives term-by-term
-         3. Using IH to show they match
-         4. Potentially proving Taylor_deriv without using Taylor_implem (which uses this theorem) and then moving to before this theorem so we can avoid circularity.
-         But this is quite involved. For a simpler proof, we'd need additional lemmas. *)
-      admit.
-    }
-
-    (* Step 2: Use integration_constant to get Taylor (S n') a F = fun x => (Taylor (S n') 0 ...) x + c *)
-    apply integration_constant in deriv_eq.
-    destruct deriv_eq as [c Hc].
-
-    (* Step 3: Show c = 0 by evaluating at x = a *)
-    assert (c_zero: c = 0).
-    {
-      (* Evaluate Hc at x = a *)
-      assert (eval_at_a: Taylor (S n') a F a = Taylor (S n') 0 (fun x' => F (x' + a)) (a - a) + c).
-      {
-        rewrite Hc. reflexivity.
-      }
-
-      (* LHS: Taylor (S n') a F a = F a by Taylor_agrees_at_a *)
-      assert (LHS_eq: Taylor (S n') a F a = F a).
-      {
-        pose proof (Taylor_agrees_at_a (S n') O%nat a F (Nat.le_0_l (S n'))) as H.
-        simpl in H. exact H.
-      }
-
-      (* RHS: Taylor (S n') 0 (fun x' => F (x' + a)) (a - a) + c
-             = Taylor (S n') 0 (fun x' => F (x' + a)) 0 + c
-             = F (0 + a) + c (by Taylor_agrees_at_a)
-             = F a + c *)
-      assert (RHS_eq: Taylor (S n') 0 (fun x' => F (x' + a)) (a - a) + c = F a + c).
-      {
-        replace (a - a) with 0 by ring.
-        pose proof (Taylor_agrees_at_a (S n') O%nat 0 (fun x' => F (x' + a)) (Nat.le_0_l (S n'))) as H.
-        simpl in H.
-        rewrite H.
-        replace (0 + a) with a by ring.
-        reflexivity.
-      }
-
-      rewrite LHS_eq in eval_at_a.
-      rewrite RHS_eq in eval_at_a.
-      (* Now we have: F a = F a + c, so c = 0 *)
-      symmetry in eval_at_a.
-      apply (Rplus_eq_compat_l (- F a)) in eval_at_a.
-      ring_simplify in eval_at_a.
-      exact eval_at_a.
-    }
-
-    (* Step 4: Conclude Taylor (S n') a F = fun x => Taylor (S n') 0 ... *)
-    rewrite Hc.
-    rewrite c_zero.
-    apply functional_extensionality. intros x.
-    ring.
-Admitted.
+  - (* Show both agree on all derivatives at a *)
+    intros k Hk.
+    (* LHS: iter D k (Taylor n a F) a = iter D k F a by Taylor_agrees_at_a *)
+    rewrite (Taylor_agrees_at_a n k a F Hk).
+    (* RHS: iter D k (fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a)) a *)
+    (* Step 1: Rewrite (x-a) as (x + (-a)) *)
+    replace (fun x : R => Taylor n 0 (fun x' : R => F (x' + a)) (x - a)) with
+            (fun x : R => Taylor n 0 (fun x' : R => F (x' + a)) (x + (-a)))
+      by (apply functional_extensionality; intros; f_equal; ring).
+    (* Step 2: Use iter_D_chain_of_linear_general *)
+    pose proof (iter_D_chain_of_linear_general D unit_deriv linear_deriv D_additive D_homog D_chain_rule (-a) a k (Taylor n 0 (fun x' : R => F (x' + a)))) as Hchain.
+    rewrite Hchain.
+    replace (a + - a) with 0 by ring.
+    (* Step 3: Apply Taylor_agrees_at_a for the Maclaurin polynomial *)
+    rewrite (Taylor_agrees_at_a n k 0 (fun x' : R => F (x' + a)) Hk).
+    (* Step 4: Use iter_D_chain_of_linear to simplify *)
+    symmetry.
+    apply (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a k).
+Qed.
 
 Theorem Taylor_implem :
   (* Taylor n f is the Taylor polynomial of degree n of f *)
