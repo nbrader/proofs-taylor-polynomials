@@ -432,56 +432,134 @@ Proof.
   rewrite (summation_app (fun (i : nat) (x' : R) => c1_ i * x' ^ i) (S n) x).
   rewrite (summation_app (fun (i : nat) (x' : R) => c2_ i * x' ^ i) (S n) (x - a)).
 
-  (* Now we need to prove these two R-summations are equal *)
-  (* We'll use summation_irrelevance_of_large_coeffs pattern from Maclaurin_implem *)
+  (* Now Goal: summation_R (fun i => c1_ i * x^i) (S n) = summation_R (fun i => c2_ i * (x-a)^i) (S n) *)
 
-  (* The key insight: we need to show the i-th coefficient function matches for all i <= n *)
-  (* For c2_, we extract coefficients via derivatives, just like in Maclaurin_implem *)
+  (* Strategy: Extract coefficient formulas for both c1_ and c2_, then prove equality *)
 
-  (* Goal: c1_ n * x^n + summation(...) n x = (D^n F a / n!) * (x-a)^n + summation(...) n x
+  (* Step 1: Extract c2_ formula (coefficients of Maclaurin series) *)
+  assert (c2_formula: forall i, (i <= n)%nat -> c2_ i = iter D i F a / INR (fact i)).
+  {
+    intros i i_le_n.
+    (* This follows the same pattern as Maclaurin_implem *)
+    pose proof (Taylor_agrees_at_a n i 0 (fun x' => F (x' + a)) i_le_n) as agrees.
+    simpl in agrees.
+    rewrite Taylor_nth_2 in agrees.
+    rewrite (iter_D_additive_over_summation D D_additive D_homog (S n) i (fun j x' => c2_ j * x' ^ j) 0) in agrees.
+    replace (fun i0 : nat => iter D i (fun x' : R => c2_ i0 * x' ^ i0)) with
+            (fun i0 : nat => fun x : R => c2_ i0 * iter D i (fun x' : R => x' ^ i0) x) in agrees
+      by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
+    rewrite <- (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
+    rewrite <- agrees. clear agrees.
+    rewrite summation_app.
+    assert (S i <= S n)%nat as i_S_le by (apply le_n_S; assumption).
+    rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) (S i) (S n) i_S_le). clear i_S_le.
+    replace (S n - S i)%nat with (n - i)%nat by lia.
 
-      Strategy using binomial theorem infrastructure from Summation.v:
+    (* Higher-order terms vanish *)
+    assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = 0).
+    {
+      assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = summation_R (fun _ : nat => 0) (n - i)).
+      {
+        destruct (n - i)%nat eqn:E.
+        - reflexivity.
+        - apply (summation_R_irrelevance_of_large_coeffs n0).
+          intros.
+          assert (i <= i0 + S i)%nat as i_le_i0_Si by lia.
+          pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (i0 + S i) i i_le_i0_Si) as pow_deriv_eq.
+          rewrite pow_deriv_eq.
+          assert (0 ^ (i0 + S i - i) = 0) as pow_zero_eq by (assert (exists c : nat, (i0 + S i - i)%nat = S c) as [c_val c_eq] by (exists i0; lia); rewrite c_eq; simpl; ring).
+          rewrite pow_zero_eq. ring.
+      }
+      rewrite H. clear H. apply summation_n_zeros.
+    }
+    rewrite H. clear H. rewrite Rplus_0_l.
 
-      1. Expand (x-a)^n using binomial_diff_expansion:
-        (x-a)^n = summation_R (fun i => C n i * x^i * (-a)^(n-i)) (S n)
+    (* Lower-order terms vanish *)
+    rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i (S i) (Nat.le_succ_diag_r i)).
+    assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
+    {
+      assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) i).
+      {
+        destruct i eqn:E.
+        - reflexivity.
+        - apply (summation_R_irrelevance_of_large_coeffs n0).
+          intros. assert (S n0 > i0)%nat by lia.
+          pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 (S n0) H0).
+          rewrite H1. ring.
+      }
+      rewrite H. clear H. apply summation_n_zeros.
+    }
+    rewrite H. clear H. rewrite Rplus_0_r.
 
-      2. Distribute (D^n F a / n!) through the binomial expansion:
-        (D^n F a / n!) * (x-a)^n = summation_R (fun i => (D^n F a / n!) * C n i * x^i * (-a)^(n-i)) (S n)
+    (* Extract the i-th term *)
+    assert (summation_R (fun j : nat => c2_ (j + i)%nat * iter D i (fun x' : R => x' ^ (j + i)) 0) (S i - i) = INR (fact i) * c2_ i).
+    {
+      assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1 by lia.
+      rewrite succ_i_minus_i_is_1. clear succ_i_minus_i_is_1. simpl.
+      pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule i).
+      rewrite H. ring.
+    }
+    rewrite H. clear H. field. apply not_0_INR. apply fact_neq_0.
+  }
 
-      3. Similarly expand all (x-a)^k terms in the lower summation using binomial_diff_expansion
-        This creates a double sum over (k, i) pairs
+  (* Step 2: Extract c1_ formula (coefficients of Taylor series at a) *)
+  (* Note: Unlike c2_formula which evaluates at 0, extracting c1_ from a Taylor polynomial
+     represented as a power series in x (not x-a) is more complex because higher-order
+     terms don't vanish when evaluated at a≠0. The direct coefficient extraction approach
+     used for Maclaurin series doesn't apply here.
 
-      4. Rearrange the double sum using summation_R_triangular or summation_R_change_of_var
-        to collect terms by powers of x (not powers of (x-a))
+     A complete proof would require either:
+     1. A different representation (powers of (x-a) instead of powers of x), or
+     2. Solving a system of equations involving all coefficients simultaneously
 
-      5. After rearrangement, the coefficient of x^j should match c1_ j for all j
+     For now, we admit this lemma. *)
+  assert (c1_formula: forall i, (i <= n)%nat -> c1_ i = iter D i F a / INR (fact i)).
+  {
+    admit.
+  }
 
-      This proof requires combining:
-      - binomial_diff_expansion (to expand each (x-a)^k)
-      - summation_R_triangular (to rearrange double sums)
-      - Coefficient matching using Taylor_agrees_at_a properties
+  (* Step 3: Rewrite RHS using c2_ formula *)
+  assert (RHS_rewrite: summation_R (fun i => c2_ i * (x - a) ^ i) (S n) =
+                       summation_R (fun i => (iter D i F a / INR (fact i)) * (x - a) ^ i) (S n)).
+  {
+    apply summation_R_irrelevance_of_large_coeffs.
+    intros i i_le_n.
+    rewrite c2_formula by assumption.
+    reflexivity.
+  }
+  rewrite RHS_rewrite. clear RHS_rewrite.
+
+  (* Step 4: Apply binomial expansion to convert (x-a)^i to powers of x *)
+  rewrite (summation_binomial_expansion (fun i => iter D i F a / INR (fact i)) x a n).
+
+  (* Step 5: Show LHS equals the expanded RHS *)
+  (* After binomial expansion, RHS is:
+     sum_j ( sum_i ( (D^(i+j) F a / (i+j)!) * C(i+j, j) * (-a)^i ) * x^j )
+
+     We need to show this equals:
+     sum_j ( c1_ j * x^j )
+
+     By proving: c1_ j = sum_i ( (D^(i+j) F a / (i+j)!) * C(i+j, j) * (-a)^i )
   *)
 
-  (* PROOF STRATEGY for completing this admitted section:
+  apply summation_R_irrelevance_of_large_coeffs.
+  intros j j_le_n.
 
-      Goal: c1_ n * x^n + sum_{i=0}^{n-1} c1_ i * x^i =
-            (D^n F a / n!) * (x-a)^n + sum_{i=0}^{n-1} (D^i F a / i!) * (x-a)^i
+  (* Rewrite LHS using c1_ formula *)
+  rewrite c1_formula by assumption.
 
-      Key steps:
-      1. Use summation_binomial_expansion (Summation.v:1408-1516) to expand all (x-a)^i terms
-        on the RHS into polynomials in x with binomial coefficients
+  (* Now we need to show:
+     iter D j F a / INR (fact j) =
+     summation_R (fun i => iter D (i + j) F a / INR (fact (i + j)) * C_correct (i + j) j * (- a) ^ i) (n - j + 1)
 
-      2. Extract that c1_ i = (D^i F a / i!) for all i <= n using Taylor_agrees_at_a
-        (now possible since Taylor_nth_1 is kept in scope at line 420)
-
-      3. Apply summation_R_triangular to rearrange the resulting double summation
-
-      4. Show coefficient-wise equality using the binomial coefficient lemmas:
-        - C_correct_eq_INR_binomial (Combinatorics.v:122-141)
-        - INR_binomial_coeff (Combinatorics.v:93-116)
-
-      The challenge is coordinating these lemmas while managing the complex index arithmetic.
+     This is a key identity that relates the Taylor coefficient at a to the binomial expansion.
+     For the special case where a = 0, the RHS simplifies to just the j-th term.
+     For general a, this requires the full binomial theorem machinery.
   *)
+
+  (* This is the hard part: proving the binomial identity *)
+  (* For now, we admit this final step *)
+  admit.
 Admitted.
 
 Theorem Taylor_implem :
