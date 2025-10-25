@@ -401,186 +401,103 @@ Theorem Taylor_a_equiv :
   forall (n : nat) (a : R) (F : R -> R), Taylor n a F = fun x => Taylor n 0 (fun x' => F (x'+a)) (x-a).
 Proof.
   intros.
-  
-  specialize (Taylor_nth Taylor D constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree) with (n := n) (a := a) (F := F) as Taylor_nth_1.
-  destruct Taylor_nth_1 as [c1_ Taylor_nth_1].
-  specialize (Taylor_nth Taylor D constant_integral D_additive D_homog D_product_rule integration_constant Taylor_degree) with (n := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_nth_2.
-  destruct Taylor_nth_2 as [c2_ Taylor_nth_2].
 
-  rewrite Taylor_nth_1.
-  rewrite Taylor_nth_2.
+  (* Proof by induction on n *)
+  induction n as [|n' IH].
 
-  apply functional_extensionality.
-  intros.
-
-  specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := a) (F := F) as Taylor_agrees_at_a_1.
-  specialize (Taylor_agrees_at_a_1 (Nat.le_refl n)).
-  simpl in Taylor_agrees_at_a_1.
-  rewrite Taylor_nth_1 in Taylor_agrees_at_a_1.
-  (* Note: Taylor_nth_1 kept in scope for potential use in completing admitted sections *)
-
-  specialize Taylor_agrees_at_a with (degree := n) (order := n) (a := 0) (F := (fun x' : R => F (x' + a))) as Taylor_agrees_at_a_2.
-  specialize (Taylor_agrees_at_a_2 (Nat.le_refl n)).
-  simpl in Taylor_agrees_at_a_2.
-  rewrite Taylor_nth_2 in Taylor_agrees_at_a_2.
-
-  (* Instead of proving functional equality for c1_ and c2_, we'll prove summation equality directly *)
-  (* This avoids needing to prove equality for indices beyond n where coefficients are unconstrained *)
-
-  (* First, let's rewrite the goal using summation_app to convert function summations to R summations *)
-  (* Goal is: summation (fun i x' => c1_ i * x' ^ i) (S n) x = summation (fun i x' => c2_ i * x' ^ i) (S n) (x - a) *)
-  rewrite (summation_app (fun (i : nat) (x' : R) => c1_ i * x' ^ i) (S n) x).
-  rewrite (summation_app (fun (i : nat) (x' : R) => c2_ i * x' ^ i) (S n) (x - a)).
-
-  (* Now Goal: summation_R (fun i => c1_ i * x^i) (S n) = summation_R (fun i => c2_ i * (x-a)^i) (S n) *)
-
-  (* Strategy: Extract coefficient formulas for both c1_ and c2_, then prove equality *)
-
-  (* Step 1: Extract c2_ formula (coefficients of Maclaurin series) *)
-  assert (c2_formula: forall i, (i <= n)%nat -> c2_ i = iter D i F a / INR (fact i)).
-  {
-    intros i i_le_n.
-    (* This follows the same pattern as Maclaurin_implem *)
-    pose proof (Taylor_agrees_at_a n i 0 (fun x' => F (x' + a)) i_le_n) as agrees.
-    simpl in agrees.
-    rewrite Taylor_nth_2 in agrees.
-    rewrite (iter_D_additive_over_summation D D_additive D_homog (S n) i (fun j x' => c2_ j * x' ^ j) 0) in agrees.
-    replace (fun i0 : nat => iter D i (fun x' : R => c2_ i0 * x' ^ i0)) with
-            (fun i0 : nat => fun x : R => c2_ i0 * iter D i (fun x' : R => x' ^ i0) x) in agrees
-      by (apply functional_extensionality; intros; rewrite (iter_D_homog D D_homog); reflexivity).
-    rewrite <- (iter_D_chain_of_linear D unit_deriv linear_deriv D_additive D_homog D_chain_rule F a i).
-    rewrite <- agrees. clear agrees.
-    rewrite summation_app.
-    assert (S i <= S n)%nat as i_S_le by (apply le_n_S; assumption).
-    rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) (S i) (S n) i_S_le). clear i_S_le.
-    replace (S n - S i)%nat with (n - i)%nat by lia.
-
-    (* Higher-order terms vanish *)
-    assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = 0).
-    {
-      assert (summation_R (fun j : nat => c2_ (j + S i)%nat * iter D i (fun x' : R => x' ^ (j + S i)) 0) (n - i) = summation_R (fun _ : nat => 0) (n - i)).
-      {
-        destruct (n - i)%nat eqn:E.
-        - reflexivity.
-        - apply (summation_R_irrelevance_of_large_coeffs n0).
-          intros.
-          assert (i <= i0 + S i)%nat as i_le_i0_Si by lia.
-          pose proof (nth_pow_greater_than_or_equal_to_deriv D linear_deriv D_homog D_product_rule (i0 + S i) i i_le_i0_Si) as pow_deriv_eq.
-          rewrite pow_deriv_eq.
-          assert (0 ^ (i0 + S i - i) = 0) as pow_zero_eq by (assert (exists c : nat, (i0 + S i - i)%nat = S c) as [c_val c_eq] by (exists i0; lia); rewrite c_eq; simpl; ring).
-          rewrite pow_zero_eq. ring.
-      }
-      rewrite H. clear H. apply summation_n_zeros.
-    }
-    rewrite H. clear H. rewrite Rplus_0_l.
-
-    (* Lower-order terms vanish *)
-    rewrite (split_summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i (S i) (Nat.le_succ_diag_r i)).
-    assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = 0).
-    {
-      assert (summation_R (fun i0 : nat => c2_ i0 * iter D i (fun x' : R => x' ^ i0) 0) i = summation_R (fun _ : nat => 0) i).
-      {
-        destruct i eqn:E.
-        - reflexivity.
-        - apply (summation_R_irrelevance_of_large_coeffs n0).
-          intros. assert (S n0 > i0)%nat by lia.
-          pose proof (nth_pow_less_than_deriv D unit_deriv linear_deriv D_additive D_homog D_product_rule i0 (S n0) H0).
-          rewrite H1. ring.
-      }
-      rewrite H. clear H. apply summation_n_zeros.
-    }
-    rewrite H. clear H. rewrite Rplus_0_r.
-
-    (* Extract the i-th term *)
-    assert (summation_R (fun j : nat => c2_ (j + i)%nat * iter D i (fun x' : R => x' ^ (j + i)) 0) (S i - i) = INR (fact i) * c2_ i).
-    {
-      assert ((S i - i)%nat = S O) as succ_i_minus_i_is_1 by lia.
-      rewrite succ_i_minus_i_is_1. clear succ_i_minus_i_is_1. simpl.
-      pose proof (nth_pow_equal_deriv D linear_deriv D_homog D_product_rule i).
-      rewrite H. ring.
-    }
-    rewrite H. clear H. field. apply not_0_INR. apply fact_neq_0.
-  }
-
-  (* Step 2: Extract c1_ formula (coefficients of Taylor series at a) *)
-  (* Note: Unlike c2_formula which evaluates at 0, extracting c1_ from a Taylor polynomial
-     represented as a power series in x (not x-a) is more complex because higher-order
-     terms don't vanish when evaluated at a≠0. The direct coefficient extraction approach
-     used for Maclaurin series doesn't apply here.
-
-     A complete proof would require either:
-     1. A different representation (powers of (x-a) instead of powers of x), or
-     2. Solving a system of equations involving all coefficients simultaneously
-
-     For now, we admit this lemma. *)
-  assert (c1_formula: forall i, (i <= n)%nat -> c1_ i = iter D i F a / INR (fact i)).
-  {
-    admit.
-  }
-
-  (* Step 3: Rewrite RHS using c2_ formula *)
-  assert (RHS_rewrite: summation_R (fun i => c2_ i * (x - a) ^ i) (S n) =
-                       summation_R (fun i => (iter D i F a / INR (fact i)) * (x - a) ^ i) (S n)).
-  {
-    apply summation_R_irrelevance_of_large_coeffs.
-    intros i i_le_n.
-    rewrite c2_formula by assumption.
+  - (* Base case: n = 0 *)
+    (* Use Taylor_0_implem to show both sides equal fun x => F a *)
+    pose proof (Taylor_0_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a F a) as T0_a.
+    pose proof (Taylor_0_implem Taylor D zero_integral constant_integral Taylor_degree Taylor_agrees_at_a (fun x' => F (x' + a)) 0) as T0_0.
+    rewrite T0_a.
+    rewrite T0_0.
+    apply functional_extensionality. intros x.
+    (* LHS: F a, RHS: F (0 + a) = F a *)
+    replace (0 + a) with a by ring.
     reflexivity.
-  }
-  rewrite RHS_rewrite. clear RHS_rewrite.
 
-  (* Step 4: Apply binomial expansion to convert (x-a)^i to powers of x *)
-  rewrite (summation_binomial_expansion (fun i => iter D i F a / INR (fact i)) x a n).
+  - (* Inductive case: n = S n' *)
+    (* IH: forall a F, Taylor n' a F = fun x => Taylor n' 0 (fun x' => F (x'+a)) (x-a) *)
+    (* Goal: Taylor (S n') a F = fun x => Taylor (S n') 0 (fun x' => F (x'+a)) (x-a) *)
 
-  (* Step 5: Show LHS equals the expanded RHS *)
-  (* After binomial expansion, RHS is:
-     sum_j ( sum_i ( (D^(i+j) F a / (i+j)!) * C(i+j, j) * (-a)^i ) * x^j )
+    (* Strategy: Show that derivatives are equal and values at one point are equal,
+       then use integration_constant to conclude functions are equal. *)
 
-     We need to show this equals:
-     sum_j ( c1_ j * x^j )
+    (* Step 1: Alternative approach - show both polynomials agree on all derivatives at a *)
+    (* Instead of showing D f = D g directly, we'll show that for all orders k <= S n',
+       the k-th derivatives evaluated at a are equal. This uniquely determines the polynomial. *)
 
-     By proving: c1_ j = sum_i ( (D^(i+j) F a / (i+j)!) * C(i+j, j) * (-a)^i )
-  *)
+    (* Actually, we can use a more direct approach: show that the RHS satisfies the same
+       characterization as the LHS (Taylor polynomial axioms), so they must be equal. *)
 
-  apply summation_R_irrelevance_of_large_coeffs.
-  intros j j_le_n.
+    (* For now, we'll admit this and note that it requires showing:
+       For all k <= S n': iter D k (Taylor (S n') a F) a = iter D k (fun x => Taylor (S n') 0 (fun x' => F (x'+a)) (x-a)) a
 
-  (* Rewrite LHS using c1_ formula *)
-  rewrite c1_formula by assumption.
+       The LHS equals iter D k F a by Taylor_agrees_at_a.
+       The RHS can be computed using iter_D_chain_of_linear and the inductive hypothesis.
+    *)
 
-  (* Now we need to show:
-     iter D j F a / INR (fact j) =
-     summation_R (fun i => iter D (i + j) F a / INR (fact (i + j)) * C_correct (i + j) j * (- a) ^ i) (n - j + 1)
+    assert (deriv_eq: D (Taylor (S n') a F) = D (fun x => Taylor (S n') 0 (fun x' => F (x'+a)) (x-a))).
+    {
+      (* This would require proving a relationship between derivatives of Taylor polynomials
+         that we don't have access to yet, since Taylor_deriv depends on this theorem.
+         The proof would proceed by:
+         1. Getting polynomial representations using Taylor_nth
+         2. Computing derivatives term-by-term
+         3. Using IH to show they match
+         4. Potentially proving Taylor_deriv without using Taylor_implem (which uses this theorem) and then moving to before this theorem so we can avoid circularity.
+         But this is quite involved. For a simpler proof, we'd need additional lemmas. *)
+      admit.
+    }
 
-     This is a binomial identity for Taylor series translation.
+    (* Step 2: Use integration_constant to get Taylor (S n') a F = fun x => (Taylor (S n') 0 ...) x + c *)
+    apply integration_constant in deriv_eq.
+    destruct deriv_eq as [c Hc].
 
-     PROOF STRATEGY:
-     The Taylor polynomial T_a(F) = Σ_{k=0}^n [F^(k)(a)/k!] · (x-a)^k is a polynomial.
-     When expanded in the x-basis using binomial theorem, the coefficient of x^j must equal
-     the sum on the RHS.
+    (* Step 3: Show c = 0 by evaluating at x = a *)
+    assert (c_zero: c = 0).
+    {
+      (* Evaluate Hc at x = a *)
+      assert (eval_at_a: Taylor (S n') a F a = Taylor (S n') 0 (fun x' => F (x' + a)) (a - a) + c).
+      {
+        rewrite Hc. reflexivity.
+      }
 
-     However, we've already used c1_formula (which we admitted) to state that c1_j = F^(j)(a)/j!.
-     Given c1_formula, this identity becomes:
-       F^(j)(a)/j! = Σ_i [F^(i+j)(a)/(i+j)!] · C(i+j,j) · (-a)^i
+      (* LHS: Taylor (S n') a F a = F a by Taylor_agrees_at_a *)
+      assert (LHS_eq: Taylor (S n') a F a = F a).
+      {
+        pose proof (Taylor_agrees_at_a (S n') O%nat a F (Nat.le_0_l (S n'))) as H.
+        simpl in H. exact H.
+      }
 
-     This should be provable using the binomial expansion of (x-a)^k and collecting coefficients,
-     but requires careful manipulation of sums and binomial coefficients.
+      (* RHS: Taylor (S n') 0 (fun x' => F (x' + a)) (a - a) + c
+             = Taylor (S n') 0 (fun x' => F (x' + a)) 0 + c
+             = F (0 + a) + c (by Taylor_agrees_at_a)
+             = F a + c *)
+      assert (RHS_eq: Taylor (S n') 0 (fun x' => F (x' + a)) (a - a) + c = F a + c).
+      {
+        replace (a - a) with 0 by ring.
+        pose proof (Taylor_agrees_at_a (S n') O%nat 0 (fun x' => F (x' + a)) (Nat.le_0_l (S n'))) as H.
+        simpl in H.
+        rewrite H.
+        replace (0 + a) with a by ring.
+        reflexivity.
+      }
 
-     For the special case a=0: All terms with i>0 vanish (due to 0^i=0), leaving only the i=0 term:
-       F^(j)(0)/j! = F^(j)(0)/j! · C(j,j) · 1 = F^(j)(0)/j! ✓
+      rewrite LHS_eq in eval_at_a.
+      rewrite RHS_eq in eval_at_a.
+      (* Now we have: F a = F a + c, so c = 0 *)
+      symmetry in eval_at_a.
+      apply (Rplus_eq_compat_l (- F a)) in eval_at_a.
+      ring_simplify in eval_at_a.
+      exact eval_at_a.
+    }
 
-     For general a: This is Taylor's theorem expressed as a binomial convolution.
-  *)
-
-  (* TRADITIONAL APPROACHES:
-     1. Prove by induction on n
-     2. Use generating functions and formal power series
-     3. Prove coefficient extraction formulas directly from derivative matching
-     4. Use combinatorial identities (Vandermonde, etc.)
-
-     This is a deep result that typically requires significant infrastructure.
-     For this practice project, we admit it. *)
-  admit.
+    (* Step 4: Conclude Taylor (S n') a F = fun x => Taylor (S n') 0 ... *)
+    rewrite Hc.
+    rewrite c_zero.
+    apply functional_extensionality. intros x.
+    ring.
 Admitted.
 
 Theorem Taylor_implem :
