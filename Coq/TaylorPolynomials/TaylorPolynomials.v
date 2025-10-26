@@ -369,10 +369,6 @@ Proof.
   apply Taylor_degree.
 Qed.
 
-(* pascal_step2 *)
-(* pascal_step3 *)
-(* simpl_fact *)
-
 (* Polynomial uniqueness: two polynomials of degree ≤ n with same derivatives at a point are equal *)
 Lemma polynomial_uniqueness_by_derivatives :
   forall (D : (R -> R) -> (R -> R)),
